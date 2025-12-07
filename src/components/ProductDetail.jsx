@@ -153,8 +153,8 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               </div>
               <button
                 className="btn-buy-detail"
-                onClick={() => {
-                  addToCart(product)
+                onClick={async () => {
+                  await addToCart(product)
                   onClose()
                 }}
                 disabled={available <= 0}

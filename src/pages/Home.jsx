@@ -9,14 +9,12 @@ function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const { addToCart } = useCart()
+  const { addToCart, sessionId, cartItems } = useCart()
   
   // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailableQuantity = (product) => {
     return product.availableQuantity !== undefined ? product.availableQuantity : (product.quantityInStock || 0)
   }
-
-  const { sessionId } = useCart()
 
   useEffect(() => {
     loadProducts()
@@ -33,6 +31,19 @@ function Home() {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAddToCart = async (product) => {
+    try {
+      await addToCart(product)
+      // Небольшая задержка перед перезагрузкой, чтобы сервер успел обновить данные
+      setTimeout(async () => {
+        await loadProducts()
+      }, 500)
+    } catch (error) {
+      // Ошибка уже обработана в addToCart
+      console.error('Error in handleAddToCart:', error)
     }
   }
 
@@ -150,9 +161,9 @@ function Home() {
                     return (
                       <button
                         className="btn-buy"
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation()
-                          addToCart(product)
+                          await handleAddToCart(product)
                         }}
                         disabled={available <= 0}
                         title={available <= 0 ? 'Товар закончился' : 'Добавить в корзину'}

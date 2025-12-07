@@ -1,15 +1,14 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { useContext } from 'react'
-import { CartContext } from '../contexts/CartContext'
+import { useCart } from '../contexts/CartContext'
 import './Layout.css'
 
 function Layout() {
   const location = useLocation()
   const isAdmin = location.pathname.startsWith('/admin')
   
-  // Безопасное использование контекста корзины
-  const cartContext = useContext(CartContext)
-  const totalItems = cartContext ? cartContext.getTotalItems() : 0
+  // Используем хук useCart для получения данных корзины
+  const { cartItems } = useCart()
+  const totalItems = cartItems.reduce((total, item) => total + (item.quantity || 0), 0)
 
   return (
     <div className="layout">
