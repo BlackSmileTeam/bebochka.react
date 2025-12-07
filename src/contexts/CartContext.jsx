@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { api } from '../services/api'
 import { getSessionId } from '../utils/sessionId'
 
@@ -14,7 +14,7 @@ export function CartProvider({ children }) {
     loadCart()
   }, [])
 
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     try {
       setLoading(true)
       const items = await api.getCartItems(sessionId)
@@ -38,16 +38,23 @@ export function CartProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [sessionId])
 
-  const addToCart = async (product) => {
+  const addToCart = useCallback(async (product) => {
     try {
-      const existingItem = cartItems.find(item => item.productId === product.id || item.id === product.id)
+      if (!product || !product.id) {
+        console.error('Invalid product:', product)
+        return
+      }
       
-      if (existingItem && existingItem.cartItemId) {
+      // Получаем актуальное состояние корзины с сервера
+      const currentItems = await api.getCartItems(sessionId)
+      const existingItem = currentItems.find(item => item.productId === product.id)
+      
+      if (existingItem && existingItem.id) {
         // Обновляем существующий элемент
         const newQuantity = existingItem.quantity + 1
-        const updatedItem = await api.updateCartItem(existingItem.cartItemId, newQuantity)
+        await api.updateCartItem(existingItem.id, newQuantity)
         await loadCart() // Перезагружаем корзину
       } else {
         // Добавляем новый элемент
@@ -56,74 +63,79 @@ export function CartProvider({ children }) {
       }
     } catch (error) {
       console.error('Error adding to cart:', error)
-      alert(error.message || 'Не удалось добавить товар в корзину')
+      const errorMessage = error?.message || error?.response?.data?.message || 'Не удалось добавить товар в корзину'
+      alert(errorMessage)
     }
-  }
+  }, [sessionId, loadCart])
 
-  const removeFromCart = async (productId) => {
+  const removeFromCart = useCallback(async (productId) => {
     try {
-      const item = cartItems.find(item => (item.productId === productId || item.id === productId) && item.cartItemId)
-      if (item && item.cartItemId) {
-        await api.removeFromCart(item.cartItemId)
+      // Получаем актуальное состояние корзины с сервера
+      const currentItems = await api.getCartItems(sessionId)
+      const item = currentItems.find(item => item.productId === productId)
+      if (item && item.id) {
+        await api.removeFromCart(item.id)
         await loadCart() // Перезагружаем корзину
       }
     } catch (error) {
       console.error('Error removing from cart:', error)
-      alert(error.message || 'Не удалось удалить товар из корзины')
+      alert(error?.message || 'Не удалось удалить товар из корзины')
     }
-  }
+  }, [sessionId, loadCart])
 
-  const updateQuantity = async (productId, quantity) => {
+  const updateQuantity = useCallback(async (productId, quantity) => {
     try {
       if (quantity <= 0) {
         await removeFromCart(productId)
         return
       }
       
-      const item = cartItems.find(item => (item.productId === productId || item.id === productId) && item.cartItemId)
-      if (item && item.cartItemId) {
-        await api.updateCartItem(item.cartItemId, quantity)
+      // Получаем актуальное состояние корзины с сервера
+      const currentItems = await api.getCartItems(sessionId)
+      const item = currentItems.find(item => item.productId === productId)
+      if (item && item.id) {
+        await api.updateCartItem(item.id, quantity)
         await loadCart() // Перезагружаем корзину
       }
     } catch (error) {
       console.error('Error updating quantity:', error)
-      alert(error.message || 'Не удалось изменить количество')
+      alert(error?.message || 'Не удалось изменить количество')
     }
-  }
+  }, [sessionId, loadCart, removeFromCart])
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     try {
       await api.clearCart(sessionId)
       await loadCart() // Перезагружаем корзину
     } catch (error) {
       console.error('Error clearing cart:', error)
-      alert(error.message || 'Не удалось очистить корзину')
+      alert(error?.message || 'Не удалось очистить корзину')
     }
-  }
+  }, [sessionId, loadCart])
 
-  const getTotalPrice = () => {
+  const getTotalPrice = useCallback(() => {
     return cartItems.reduce((total, item) => total + (item.price || 0) * item.quantity, 0)
-  }
+  }, [cartItems])
 
-  const getTotalItems = () => {
+  const getTotalItems = useCallback(() => {
     return cartItems.reduce((total, item) => total + item.quantity, 0)
+  }, [cartItems])
+
+  const contextValue = {
+    cartItems,
+    loading,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    getTotalPrice,
+    getTotalItems,
+    loadCart,
+    sessionId
   }
 
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        loading,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        getTotalPrice,
-        getTotalItems,
-        loadCart,
-        sessionId
-      }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   )
@@ -136,4 +148,3 @@ export function useCart() {
   }
   return context
 }
-
