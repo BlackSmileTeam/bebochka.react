@@ -4,7 +4,8 @@ import './ProductDetail.css'
 
 function ProductDetail({ product, onClose, getAvailableQuantity }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const { addToCart } = useCart()
+  const [isAdding, setIsAdding] = useState(false)
+  const { addToCart, cartItems } = useCart()
   
   // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailable = () => {
@@ -15,6 +16,30 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   }
   
   const available = getAvailable()
+  
+  // Получаем количество товара в корзине
+  const getCartQuantity = () => {
+    const cartItem = cartItems.find(item => item.productId === product.id)
+    return cartItem ? cartItem.quantity : 0
+  }
+  
+  const inCart = getCartQuantity()
+  const canAdd = available > 0 && inCart < available
+  
+  const handleAddToCart = async () => {
+    if (!canAdd || isAdding) return
+    
+    setIsAdding(true)
+    try {
+      await addToCart(product)
+      onClose()
+    } catch (error) {
+      alert(error.message || 'Не удалось добавить товар в корзину')
+      console.error('Error adding to cart:', error)
+    } finally {
+      setIsAdding(false)
+    }
+  }
 
   if (!product) return null
 
@@ -153,14 +178,20 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               </div>
               <button
                 className="btn-buy-detail"
-                onClick={async () => {
-                  await addToCart(product)
-                  onClose()
-                }}
-                disabled={available <= 0}
-                title={available <= 0 ? 'Товар закончился' : 'Добавить в корзину'}
+                onClick={handleAddToCart}
+                disabled={!canAdd || isAdding}
+                title={
+                  !canAdd 
+                    ? (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество')
+                    : (isAdding ? 'Добавление...' : 'Добавить в корзину')
+                }
               >
-                {available <= 0 ? 'Нет в наличии' : 'В корзину'}
+                {isAdding 
+                  ? 'Добавление...' 
+                  : (!canAdd 
+                    ? (available <= 0 ? 'Нет в наличии' : 'В корзине')
+                    : 'В корзину')
+                }
               </button>
             </div>
           </div>

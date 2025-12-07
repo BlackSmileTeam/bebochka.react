@@ -47,24 +47,13 @@ export function CartProvider({ children }) {
         return
       }
       
-      // Получаем актуальное состояние корзины с сервера
-      const currentItems = await api.getCartItems(sessionId)
-      const existingItem = currentItems.find(item => item.productId === product.id)
-      
-      if (existingItem && existingItem.id) {
-        // Обновляем существующий элемент
-        const newQuantity = existingItem.quantity + 1
-        await api.updateCartItem(existingItem.id, newQuantity)
-        await loadCart() // Перезагружаем корзину
-      } else {
-        // Добавляем новый элемент
-        await api.addToCart(sessionId, product.id, 1)
-        await loadCart() // Перезагружаем корзину
-      }
+      // Просто вызываем API - сервер сам проверит, есть ли товар в корзине, и либо добавит, либо обновит
+      await api.addToCart(sessionId, product.id, 1)
+      await loadCart() // Перезагружаем корзину после успешного добавления
     } catch (error) {
       console.error('Error adding to cart:', error)
       const errorMessage = error?.message || error?.response?.data?.message || 'Не удалось добавить товар в корзину'
-      alert(errorMessage)
+      throw new Error(errorMessage) // Пробрасываем ошибку, чтобы обработать её в компоненте
     }
   }, [sessionId, loadCart])
 

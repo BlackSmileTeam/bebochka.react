@@ -9,11 +9,18 @@ function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [addingToCart, setAddingToCart] = useState(new Set()) // Track which products are being added
   const { addToCart, sessionId, cartItems } = useCart()
   
   // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailableQuantity = (product) => {
     return product.availableQuantity !== undefined ? product.availableQuantity : (product.quantityInStock || 0)
+  }
+  
+  // Получаем количество товара в корзине
+  const getCartQuantity = (productId) => {
+    const cartItem = cartItems.find(item => item.productId === productId)
+    return cartItem ? cartItem.quantity : 0
   }
 
   useEffect(() => {
@@ -35,15 +42,32 @@ function Home() {
   }
 
   const handleAddToCart = async (product) => {
+    // Проверяем доступное количество перед добавлением
+    const available = getAvailableQuantity(product)
+    const inCart = getCartQuantity(product.id)
+    
+    if (available <= 0 || inCart >= available) {
+      return // Не добавляем, если товар закончился или уже в корзине в максимальном количестве
+    }
+    
+    // Блокируем кнопку для этого товара
+    setAddingToCart(prev => new Set(prev).add(product.id))
+    
     try {
       await addToCart(product)
-      // Небольшая задержка перед перезагрузкой, чтобы сервер успел обновить данные
-      setTimeout(async () => {
-        await loadProducts()
-      }, 500)
+      // Перезагружаем товары после добавления, чтобы обновить availableQuantity
+      await loadProducts()
     } catch (error) {
-      // Ошибка уже обработана в addToCart
+      // Показываем ошибку пользователю
+      alert(error.message || 'Не удалось добавить товар в корзину')
       console.error('Error in handleAddToCart:', error)
+    } finally {
+      // Разблокируем кнопку
+      setAddingToCart(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(product.id)
+        return newSet
+      })
     }
   }
 
@@ -156,22 +180,37 @@ function Home() {
                   <div className="product-price">
                     {(product.price ?? 0).toLocaleString('ru-RU')} ₽
                   </div>
-                  {(() => {
-                    const available = getAvailableQuantity(product)
-                    return (
-                      <button
-                        className="btn-buy"
-                        onClick={async (e) => {
-                          e.stopPropagation()
+                {(() => {
+                  const available = getAvailableQuantity(product)
+                  const inCart = getCartQuantity(product.id)
+                  const canAdd = available > 0 && inCart < available
+                  const isAdding = addingToCart.has(product.id)
+                  
+                  return (
+                    <button
+                      className="btn-buy"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (canAdd && !isAdding) {
                           await handleAddToCart(product)
-                        }}
-                        disabled={available <= 0}
-                        title={available <= 0 ? 'Товар закончился' : 'Добавить в корзину'}
-                      >
-                        {available <= 0 ? 'Нет в наличии' : 'В корзину'}
-                      </button>
-                    )
-                  })()}
+                        }
+                      }}
+                      disabled={!canAdd || isAdding}
+                      title={
+                        !canAdd 
+                          ? (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество')
+                          : (isAdding ? 'Добавление...' : 'Добавить в корзину')
+                      }
+                    >
+                      {isAdding 
+                        ? 'Добавление...' 
+                        : (!canAdd 
+                          ? (available <= 0 ? 'Нет в наличии' : 'В корзине')
+                          : 'В корзину')
+                      }
+                    </button>
+                  )
+                })()}
                 </div>
               </div>
             </div>
