@@ -27,23 +27,21 @@ function Login() {
     setLoading(true)
 
     try {
+      console.log('[Login] Attempting login...')
       const response = await api.login(formData.username, formData.password)
       
+      console.log('[Login] Login response:', response)
+      
       if (response && response.token) {
-        // Save token to localStorage
-        localStorage.setItem('authToken', response.token)
-        localStorage.setItem('user', JSON.stringify({
-          username: response.username,
-          fullName: response.fullName
-        }))
-        
-        // Redirect to admin page
+        console.log('[Login] Login successful, redirecting to admin...')
+        // Токен уже сохранен в api.login, просто перенаправляем
         navigate('/admin/products')
       } else {
+        console.error('[Login] No token in response:', response)
         setError('Неверное имя пользователя или пароль')
       }
     } catch (err) {
-      console.error('Login error:', err)
+      console.error('[Login] Login error:', err)
       setError(err.message || 'Ошибка при входе. Проверьте данные.')
     } finally {
       setLoading(false)

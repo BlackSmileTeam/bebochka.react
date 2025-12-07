@@ -19,6 +19,81 @@
   .checkout-content {
     grid-template-columns: 1fr;
   }
+
+  .checkout-summary {
+    position: static;
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .checkout-header h1 {
+    font-size: 2rem;
+  }
+
+  .checkout-form-container {
+    padding: 1.5rem;
+  }
+
+  .checkout-form h2 {
+    font-size: 1.5rem;
+  }
+
+  .checkout-summary {
+    padding: 1.5rem;
+  }
+
+  .checkout-summary h2 {
+    font-size: 1.5rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    font-size: 16px; /* Предотвращает зум на iOS */
+    padding: 0.875rem;
+    min-height: 44px;
+  }
+
+  .form-group textarea {
+    min-height: 100px;
+  }
+
+  .btn-submit {
+    padding: 1rem;
+    font-size: 1rem;
+    min-height: 48px; /* Минимальный размер для touch */
+    touch-action: manipulation;
+    width: 100%;
+    display: block;
+  }
+
+  .btn-back {
+    padding: 1rem;
+    font-size: 1rem;
+    min-height: 48px;
+    touch-action: manipulation;
+    width: 100%;
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .checkout-form-container {
+    padding: 1rem;
+  }
+
+  .checkout-summary {
+    padding: 1rem;
+  }
+
+  .order-total {
+    font-size: 1.25rem;
+  }
 }
 
 .checkout-form-container {
@@ -90,11 +165,31 @@
   width: 100%;
   padding: 1rem;
   font-size: 1.1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 48px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-submit:hover {
+  background: #5568d3;
+}
+
+.btn-submit:active {
+  background: #4a5bc4;
+  transform: scale(0.98);
 }
 
 .btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background: #a0aec0;
 }
 
 .btn-back {
@@ -111,10 +206,19 @@
   transition: background 0.2s;
   font-size: 1rem;
   font-weight: 500;
+  min-height: 48px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 .btn-back:hover {
   background: #e2e8f0;
+}
+
+.btn-back:active {
+  background: #cbd5e0;
+  transform: scale(0.98);
 }
 
 .checkout-summary {

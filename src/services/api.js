@@ -503,21 +503,54 @@ export const api = {
    */
   async login(username, password) {
     try {
-      console.log('[API] Logging in user:', username)
+      console.log('[API] Attempting login for user:', username)
       const response = await apiClient.post('/auth/login', {
         username,
         password
       })
       
-      console.log('[API] Login successful:', response.data)
-      return response.data
+      console.log('[API] Login response received:', response.data)
+      
+      // Нормализуем ответ - сервер может возвращать ключи с заглавными буквами
+      const data = response.data || {}
+      const normalizedResponse = {
+        token: data.token || data.Token || '',
+        expiresAt: data.expiresAt || data.ExpiresAt || '',
+        username: data.username || data.Username || '',
+        fullName: data.fullName || data.FullName || ''
+      }
+      
+      console.log('[API] Normalized login response:', normalizedResponse)
+      
+      if (!normalizedResponse.token) {
+        console.error('[API] No token in login response:', data)
+        throw new Error('Неверное имя пользователя или пароль')
+      }
+      
+      // Сохраняем токен и данные пользователя
+      localStorage.setItem('authToken', normalizedResponse.token)
+      localStorage.setItem('user', JSON.stringify({
+        username: normalizedResponse.username,
+        fullName: normalizedResponse.fullName
+      }))
+      
+      console.log('[API] Login successful. Token stored.')
+      return normalizedResponse
     } catch (error) {
       console.error('[API] Login error:', error)
       if (error.response) {
-        const errorMessage = error.response.data?.message || 'Invalid credentials'
+        console.error('[API] Login error response:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data
+        })
+        const errorMessage = error.response.data?.message 
+          || error.response.data?.Message
+          || error.message
+          || 'Неверное имя пользователя или пароль'
         throw new Error(errorMessage)
       }
-      throw new Error('Failed to login')
+      throw new Error(error.message || 'Ошибка при входе. Проверьте данные.')
     }
   },
 
