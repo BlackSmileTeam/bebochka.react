@@ -148,7 +148,7 @@ function AdminProducts() {
                   <td>{product.brand || '-'}</td>
                   <td>{product.size || '-'}</td>
                   <td>{product.color || '-'}</td>
-                  <td>{product.price.toLocaleString('ru-RU')} ₽</td>
+                  <td>{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
                   <td>
                     <div className="action-buttons">
                       <button

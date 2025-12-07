@@ -93,7 +93,7 @@ function Home() {
                   )}
                 </div>
                 <div className="product-price">
-                  {product.price.toLocaleString('ru-RU')} ₽
+                  {(product.price ?? 0).toLocaleString('ru-RU')} ₽
                 </div>
               </div>
             </div>
