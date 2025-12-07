@@ -12,8 +12,8 @@ import './App.css'
 
 function App() {
   return (
-    <CartProvider>
-      <Router>
+    <Router>
+      <CartProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Layout />}>
@@ -24,8 +24,8 @@ function App() {
             <Route path="admin/products" element={<PrivateRoute><AdminProducts /></PrivateRoute>} />
           </Route>
         </Routes>
-      </Router>
-    </CartProvider>
+      </CartProvider>
+    </Router>
   )
 }
 

@@ -202,13 +202,18 @@ function Checkout() {
               />
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary btn-submit"
-              disabled={loading}
-            >
-              {loading ? 'Оформление...' : 'Оформить заказ'}
-            </button>
+            <div className="checkout-form-actions">
+              <button
+                type="submit"
+                className="btn btn-primary btn-submit"
+                disabled={loading}
+              >
+                {loading ? 'Оформление...' : 'Оформить заказ'}
+              </button>
+              <Link to="/cart" className="btn btn-secondary btn-back">
+                Вернуться в корзину
+              </Link>
+            </div>
           </form>
         </div>
 

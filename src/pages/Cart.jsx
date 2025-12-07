@@ -111,12 +111,14 @@ function Cart() {
             <span>Сумма:</span>
             <span>{getTotalPrice().toLocaleString('ru-RU')} ₽</span>
           </div>
-          <Link to="/checkout" className="btn btn-primary btn-checkout">
-            Оформить заказ
-          </Link>
-          <Link to="/" className="btn btn-secondary">
-            Продолжить покупки
-          </Link>
+          <div className="cart-summary-actions">
+            <Link to="/checkout" className="btn btn-primary btn-checkout">
+              Оформить заказ
+            </Link>
+            <Link to="/" className="btn btn-secondary">
+              Продолжить покупки
+            </Link>
+          </div>
         </div>
       </div>
     </div>

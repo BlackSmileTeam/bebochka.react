@@ -1,11 +1,15 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { useCart } from '../contexts/CartContext'
+import { useContext } from 'react'
+import { CartContext } from '../contexts/CartContext'
 import './Layout.css'
 
 function Layout() {
   const location = useLocation()
   const isAdmin = location.pathname.startsWith('/admin')
-  const { getTotalItems } = useCart()
+  
+  // Безопасное использование контекста корзины
+  const cartContext = useContext(CartContext)
+  const totalItems = cartContext ? cartContext.getTotalItems() : 0
 
   return (
     <div className="layout">
@@ -22,8 +26,8 @@ function Layout() {
             {!isAdmin && (
               <Link to="/cart" className="cart-link">
                 Корзина
-                {getTotalItems() > 0 && (
-                  <span className="cart-badge">{getTotalItems()}</span>
+                {totalItems > 0 && (
+                  <span className="cart-badge">{totalItems}</span>
                 )}
               </Link>
             )}

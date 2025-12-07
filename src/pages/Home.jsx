@@ -141,7 +141,6 @@ function Home() {
           onClose={() => setSelectedProduct(null)} 
         />
       )}
-      )}
     </div>
   )
 }
