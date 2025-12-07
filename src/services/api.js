@@ -714,5 +714,96 @@ export const api = {
       }
       throw error
     }
+  },
+
+  /**
+   * Gets cart items for a session
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<Array>} List of cart items
+   */
+  async getCartItems(sessionId) {
+    try {
+      console.log('[API] Fetching cart items for session:', sessionId)
+      const response = await apiClient.get('/cart', { params: { sessionId } })
+      return response.data || []
+    } catch (error) {
+      console.error('[API] Error fetching cart items:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Adds a product to cart
+   * @param {string} sessionId - Session ID
+   * @param {number} productId - Product ID
+   * @param {number} quantity - Quantity to add
+   * @returns {Promise<Object>} Cart item
+   */
+  async addToCart(sessionId, productId, quantity = 1) {
+    try {
+      console.log('[API] Adding to cart:', { sessionId, productId, quantity })
+      const response = await apiClient.post('/cart', {
+        sessionId,
+        productId,
+        quantity
+      })
+      return response.data
+    } catch (error) {
+      console.error('[API] Error adding to cart:', error)
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Updates cart item quantity
+   * @param {number} cartItemId - Cart item ID
+   * @param {number} quantity - New quantity
+   * @returns {Promise<Object>} Updated cart item
+   */
+  async updateCartItem(cartItemId, quantity) {
+    try {
+      console.log('[API] Updating cart item:', { cartItemId, quantity })
+      const response = await apiClient.put(`/cart/${cartItemId}`, { quantity })
+      return response.data
+    } catch (error) {
+      console.error('[API] Error updating cart item:', error)
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Removes item from cart
+   * @param {number} cartItemId - Cart item ID
+   * @returns {Promise<void>}
+   */
+  async removeFromCart(cartItemId) {
+    try {
+      console.log('[API] Removing from cart:', cartItemId)
+      await apiClient.delete(`/cart/${cartItemId}`)
+    } catch (error) {
+      console.error('[API] Error removing from cart:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Clears cart for a session
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<void>}
+   */
+  async clearCart(sessionId) {
+    try {
+      console.log('[API] Clearing cart for session:', sessionId)
+      await apiClient.delete('/cart', { params: { sessionId } })
+    } catch (error) {
+      console.error('[API] Error clearing cart:', error)
+      throw error
+    }
   }
 }
