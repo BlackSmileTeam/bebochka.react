@@ -31,7 +31,12 @@ function Home() {
     try {
       setLoading(true)
       const data = await api.getProducts(sessionId)
-      setProducts(data)
+      // Фильтруем товары с нулевым количеством
+      const availableProducts = data.filter(product => {
+        const available = getAvailableQuantity(product)
+        return available > 0
+      })
+      setProducts(availableProducts)
       setError(null)
     } catch (err) {
       setError('Не удалось загрузить товары')
