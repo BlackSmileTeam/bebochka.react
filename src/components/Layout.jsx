@@ -1,9 +1,11 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { useCart } from '../contexts/CartContext'
 import './Layout.css'
 
 function Layout() {
   const location = useLocation()
   const isAdmin = location.pathname.startsWith('/admin')
+  const { getTotalItems } = useCart()
 
   return (
     <div className="layout">
@@ -17,6 +19,14 @@ function Layout() {
             <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
               Каталог
             </Link>
+            {!isAdmin && (
+              <Link to="/cart" className="cart-link">
+                Корзина
+                {getTotalItems() > 0 && (
+                  <span className="cart-badge">{getTotalItems()}</span>
+                )}
+              </Link>
+            )}
             {!isAdmin && localStorage.getItem('authToken') && (
               <Link to="/admin" className="admin-link">
                 Админка
