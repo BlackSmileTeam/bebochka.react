@@ -96,6 +96,15 @@ function ProductDetail({ product, onClose }) {
           {/* Информация о товаре */}
           <div className="product-detail-info">
             <h2 className="product-detail-name">{product.name}</h2>
+            {product.quantityInStock !== undefined && (
+              <div className="product-detail-stock" style={{
+                color: product.quantityInStock > 0 ? '#48bb78' : '#e53e3e',
+                fontWeight: 'bold',
+                marginBottom: '0.5rem'
+              }}>
+                В наличии: {product.quantityInStock} шт.
+              </div>
+            )}
             
             {product.brand && (
               <p className="product-detail-brand">
@@ -118,6 +127,16 @@ function ProductDetail({ product, onClose }) {
                   <strong>Цвет:</strong> {product.color}
                 </div>
               )}
+              {product.gender && (
+                <div className="product-detail-spec">
+                  <strong>Пол:</strong> {product.gender}
+                </div>
+              )}
+              {product.condition && (
+                <div className="product-detail-spec">
+                  <strong>Состояние:</strong> {product.condition}
+                </div>
+              )}
             </div>
             
             <div className="product-detail-footer">
@@ -130,8 +149,10 @@ function ProductDetail({ product, onClose }) {
                   addToCart(product)
                   onClose()
                 }}
+                disabled={!product.quantityInStock || product.quantityInStock <= 0}
+                title={!product.quantityInStock || product.quantityInStock <= 0 ? 'Товар закончился' : 'Добавить в корзину'}
               >
-                В корзину
+                {!product.quantityInStock || product.quantityInStock <= 0 ? 'Нет в наличии' : 'В корзину'}
               </button>
             </div>
           </div>

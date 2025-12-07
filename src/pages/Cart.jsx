@@ -30,8 +30,8 @@ function Cart() {
     <div className="container">
       <div className="cart-header">
         <h1>Корзина</h1>
-        <button className="btn btn-secondary" onClick={clearCart}>
-          Очистить корзину
+        <button className="btn-clear-cart" onClick={clearCart} title="Очистить корзину">
+          Очистить
         </button>
       </div>
 

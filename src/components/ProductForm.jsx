@@ -9,7 +9,10 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     description: '',
     price: '',
     size: '',
-    color: ''
+    color: '',
+    quantityInStock: 1,
+    gender: '',
+    condition: ''
   })
   const [images, setImages] = useState([])
   const [existingImages, setExistingImages] = useState([])
@@ -29,7 +32,10 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         description: product.description || '',
         price: product.price?.toString() || '',
         size: product.size || '',
-        color: product.color || ''
+        color: product.color || '',
+        quantityInStock: product.quantityInStock || 1,
+        gender: product.gender || '',
+        condition: product.condition || ''
       })
       setExistingImages(product.images || [])
     }
@@ -65,6 +71,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('price', formData.price)
       formDataToSend.append('size', formData.size || '')
       formDataToSend.append('color', formData.color || '')
+      formDataToSend.append('quantityInStock', formData.quantityInStock || 1)
+      formDataToSend.append('gender', formData.gender || '')
+      formDataToSend.append('condition', formData.condition || '')
 
       if (product) {
         // For update: send existing images that should be preserved
@@ -179,30 +188,78 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="color">Цвет</label>
-            <select
-              id="color"
-              name="color"
-              value={formData.color}
-              onChange={handleChange}
-            >
-              <option value="">Выберите цвет</option>
-              {Array.isArray(colors) && colors.length > 0 ? (
-                colors.map((color, index) => (
-                  <option key={color || index} value={color}>
-                    {color}
-                  </option>
-                ))
-              ) : (
-                <option disabled>Загрузка цветов...</option>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="color">Цвет</label>
+              <select
+                id="color"
+                name="color"
+                value={formData.color}
+                onChange={handleChange}
+              >
+                <option value="">Выберите цвет</option>
+                {Array.isArray(colors) && colors.length > 0 ? (
+                  colors.map((color, index) => (
+                    <option key={color || index} value={color}>
+                      {color}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>Загрузка цветов...</option>
+                )}
+              </select>
+              {(!Array.isArray(colors) || colors.length === 0) && (
+                <small style={{ color: '#999', display: 'block', marginTop: '4px' }}>
+                  Цвета не загружены. Проверьте подключение к API. (Получено: {typeof colors}, Длина: {colors?.length || 0})
+                </small>
               )}
-            </select>
-            {(!Array.isArray(colors) || colors.length === 0) && (
-              <small style={{ color: '#999', display: 'block', marginTop: '4px' }}>
-                Цвета не загружены. Проверьте подключение к API. (Получено: {typeof colors}, Длина: {colors?.length || 0})
-              </small>
-            )}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="quantityInStock">Количество в наличии *</label>
+              <input
+                type="number"
+                id="quantityInStock"
+                name="quantityInStock"
+                value={formData.quantityInStock}
+                onChange={handleChange}
+                required
+                min="1"
+                placeholder="1"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="gender">Пол</label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+              >
+                <option value="">Выберите пол</option>
+                <option value="мальчик">Мальчик</option>
+                <option value="девочка">Девочка</option>
+                <option value="унисекс">Унисекс</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="condition">Состояние</label>
+              <select
+                id="condition"
+                name="condition"
+                value={formData.condition}
+                onChange={handleChange}
+              >
+                <option value="">Выберите состояние</option>
+                <option value="новая">Новая</option>
+                <option value="отличное">Отличное</option>
+                <option value="недостаток">Недостаток</option>
+              </select>
+            </div>
           </div>
 
           <div className="form-group">

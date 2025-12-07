@@ -25,16 +25,25 @@ export function CartProvider({ children }) {
   const addToCart = (product) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id)
+      const availableQuantity = product.quantityInStock || 0
       
       if (existingItem) {
-        // Если товар уже в корзине, увеличиваем количество
+        // Если товар уже в корзине, увеличиваем количество, но не больше доступного
+        const newQuantity = Math.min(existingItem.quantity + 1, availableQuantity)
+        if (newQuantity <= existingItem.quantity) {
+          // Не можем добавить больше, чем есть в наличии
+          return prevItems
+        }
         return prevItems.map(item =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: newQuantity }
             : item
         )
       } else {
-        // Добавляем новый товар
+        // Добавляем новый товар, но только если есть в наличии
+        if (availableQuantity <= 0) {
+          return prevItems
+        }
         return [...prevItems, { ...product, quantity: 1 }]
       }
     })

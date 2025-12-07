@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import './Checkout.css'
 
 function Checkout() {
@@ -45,20 +45,42 @@ function Checkout() {
     }
 
     try {
-      // Здесь можно добавить отправку заказа на сервер
-      // Пока просто сохраняем в localStorage и показываем успех
-      const order = {
-        id: Date.now(),
-        items: cartItems,
-        total: getTotalPrice(),
-        customer: formData,
-        createdAt: new Date().toISOString()
+      // Генерируем sessionId если его нет
+      let sessionId = localStorage.getItem('sessionId')
+      if (!sessionId) {
+        sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        localStorage.setItem('sessionId', sessionId)
       }
 
-      // Сохраняем заказ в localStorage (в реальном приложении отправляем на сервер)
-      const orders = JSON.parse(localStorage.getItem('orders') || '[]')
-      orders.push(order)
-      localStorage.setItem('orders', JSON.stringify(orders))
+      // Отправляем заказ на сервер
+      const orderData = {
+        sessionId: sessionId,
+        customerName: formData.name,
+        customerPhone: formData.phone,
+        customerEmail: formData.email || null,
+        customerAddress: formData.address || null,
+        deliveryMethod: formData.deliveryMethod || null,
+        comment: formData.comment || null,
+        items: cartItems.map(item => ({
+          productId: item.id,
+          quantity: item.quantity
+        }))
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Ошибка при оформлении заказа' }))
+        throw new Error(errorData.message || 'Ошибка при оформлении заказа')
+      }
+
+      const order = await response.json()
 
       // Очищаем корзину
       clearCart()

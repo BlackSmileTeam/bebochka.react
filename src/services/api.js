@@ -249,6 +249,9 @@ export const api = {
         price: parseFloat(formData.get('price') || 0),
         size: formData.get('size') || '',
         color: formData.get('color') || '',
+        quantityInStock: parseInt(formData.get('quantityInStock') || 1),
+        gender: formData.get('gender') || null,
+        condition: formData.get('condition') || null,
         images: []
       }
       
@@ -327,10 +330,38 @@ export const api = {
   async updateProduct(id, formData) {
     try {
       console.log(`[API] Updating product ${id}...`)
-      const response = await apiClient.put(`/products/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      
+      // Конвертируем FormData в JSON с base64 изображениями
+      const productData = {
+        name: formData.get('name') || '',
+        brand: formData.get('brand') || '',
+        description: formData.get('description') || '',
+        price: parseFloat(formData.get('price') || 0),
+        size: formData.get('size') || '',
+        color: formData.get('color') || '',
+        quantityInStock: parseInt(formData.get('quantityInStock') || 1),
+        gender: formData.get('gender') || null,
+        condition: formData.get('condition') || null,
+        images: []
+      }
+      
+      // Сохраняем существующие изображения
+      const existingImages = formData.getAll('existingImages')
+      if (existingImages && existingImages.length > 0) {
+        productData.existingImages = existingImages
+      }
+      
+      // Конвертируем новые файлы в base64
+      const imageFiles = formData.getAll('images')
+      for (const file of imageFiles) {
+        if (file instanceof File) {
+          const base64 = await this.fileToBase64(file)
+          productData.images.push(base64)
         }
+      }
+      
+      const response = await apiClient.put(`/products/${id}`, productData, {
+        timeout: 120000
       })
       
       console.log('[API] Product updated successfully:', response.status, response.data)

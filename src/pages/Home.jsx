@@ -107,6 +107,16 @@ function Home() {
                 {product.description && (
                   <p className="product-description">{product.description}</p>
                 )}
+                {product.quantityInStock !== undefined && (
+                  <div className="product-stock" style={{
+                    fontSize: '0.85rem',
+                    color: product.quantityInStock > 0 ? '#48bb78' : '#e53e3e',
+                    fontWeight: '600',
+                    marginBottom: '0.5rem'
+                  }}>
+                    {product.quantityInStock > 0 ? `В наличии: ${product.quantityInStock} шт.` : 'Нет в наличии'}
+                  </div>
+                )}
                 <div className="product-details">
                   {product.size && (
                     <span className="product-size">Размер: {product.size}</span>
@@ -125,8 +135,10 @@ function Home() {
                       e.stopPropagation()
                       addToCart(product)
                     }}
+                    disabled={!product.quantityInStock || product.quantityInStock <= 0}
+                    title={!product.quantityInStock || product.quantityInStock <= 0 ? 'Товар закончился' : 'Добавить в корзину'}
                   >
-                    В корзину
+                    {!product.quantityInStock || product.quantityInStock <= 0 ? 'Нет в наличии' : 'В корзину'}
                   </button>
                 </div>
               </div>

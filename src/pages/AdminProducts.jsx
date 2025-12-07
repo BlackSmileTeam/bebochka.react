@@ -121,6 +121,9 @@ function AdminProducts() {
                 <th>Бренд</th>
                 <th>Размер</th>
                 <th>Цвет</th>
+                <th>Пол</th>
+                <th>Состояние</th>
+                <th>В наличии</th>
                 <th>Цена</th>
                 <th>Действия</th>
               </tr>
@@ -148,6 +151,16 @@ function AdminProducts() {
                   <td>{product.brand || '-'}</td>
                   <td>{product.size || '-'}</td>
                   <td>{product.color || '-'}</td>
+                  <td>{product.gender || '-'}</td>
+                  <td>{product.condition || '-'}</td>
+                  <td>
+                    <span style={{ 
+                      color: (product.quantityInStock || 0) > 0 ? '#48bb78' : '#e53e3e',
+                      fontWeight: 'bold'
+                    }}>
+                      {product.quantityInStock || 0}
+                    </span>
+                  </td>
                   <td>{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
                   <td>
                     <div className="action-buttons">
