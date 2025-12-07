@@ -113,7 +113,7 @@ jobs:
 
     - name: Save Docker image
       run: |
-        docker save ${{ env.IMAGE_NAME }}:latest | gzip > ${{ env.IMAGE_NAME }}.tar.gz
+        docker save ${{ env.IMAGE_NAME }}:${{ steps.determine_tag.outputs.TAG }} | gzip > ${{ env.IMAGE_NAME }}.tar.gz
 
     - name: Upload Docker image artifact
       uses: actions/upload-artifact@v4
@@ -180,7 +180,7 @@ jobs:
             --name $IMAGE_NAME \
             --restart unless-stopped \
             -p $HOST_PORT:$CONTAINER_PORT \
-            $IMAGE_NAME:${{ needs.build.outputs.docker_tag }}
+            $IMAGE_NAME:latest
 
           # Clean up old images
           docker image prune -f
