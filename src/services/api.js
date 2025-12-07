@@ -207,21 +207,39 @@ export const api = {
    */
   async fileToBase64(file) {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result
-        // Убираем префикс data:image/...;base64,
-        const base64 = result.includes(',') ? result.split(',')[1] : result
-        resolve(base64)
+      try {
+        const reader = new FileReader()
+        reader.onload = () => {
+          try {
+            const result = reader.result
+            if (!result) {
+              reject(new Error('FileReader returned empty result'))
+              return
+            }
+            // Убираем префикс data:image/...;base64,
+            const base64 = result.includes(',') ? result.split(',')[1] : result
+            resolve(base64)
+          } catch (err) {
+            console.error('[API] Error processing FileReader result:', err)
+            reject(err)
+          }
+        }
+        reader.onerror = (error) => {
+          console.error('[API] FileReader error:', error)
+          reject(new Error('Failed to read file: ' + (error.message || 'Unknown error')))
+        }
+        reader.readAsDataURL(file)
+      } catch (err) {
+        console.error('[API] Error setting up FileReader:', err)
+        reject(err)
       }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
     })
   },
 
   async createProduct(formData) {
     try {
       console.log('[API] Creating product...')
+      console.log('[API] FormData entries:', Array.from(formData.entries()).map(([key, value]) => [key, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value]))
       
       // Конвертируем FormData в JSON с base64 изображениями
       const productData = {
@@ -238,17 +256,25 @@ export const api = {
       const imageFiles = formData.getAll('images')
       console.log('[API] Converting', imageFiles.length, 'images to base64...')
       
+      let totalSize = 0
       for (const file of imageFiles) {
         if (file instanceof File) {
+          console.log('[API] Converting file:', file.name, 'Size:', file.size, 'bytes')
           const base64 = await this.fileToBase64(file)
+          totalSize += base64.length
           productData.images.push(base64)
+          console.log('[API] File converted, base64 size:', base64.length, 'bytes')
         }
       }
       
+      const jsonSize = JSON.stringify(productData).length
       console.log('[API] Sending JSON request with', productData.images.length, 'images')
+      console.log('[API] Total JSON size:', jsonSize, 'bytes (', (jsonSize / 1024).toFixed(2), 'KB)')
+      console.log('[API] Request URL:', `${API_BASE_URL}/products`)
+      console.log('[API] Auth token:', localStorage.getItem('authToken') ? 'Present' : 'Missing')
       
       const response = await apiClient.post('/products', productData, {
-        timeout: 120000 // 2 minutes для больших файлов
+        timeout: 180000 // 3 minutes для больших JSON с base64
       })
       
       console.log('[API] Product created successfully:', response.status, response.data)
