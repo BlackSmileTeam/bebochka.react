@@ -124,6 +124,12 @@ function Home() {
                   {product.color && (
                     <span className="product-color">Цвет: {product.color}</span>
                   )}
+                  {product.gender && (
+                    <span className="product-gender">Пол: {product.gender}</span>
+                  )}
+                  {product.condition && (
+                    <span className="product-condition">Состояние: {product.condition}</span>
+                  )}
                 </div>
                 <div className="product-footer">
                   <div className="product-price">

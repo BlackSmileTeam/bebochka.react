@@ -130,7 +130,9 @@
 }
 
 .product-size,
-.product-color {
+.product-color,
+.product-gender,
+.product-condition {
   padding: 0.25rem 0.75rem;
   background-color: #edf2f7;
   border-radius: 4px;

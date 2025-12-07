@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Admin from './pages/Admin'
 import AdminProducts from './pages/AdminProducts'
+import AdminUsers from './pages/AdminUsers'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import PrivateRoute from './components/PrivateRoute'
@@ -22,6 +23,7 @@ function App() {
             <Route path="checkout" element={<Checkout />} />
             <Route path="admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
             <Route path="admin/products" element={<PrivateRoute><AdminProducts /></PrivateRoute>} />
+            <Route path="admin/users" element={<PrivateRoute><AdminUsers /></PrivateRoute>} />
           </Route>
         </Routes>
       </CartProvider>

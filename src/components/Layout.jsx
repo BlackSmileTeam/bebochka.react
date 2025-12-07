@@ -20,21 +20,23 @@ function Layout() {
             <span className="logo-text">bebochka | детский секонд-хенд</span>
           </Link>
           <nav className="nav">
-            <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
-              Каталог
-            </Link>
             {!isAdmin && (
-              <Link to="/cart" className="cart-link">
-                Корзина
-                {totalItems > 0 && (
-                  <span className="cart-badge">{totalItems}</span>
+              <>
+                <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+                  Каталог
+                </Link>
+                <Link to="/cart" className="cart-link">
+                  Корзина
+                  {totalItems > 0 && (
+                    <span className="cart-badge">{totalItems}</span>
+                  )}
+                </Link>
+                {localStorage.getItem('authToken') && (
+                  <Link to="/admin" className="admin-link">
+                    Админка
+                  </Link>
                 )}
-              </Link>
-            )}
-            {!isAdmin && localStorage.getItem('authToken') && (
-              <Link to="/admin" className="admin-link">
-                Админка
-              </Link>
+              </>
             )}
             {isAdmin && (
               <>
@@ -43,6 +45,12 @@ function Layout() {
                   className={location.pathname === '/admin/products' ? 'active' : ''}
                 >
                   Товары
+                </Link>
+                <Link 
+                  to="/admin/users" 
+                  className={location.pathname === '/admin/users' ? 'active' : ''}
+                >
+                  Пользователи
                 </Link>
                 <Link to="/" className="back-link">
                   На сайт

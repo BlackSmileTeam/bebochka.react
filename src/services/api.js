@@ -140,6 +140,9 @@ export const api = {
         size: product.size || product.Size,
         color: product.color || product.Color,
         images: product.images || product.Images || [],
+        quantityInStock: product.quantityInStock !== undefined ? product.quantityInStock : (product.QuantityInStock !== undefined ? product.QuantityInStock : 1),
+        gender: product.gender || product.Gender || null,
+        condition: product.condition || product.Condition || null,
         createdAt: product.createdAt || product.CreatedAt,
         updatedAt: product.updatedAt || product.UpdatedAt
       }))
@@ -183,6 +186,9 @@ export const api = {
         size: response.data.size || response.data.Size,
         color: response.data.color || response.data.Color,
         images: response.data.images || response.data.Images || [],
+        quantityInStock: response.data.quantityInStock !== undefined ? response.data.quantityInStock : (response.data.QuantityInStock !== undefined ? response.data.QuantityInStock : 1),
+        gender: response.data.gender || response.data.Gender || null,
+        condition: response.data.condition || response.data.Condition || null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
         updatedAt: response.data.updatedAt || response.data.UpdatedAt
       }
@@ -298,6 +304,9 @@ export const api = {
         size: response.data.size || response.data.Size,
         color: response.data.color || response.data.Color,
         images: response.data.images || response.data.Images || [],
+        quantityInStock: response.data.quantityInStock !== undefined ? response.data.quantityInStock : (response.data.QuantityInStock !== undefined ? response.data.QuantityInStock : 1),
+        gender: response.data.gender || response.data.Gender || null,
+        condition: response.data.condition || response.data.Condition || null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
         updatedAt: response.data.updatedAt || response.data.UpdatedAt
       }
@@ -382,6 +391,9 @@ export const api = {
         size: response.data.size || response.data.Size,
         color: response.data.color || response.data.Color,
         images: response.data.images || response.data.Images || [],
+        quantityInStock: response.data.quantityInStock !== undefined ? response.data.quantityInStock : (response.data.QuantityInStock !== undefined ? response.data.QuantityInStock : 1),
+        gender: response.data.gender || response.data.Gender || null,
+        condition: response.data.condition || response.data.Condition || null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
         updatedAt: response.data.updatedAt || response.data.UpdatedAt
       }
@@ -597,6 +609,91 @@ export const api = {
       return response.data
     } catch (error) {
       console.error('[API] Error getting current user:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Gets all users
+   * @returns {Promise<Array>} List of users
+   */
+  async getUsers() {
+    try {
+      console.log('[API] Fetching all users...')
+      const response = await apiClient.get('/users')
+      console.log('[API] Successfully loaded users:', response.data.length)
+      return response.data
+    } catch (error) {
+      console.error('[API] Error fetching users:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Creates a new user
+   * @param {Object} userData - User data
+   * @returns {Promise<Object>} Created user
+   */
+  async createUser(userData) {
+    try {
+      console.log('[API] Creating user...', userData)
+      const formData = new FormData()
+      formData.append('username', userData.username)
+      formData.append('password', userData.password)
+      if (userData.email) formData.append('email', userData.email)
+      if (userData.fullName) formData.append('fullName', userData.fullName)
+      
+      const response = await apiClient.post('/users', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      console.log('[API] User created successfully:', response.data)
+      return response.data
+    } catch (error) {
+      console.error('[API] Error creating user:', error)
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Changes user password
+   * @param {number} userId - User ID
+   * @param {string} newPassword - New password
+   * @returns {Promise<void>}
+   */
+  async changePassword(userId, newPassword) {
+    try {
+      console.log('[API] Changing password for user:', userId)
+      await apiClient.put(`/users/${userId}/password`, { newPassword })
+      console.log('[API] Password changed successfully')
+    } catch (error) {
+      console.error('[API] Error changing password:', error)
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Deletes a user
+   * @param {number} userId - User ID
+   * @returns {Promise<void>}
+   */
+  async deleteUser(userId) {
+    try {
+      console.log('[API] Deleting user:', userId)
+      await apiClient.delete(`/users/${userId}`)
+      console.log('[API] User deleted successfully')
+    } catch (error) {
+      console.error('[API] Error deleting user:', error)
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
       throw error
     }
   }
