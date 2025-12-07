@@ -240,7 +240,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       <img
                         src={img.startsWith('http') 
                           ? img 
-                          : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${img}`}
+                          : `${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}${img}`}
                         alt={`Existing ${index}`}
                         className="preview-image"
                       />

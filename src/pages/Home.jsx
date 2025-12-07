@@ -63,7 +63,7 @@ function Home() {
                   <img
                     src={product.images[0].startsWith('http') 
                       ? product.images[0] 
-                      : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${product.images[0]}`}
+                          : `${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}${product.images[0]}`}
                     alt={product.name}
                     className="product-image"
                     onError={(e) => {
