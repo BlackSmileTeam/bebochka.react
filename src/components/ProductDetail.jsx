@@ -2,9 +2,22 @@ import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
 import './ProductDetail.css'
 
-function ProductDetail({ product, onClose }) {
+function ProductDetail({ product, onClose, getAvailableQuantity }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const { addToCart } = useCart()
+  const { addToCart, cartItems } = useCart()
+  
+  // Вычисляем доступное количество с учетом корзины
+  const getAvailable = () => {
+    if (getAvailableQuantity) {
+      return getAvailableQuantity(product)
+    }
+    const cartItem = cartItems.find(item => item.id === product.id)
+    const inCart = cartItem ? cartItem.quantity : 0
+    const available = (product.quantityInStock || 0) - inCart
+    return Math.max(0, available)
+  }
+  
+  const available = getAvailable()
 
   if (!product) return null
 
@@ -96,15 +109,13 @@ function ProductDetail({ product, onClose }) {
           {/* Информация о товаре */}
           <div className="product-detail-info">
             <h2 className="product-detail-name">{product.name}</h2>
-            {product.quantityInStock !== undefined && (
-              <div className="product-detail-stock" style={{
-                color: product.quantityInStock > 0 ? '#48bb78' : '#e53e3e',
-                fontWeight: 'bold',
-                marginBottom: '0.5rem'
-              }}>
-                В наличии: {product.quantityInStock} шт.
-              </div>
-            )}
+            <div className="product-detail-stock" style={{
+              color: available > 0 ? '#48bb78' : '#e53e3e',
+              fontWeight: 'bold',
+              marginBottom: '0.5rem'
+            }}>
+              {available > 0 ? `В наличии: ${available} шт.` : 'Нет в наличии'}
+            </div>
             
             {product.brand && (
               <p className="product-detail-brand">
@@ -149,10 +160,10 @@ function ProductDetail({ product, onClose }) {
                   addToCart(product)
                   onClose()
                 }}
-                disabled={!product.quantityInStock || product.quantityInStock <= 0}
-                title={!product.quantityInStock || product.quantityInStock <= 0 ? 'Товар закончился' : 'Добавить в корзину'}
+                disabled={available <= 0}
+                title={available <= 0 ? 'Товар закончился' : 'Добавить в корзину'}
               >
-                {!product.quantityInStock || product.quantityInStock <= 0 ? 'Нет в наличии' : 'В корзину'}
+                {available <= 0 ? 'Нет в наличии' : 'В корзину'}
               </button>
             </div>
           </div>

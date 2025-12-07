@@ -212,31 +212,48 @@ function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.id}</td>
-                  <td>{user.username}</td>
-                  <td>{user.email || '-'}</td>
-                  <td>{user.fullName || '-'}</td>
-                  <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : '-'}</td>
-                  <td>
-                    <button
-                      className="btn btn-small btn-edit"
-                      onClick={() => setShowPasswordForm(user.id)}
-                    >
-                      Изменить пароль
-                    </button>
-                    {user.id !== parseInt(localStorage.getItem('userId') || '0') && (
+              {users.map((user) => {
+                console.log('Rendering user:', user) // Debug log
+                return (
+                  <tr key={user.id || user.Id}>
+                    <td>{user.id || user.Id}</td>
+                    <td>{user.username || user.Username || '-'}</td>
+                    <td>{user.email || user.Email || '-'}</td>
+                    <td>{user.fullName || user.FullName || '-'}</td>
+                    <td>
+                      {(() => {
+                        const createdAt = user.createdAt || user.CreatedAt
+                        if (!createdAt) return '-'
+                        try {
+                          return new Date(createdAt).toLocaleDateString('ru-RU', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                          })
+                        } catch (e) {
+                          return createdAt
+                        }
+                      })()}
+                    </td>
+                    <td>
                       <button
-                        className="btn btn-small btn-delete"
-                        onClick={() => handleDelete(user.id)}
+                        className="btn btn-small btn-edit"
+                        onClick={() => setShowPasswordForm(user.id || user.Id)}
                       >
-                        Удалить
+                        Изменить пароль
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
+                        <button
+                          className="btn btn-small btn-delete"
+                          onClick={() => handleDelete(user.id || user.Id)}
+                        >
+                          Удалить
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

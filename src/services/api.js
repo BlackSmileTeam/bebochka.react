@@ -621,8 +621,20 @@ export const api = {
     try {
       console.log('[API] Fetching all users...')
       const response = await apiClient.get('/users')
-      console.log('[API] Successfully loaded users:', response.data.length)
-      return response.data
+      
+      // Нормализуем данные пользователей
+      const normalizedUsers = Array.isArray(response.data) 
+        ? response.data.map(user => ({
+            id: user.id || user.Id,
+            username: user.username || user.Username || '',
+            email: user.email || user.Email || null,
+            fullName: user.fullName || user.FullName || null,
+            createdAt: user.createdAt || user.CreatedAt || null
+          }))
+        : []
+      
+      console.log('[API] Successfully loaded users:', normalizedUsers.length)
+      return normalizedUsers
     } catch (error) {
       console.error('[API] Error fetching users:', error)
       throw error

@@ -9,7 +9,15 @@ function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const { addToCart } = useCart()
+  const { addToCart, cartItems } = useCart()
+  
+  // Вычисляем доступное количество для каждого товара с учетом корзины
+  const getAvailableQuantity = (product) => {
+    const cartItem = cartItems.find(item => item.id === product.id)
+    const inCart = cartItem ? cartItem.quantity : 0
+    const available = (product.quantityInStock || 0) - inCart
+    return Math.max(0, available)
+  }
 
   useEffect(() => {
     loadProducts()
@@ -107,16 +115,19 @@ function Home() {
                 {product.description && (
                   <p className="product-description">{product.description}</p>
                 )}
-                {product.quantityInStock !== undefined && (
-                  <div className="product-stock" style={{
-                    fontSize: '0.85rem',
-                    color: product.quantityInStock > 0 ? '#48bb78' : '#e53e3e',
-                    fontWeight: '600',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {product.quantityInStock > 0 ? `В наличии: ${product.quantityInStock} шт.` : 'Нет в наличии'}
-                  </div>
-                )}
+                {(() => {
+                  const available = getAvailableQuantity(product)
+                  return (
+                    <div className="product-stock" style={{
+                      fontSize: '0.85rem',
+                      color: available > 0 ? '#48bb78' : '#e53e3e',
+                      fontWeight: '600',
+                      marginBottom: '0.5rem'
+                    }}>
+                      {available > 0 ? `В наличии: ${available} шт.` : 'Нет в наличии'}
+                    </div>
+                  )
+                })()}
                 <div className="product-details">
                   {product.size && (
                     <span className="product-size">Размер: {product.size}</span>
@@ -135,17 +146,22 @@ function Home() {
                   <div className="product-price">
                     {(product.price ?? 0).toLocaleString('ru-RU')} ₽
                   </div>
-                  <button
-                    className="btn-buy"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      addToCart(product)
-                    }}
-                    disabled={!product.quantityInStock || product.quantityInStock <= 0}
-                    title={!product.quantityInStock || product.quantityInStock <= 0 ? 'Товар закончился' : 'Добавить в корзину'}
-                  >
-                    {!product.quantityInStock || product.quantityInStock <= 0 ? 'Нет в наличии' : 'В корзину'}
-                  </button>
+                  {(() => {
+                    const available = getAvailableQuantity(product)
+                    return (
+                      <button
+                        className="btn-buy"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          addToCart(product)
+                        }}
+                        disabled={available <= 0}
+                        title={available <= 0 ? 'Товар закончился' : 'Добавить в корзину'}
+                      >
+                        {available <= 0 ? 'Нет в наличии' : 'В корзину'}
+                      </button>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
@@ -156,7 +172,8 @@ function Home() {
       {selectedProduct && (
         <ProductDetail 
           product={selectedProduct} 
-          onClose={() => setSelectedProduct(null)} 
+          onClose={() => setSelectedProduct(null)}
+          getAvailableQuantity={getAvailableQuantity}
         />
       )}
     </div>
