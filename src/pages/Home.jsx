@@ -9,24 +9,23 @@ function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const { addToCart, cartItems } = useCart()
+  const { addToCart } = useCart()
   
-  // Вычисляем доступное количество для каждого товара с учетом корзины
+  // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailableQuantity = (product) => {
-    const cartItem = cartItems.find(item => item.id === product.id)
-    const inCart = cartItem ? cartItem.quantity : 0
-    const available = (product.quantityInStock || 0) - inCart
-    return Math.max(0, available)
+    return product.availableQuantity !== undefined ? product.availableQuantity : (product.quantityInStock || 0)
   }
+
+  const { sessionId } = useCart()
 
   useEffect(() => {
     loadProducts()
-  }, [])
+  }, [sessionId])
 
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const data = await api.getProducts()
+      const data = await api.getProducts(sessionId)
       setProducts(data)
       setError(null)
     } catch (err) {

@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import './Checkout.css'
 
 function Checkout() {
-  const { cartItems, getTotalPrice, clearCart } = useCart()
+  const { cartItems, getTotalPrice, clearCart, sessionId } = useCart()
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: '',
@@ -45,13 +45,6 @@ function Checkout() {
     }
 
     try {
-      // Генерируем sessionId если его нет
-      let sessionId = localStorage.getItem('sessionId')
-      if (!sessionId) {
-        sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        localStorage.setItem('sessionId', sessionId)
-      }
-
       // Отправляем заказ на сервер
       const orderData = {
         sessionId: sessionId,
@@ -62,7 +55,7 @@ function Checkout() {
         deliveryMethod: formData.deliveryMethod || null,
         comment: formData.comment || null,
         items: cartItems.map(item => ({
-          productId: item.id,
+          productId: item.productId || item.id,
           quantity: item.quantity
         }))
       }

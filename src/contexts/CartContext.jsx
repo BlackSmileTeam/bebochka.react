@@ -1,75 +1,104 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { api } from '../services/api'
+import { getSessionId } from '../utils/sessionId'
 
 export const CartContext = createContext()
 
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [sessionId] = useState(() => getSessionId())
 
-  // Загружаем корзину из localStorage при монтировании
+  // Загружаем корзину с сервера при монтировании
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart')
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart))
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error)
-      }
-    }
+    loadCart()
   }, [])
 
-  // Сохраняем корзину в localStorage при изменении
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems))
-  }, [cartItems])
-
-  const addToCart = (product) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id)
-      const availableQuantity = product.quantityInStock || 0
-      
-      if (existingItem) {
-        // Если товар уже в корзине, увеличиваем количество, но не больше доступного
-        const newQuantity = Math.min(existingItem.quantity + 1, availableQuantity)
-        if (newQuantity <= existingItem.quantity) {
-          // Не можем добавить больше, чем есть в наличии
-          return prevItems
-        }
-        return prevItems.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: newQuantity }
-            : item
-        )
-      } else {
-        // Добавляем новый товар, но только если есть в наличии
-        if (availableQuantity <= 0) {
-          return prevItems
-        }
-        return [...prevItems, { ...product, quantity: 1 }]
-      }
-    })
-  }
-
-  const removeFromCart = (productId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== productId))
-  }
-
-  const updateQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(productId)
-      return
+  const loadCart = async () => {
+    try {
+      setLoading(true)
+      const items = await api.getCartItems(sessionId)
+      // Преобразуем формат для совместимости
+      const formattedItems = items.map(item => ({
+        id: item.productId || item.productId,
+        productId: item.productId,
+        name: item.productName || item.productName,
+        brand: item.productBrand,
+        size: item.productSize,
+        color: item.productColor,
+        images: item.productImages || [],
+        price: item.productPrice || item.productPrice,
+        quantity: item.quantity || item.quantity,
+        cartItemId: item.id // ID элемента корзины на сервере
+      }))
+      setCartItems(formattedItems)
+    } catch (error) {
+      console.error('Error loading cart from server:', error)
+      setCartItems([])
+    } finally {
+      setLoading(false)
     }
-    
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.id === productId
-          ? { ...item, quantity }
-          : item
-      )
-    )
   }
 
-  const clearCart = () => {
-    setCartItems([])
+  const addToCart = async (product) => {
+    try {
+      const existingItem = cartItems.find(item => item.productId === product.id || item.id === product.id)
+      
+      if (existingItem && existingItem.cartItemId) {
+        // Обновляем существующий элемент
+        const newQuantity = existingItem.quantity + 1
+        const updatedItem = await api.updateCartItem(existingItem.cartItemId, newQuantity)
+        await loadCart() // Перезагружаем корзину
+      } else {
+        // Добавляем новый элемент
+        await api.addToCart(sessionId, product.id, 1)
+        await loadCart() // Перезагружаем корзину
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error)
+      alert(error.message || 'Не удалось добавить товар в корзину')
+    }
+  }
+
+  const removeFromCart = async (productId) => {
+    try {
+      const item = cartItems.find(item => (item.productId === productId || item.id === productId) && item.cartItemId)
+      if (item && item.cartItemId) {
+        await api.removeFromCart(item.cartItemId)
+        await loadCart() // Перезагружаем корзину
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error)
+      alert(error.message || 'Не удалось удалить товар из корзины')
+    }
+  }
+
+  const updateQuantity = async (productId, quantity) => {
+    try {
+      if (quantity <= 0) {
+        await removeFromCart(productId)
+        return
+      }
+      
+      const item = cartItems.find(item => (item.productId === productId || item.id === productId) && item.cartItemId)
+      if (item && item.cartItemId) {
+        await api.updateCartItem(item.cartItemId, quantity)
+        await loadCart() // Перезагружаем корзину
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error)
+      alert(error.message || 'Не удалось изменить количество')
+    }
+  }
+
+  const clearCart = async () => {
+    try {
+      await api.clearCart(sessionId)
+      await loadCart() // Перезагружаем корзину
+    } catch (error) {
+      console.error('Error clearing cart:', error)
+      alert(error.message || 'Не удалось очистить корзину')
+    }
   }
 
   const getTotalPrice = () => {
@@ -84,12 +113,15 @@ export function CartProvider({ children }) {
     <CartContext.Provider
       value={{
         cartItems,
+        loading,
         addToCart,
         removeFromCart,
         updateQuantity,
         clearCart,
         getTotalPrice,
-        getTotalItems
+        getTotalItems,
+        loadCart,
+        sessionId
       }}
     >
       {children}

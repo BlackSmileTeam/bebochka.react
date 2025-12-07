@@ -117,12 +117,14 @@ function validateProduct(product) {
 export const api = {
   /**
    * Gets all products
+   * @param {string} sessionId - Optional session ID for cart reservation calculation
    * @returns {Promise<Array>} List of products
    */
-  async getProducts() {
+  async getProducts(sessionId = null) {
     try {
-      console.log('[API] Fetching products...')
-      const response = await apiClient.get('/products')
+      console.log('[API] Fetching products...', sessionId ? `sessionId: ${sessionId}` : '')
+      const params = sessionId ? { sessionId } : {}
+      const response = await apiClient.get('/products', { params })
       
       if (!validateArray(response.data, 'products')) {
         console.error('[API] Products response is not an array:', response.data)
@@ -141,6 +143,7 @@ export const api = {
         color: product.color || product.Color,
         images: product.images || product.Images || [],
         quantityInStock: product.quantityInStock !== undefined ? product.quantityInStock : (product.QuantityInStock !== undefined ? product.QuantityInStock : 1),
+        availableQuantity: product.availableQuantity !== undefined ? product.availableQuantity : (product.AvailableQuantity !== undefined ? product.AvailableQuantity : product.quantityInStock || product.QuantityInStock || 1),
         gender: product.gender || product.Gender || null,
         condition: product.condition || product.Condition || null,
         createdAt: product.createdAt || product.CreatedAt,
@@ -187,6 +190,7 @@ export const api = {
         color: response.data.color || response.data.Color,
         images: response.data.images || response.data.Images || [],
         quantityInStock: response.data.quantityInStock !== undefined ? response.data.quantityInStock : (response.data.QuantityInStock !== undefined ? response.data.QuantityInStock : 1),
+        availableQuantity: response.data.availableQuantity !== undefined ? response.data.availableQuantity : (response.data.AvailableQuantity !== undefined ? response.data.AvailableQuantity : response.data.quantityInStock || response.data.QuantityInStock || 1),
         gender: response.data.gender || response.data.Gender || null,
         condition: response.data.condition || response.data.Condition || null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
@@ -305,6 +309,7 @@ export const api = {
         color: response.data.color || response.data.Color,
         images: response.data.images || response.data.Images || [],
         quantityInStock: response.data.quantityInStock !== undefined ? response.data.quantityInStock : (response.data.QuantityInStock !== undefined ? response.data.QuantityInStock : 1),
+        availableQuantity: response.data.availableQuantity !== undefined ? response.data.availableQuantity : (response.data.AvailableQuantity !== undefined ? response.data.AvailableQuantity : response.data.quantityInStock || response.data.QuantityInStock || 1),
         gender: response.data.gender || response.data.Gender || null,
         condition: response.data.condition || response.data.Condition || null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
@@ -392,6 +397,7 @@ export const api = {
         color: response.data.color || response.data.Color,
         images: response.data.images || response.data.Images || [],
         quantityInStock: response.data.quantityInStock !== undefined ? response.data.quantityInStock : (response.data.QuantityInStock !== undefined ? response.data.QuantityInStock : 1),
+        availableQuantity: response.data.availableQuantity !== undefined ? response.data.availableQuantity : (response.data.AvailableQuantity !== undefined ? response.data.AvailableQuantity : response.data.quantityInStock || response.data.QuantityInStock || 1),
         gender: response.data.gender || response.data.Gender || null,
         condition: response.data.condition || response.data.Condition || null,
         createdAt: response.data.createdAt || response.data.CreatedAt,

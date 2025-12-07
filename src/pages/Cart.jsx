@@ -67,14 +67,14 @@ function Cart() {
                 <div className="quantity-controls">
                   <button
                     className="quantity-btn"
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    onClick={() => updateQuantity(item.productId || item.id, item.quantity - 1)}
                   >
                     −
                   </button>
                   <span className="quantity-value">{item.quantity}</span>
                   <button
                     className="quantity-btn"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.productId || item.id, item.quantity + 1)}
                   >
                     +
                   </button>
@@ -92,7 +92,7 @@ function Cart() {
 
               <button
                 className="cart-item-remove"
-                onClick={() => removeFromCart(item.id)}
+                onClick={() => removeFromCart(item.productId || item.id)}
                 aria-label="Удалить из корзины"
               >
                 ×

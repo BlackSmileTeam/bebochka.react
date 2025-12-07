@@ -4,17 +4,14 @@ import './ProductDetail.css'
 
 function ProductDetail({ product, onClose, getAvailableQuantity }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const { addToCart, cartItems } = useCart()
+  const { addToCart } = useCart()
   
-  // Вычисляем доступное количество с учетом корзины
+  // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailable = () => {
     if (getAvailableQuantity) {
       return getAvailableQuantity(product)
     }
-    const cartItem = cartItems.find(item => item.id === product.id)
-    const inCart = cartItem ? cartItem.quantity : 0
-    const available = (product.quantityInStock || 0) - inCart
-    return Math.max(0, available)
+    return product.availableQuantity !== undefined ? product.availableQuantity : (product.quantityInStock || 0)
   }
   
   const available = getAvailable()
