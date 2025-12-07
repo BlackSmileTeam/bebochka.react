@@ -11,7 +11,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 60000, // 60 seconds timeout для больших ответов с изображениями
   validateStatus: function (status) {
     // Accept status codes from 200 to 299 as success
     return status >= 200 && status < 300
