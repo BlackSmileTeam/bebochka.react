@@ -200,17 +200,54 @@ export const api = {
    * @param {FormData} formData - Product form data
    * @returns {Promise<Object>} Created product
    */
+  /**
+   * Converts File to base64 string
+   * @param {File} file - File to convert
+   * @returns {Promise<string>} Base64 string
+   */
+  async fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result
+        // Убираем префикс data:image/...;base64,
+        const base64 = result.includes(',') ? result.split(',')[1] : result
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  },
+
   async createProduct(formData) {
     try {
       console.log('[API] Creating product...')
-      console.log('[API] FormData entries:', Array.from(formData.entries()).map(([key, value]) => [key, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value]))
-      console.log('[API] Request URL:', `${API_BASE_URL}/products`)
-      console.log('[API] Auth token:', localStorage.getItem('authToken') ? 'Present' : 'Missing')
       
-      const response = await apiClient.post('/products', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
+      // Конвертируем FormData в JSON с base64 изображениями
+      const productData = {
+        name: formData.get('name') || '',
+        brand: formData.get('brand') || '',
+        description: formData.get('description') || '',
+        price: parseFloat(formData.get('price') || 0),
+        size: formData.get('size') || '',
+        color: formData.get('color') || '',
+        images: []
+      }
+      
+      // Конвертируем файлы в base64
+      const imageFiles = formData.getAll('images')
+      console.log('[API] Converting', imageFiles.length, 'images to base64...')
+      
+      for (const file of imageFiles) {
+        if (file instanceof File) {
+          const base64 = await this.fileToBase64(file)
+          productData.images.push(base64)
+        }
+      }
+      
+      console.log('[API] Sending JSON request with', productData.images.length, 'images')
+      
+      const response = await apiClient.post('/products', productData, {
         timeout: 120000 // 2 minutes для больших файлов
       })
       
