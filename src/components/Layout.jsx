@@ -8,7 +8,14 @@ function Layout() {
   
   // Используем хук useCart для получения данных корзины
   const { cartItems } = useCart()
-  const totalItems = cartItems.reduce((total, item) => total + (item.quantity || 0), 0)
+  const totalItems = Array.isArray(cartItems) 
+    ? cartItems.reduce((total, item) => total + (item.quantity || 0), 0)
+    : 0
+  
+  // Отладочный вывод
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Layout] Cart items:', cartItems, 'Total:', totalItems)
+  }
 
   return (
     <div className="layout">

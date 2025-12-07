@@ -16,8 +16,17 @@ export function CartProvider({ children }) {
 
   const loadCart = useCallback(async () => {
     try {
+      if (!sessionId) {
+        console.warn('[CartContext] SessionId is missing, cannot load cart')
+        setCartItems([])
+        return
+      }
+      
       setLoading(true)
+      console.log('[CartContext] Loading cart for session:', sessionId)
       const items = await api.getCartItems(sessionId)
+      console.log('[CartContext] Received cart items:', items)
+      
       // Преобразуем формат для совместимости
       const formattedItems = items.map(item => ({
         id: item.productId || item.productId,
@@ -31,9 +40,10 @@ export function CartProvider({ children }) {
         quantity: item.quantity || item.quantity,
         cartItemId: item.id // ID элемента корзины на сервере
       }))
+      console.log('[CartContext] Formatted cart items:', formattedItems)
       setCartItems(formattedItems)
     } catch (error) {
-      console.error('Error loading cart from server:', error)
+      console.error('[CartContext] Error loading cart from server:', error)
       setCartItems([])
     } finally {
       setLoading(false)
@@ -44,14 +54,25 @@ export function CartProvider({ children }) {
     try {
       if (!product || !product.id) {
         console.error('Invalid product:', product)
-        return
+        throw new Error('Invalid product')
       }
       
+      if (!sessionId) {
+        console.error('SessionId is missing')
+        throw new Error('SessionId is required')
+      }
+      
+      console.log('[CartContext] Adding to cart:', { productId: product.id, sessionId })
+      
       // Просто вызываем API - сервер сам проверит, есть ли товар в корзине, и либо добавит, либо обновит
-      await api.addToCart(sessionId, product.id, 1)
-      await loadCart() // Перезагружаем корзину после успешного добавления
+      const result = await api.addToCart(sessionId, product.id, 1)
+      console.log('[CartContext] Add to cart result:', result)
+      
+      // Перезагружаем корзину после успешного добавления
+      await loadCart()
+      console.log('[CartContext] Cart reloaded after adding item')
     } catch (error) {
-      console.error('Error adding to cart:', error)
+      console.error('[CartContext] Error adding to cart:', error)
       const errorMessage = error?.message || error?.response?.data?.message || 'Не удалось добавить товар в корзину'
       throw new Error(errorMessage) // Пробрасываем ошибку, чтобы обработать её в компоненте
     }

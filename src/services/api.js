@@ -723,11 +723,35 @@ export const api = {
    */
   async getCartItems(sessionId) {
     try {
+      if (!sessionId) {
+        console.warn('[API] SessionId is missing for getCartItems')
+        return []
+      }
       console.log('[API] Fetching cart items for session:', sessionId)
       const response = await apiClient.get('/cart', { params: { sessionId } })
-      return response.data || []
+      console.log('[API] Cart items response:', response.data)
+      
+      // Нормализуем данные, если они приходят в разных форматах
+      const items = Array.isArray(response.data) ? response.data : []
+      return items.map(item => ({
+        id: item.Id || item.id,
+        productId: item.ProductId || item.productId,
+        productName: item.ProductName || item.productName,
+        productBrand: item.ProductBrand || item.productBrand,
+        productSize: item.ProductSize || item.productSize,
+        productColor: item.ProductColor || item.productColor,
+        productImages: item.ProductImages || item.productImages || [],
+        productPrice: item.ProductPrice || item.productPrice,
+        quantity: item.Quantity || item.quantity || 0,
+        createdAt: item.CreatedAt || item.createdAt
+      }))
     } catch (error) {
       console.error('[API] Error fetching cart items:', error)
+      // Если ошибка 400 из-за отсутствия sessionId, возвращаем пустой массив
+      if (error.response?.status === 400) {
+        console.warn('[API] Bad request for cart items, returning empty array')
+        return []
+      }
       throw error
     }
   },
@@ -741,19 +765,38 @@ export const api = {
    */
   async addToCart(sessionId, productId, quantity = 1) {
     try {
+      if (!sessionId) {
+        throw new Error('SessionId is required')
+      }
+      if (!productId) {
+        throw new Error('ProductId is required')
+      }
+      
       console.log('[API] Adding to cart:', { sessionId, productId, quantity })
-      const response = await apiClient.post('/cart', {
-        sessionId,
-        productId,
-        quantity
+      const payload = {
+        sessionId: String(sessionId),
+        productId: Number(productId),
+        quantity: Number(quantity)
+      }
+      console.log('[API] Payload:', payload)
+      
+      const response = await apiClient.post('/cart', payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
+      console.log('[API] Add to cart response:', response.data)
       return response.data
     } catch (error) {
       console.error('[API] Error adding to cart:', error)
+      console.error('[API] Error response:', error.response?.data)
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message)
       }
-      throw error
+      if (error.message) {
+        throw error
+      }
+      throw new Error('Failed to add item to cart')
     }
   },
 
