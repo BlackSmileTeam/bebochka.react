@@ -173,10 +173,15 @@ export const api = {
   async createProduct(formData) {
     try {
       console.log('[API] Creating product...')
+      console.log('[API] FormData entries:', Array.from(formData.entries()).map(([key, value]) => [key, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value]))
+      console.log('[API] Request URL:', `${API_BASE_URL}/products`)
+      console.log('[API] Auth token:', localStorage.getItem('authToken') ? 'Present' : 'Missing')
+      
       const response = await apiClient.post('/products', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        timeout: 120000 // 2 minutes для больших файлов
       })
       
       console.log('[API] Product created successfully:', response.status, response.data)
