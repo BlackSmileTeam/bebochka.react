@@ -129,8 +129,23 @@ export const api = {
         return []
       }
       
-      console.log(`[API] Successfully loaded ${response.data.length} products`)
-      return response.data
+      // Нормализуем данные - конвертируем Id в id для совместимости
+      const normalizedProducts = response.data.map(product => ({
+        ...product,
+        id: product.id || product.Id,
+        name: product.name || product.Name,
+        brand: product.brand || product.Brand,
+        description: product.description || product.Description,
+        price: product.price || product.Price,
+        size: product.size || product.Size,
+        color: product.color || product.Color,
+        images: product.images || product.Images || [],
+        createdAt: product.createdAt || product.CreatedAt,
+        updatedAt: product.updatedAt || product.UpdatedAt
+      }))
+      
+      console.log(`[API] Successfully loaded ${normalizedProducts.length} products`)
+      return normalizedProducts
     } catch (error) {
       console.error('[API] Error fetching products:', error)
       if (error.response) {
@@ -157,8 +172,23 @@ export const api = {
         throw new Error('Invalid product data received')
       }
       
-      console.log('[API] Successfully loaded product:', response.data)
-      return response.data
+      // Нормализуем данные - конвертируем Id в id для совместимости
+      const normalizedProduct = {
+        ...response.data,
+        id: response.data.id || response.data.Id,
+        name: response.data.name || response.data.Name,
+        brand: response.data.brand || response.data.Brand,
+        description: response.data.description || response.data.Description,
+        price: response.data.price || response.data.Price,
+        size: response.data.size || response.data.Size,
+        color: response.data.color || response.data.Color,
+        images: response.data.images || response.data.Images || [],
+        createdAt: response.data.createdAt || response.data.CreatedAt,
+        updatedAt: response.data.updatedAt || response.data.UpdatedAt
+      }
+      
+      console.log('[API] Successfully loaded product:', normalizedProduct)
+      return normalizedProduct
     } catch (error) {
       console.error(`[API] Error fetching product ${id}:`, error)
       throw error
@@ -191,7 +221,22 @@ export const api = {
         throw new Error('Invalid product data received from server')
       }
       
-      return response.data
+      // Нормализуем данные - конвертируем Id в id для совместимости
+      const normalizedProduct = {
+        ...response.data,
+        id: response.data.id || response.data.Id,
+        name: response.data.name || response.data.Name,
+        brand: response.data.brand || response.data.Brand,
+        description: response.data.description || response.data.Description,
+        price: response.data.price || response.data.Price,
+        size: response.data.size || response.data.Size,
+        color: response.data.color || response.data.Color,
+        images: response.data.images || response.data.Images || [],
+        createdAt: response.data.createdAt || response.data.CreatedAt,
+        updatedAt: response.data.updatedAt || response.data.UpdatedAt
+      }
+      
+      return normalizedProduct
     } catch (error) {
       console.error('[API] Error creating product:', error)
       if (error.response) {
@@ -232,7 +277,22 @@ export const api = {
         throw new Error('Invalid product data received from server')
       }
       
-      return response.data
+      // Нормализуем данные - конвертируем Id в id для совместимости
+      const normalizedProduct = {
+        ...response.data,
+        id: response.data.id || response.data.Id,
+        name: response.data.name || response.data.Name,
+        brand: response.data.brand || response.data.Brand,
+        description: response.data.description || response.data.Description,
+        price: response.data.price || response.data.Price,
+        size: response.data.size || response.data.Size,
+        color: response.data.color || response.data.Color,
+        images: response.data.images || response.data.Images || [],
+        createdAt: response.data.createdAt || response.data.CreatedAt,
+        updatedAt: response.data.updatedAt || response.data.UpdatedAt
+      }
+      
+      return normalizedProduct
     } catch (error) {
       console.error(`[API] Error updating product ${id}:`, error)
       if (error.response) {
