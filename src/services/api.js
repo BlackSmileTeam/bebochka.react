@@ -116,6 +116,53 @@ function validateProduct(product) {
 
 export const api = {
   /**
+   * Gets all products for admin panel (including unpublished)
+   * @returns {Promise<Array>} List of all products
+   */
+  async getAllProductsForAdmin() {
+    try {
+      console.log('[API] Fetching all products for admin...')
+      const response = await apiClient.get('/products/admin/all')
+      
+      if (!validateArray(response.data, 'products')) {
+        console.error('[API] Products response is not an array:', response.data)
+        return []
+      }
+      
+      // Нормализуем данные - конвертируем Id в id для совместимости
+      const normalizedProducts = response.data.map(product => ({
+        ...product,
+        id: product.id || product.Id,
+        name: product.name || product.Name,
+        brand: product.brand || product.Brand,
+        description: product.description || product.Description,
+        price: product.price || product.Price,
+        size: product.size || product.Size,
+        color: product.color || product.Color,
+        images: product.images || product.Images || [],
+        quantityInStock: product.quantityInStock !== undefined ? product.quantityInStock : (product.QuantityInStock !== undefined ? product.QuantityInStock : 1),
+        availableQuantity: product.availableQuantity !== undefined ? product.availableQuantity : (product.AvailableQuantity !== undefined ? product.AvailableQuantity : product.quantityInStock || product.QuantityInStock || 1),
+        gender: product.gender || product.Gender || null,
+        condition: product.condition || product.Condition || null,
+        publishedAt: product.publishedAt || product.PublishedAt || null,
+        createdAt: product.createdAt || product.CreatedAt,
+        updatedAt: product.updatedAt || product.UpdatedAt
+      }))
+      
+      console.log(`[API] Successfully loaded ${normalizedProducts.length} products for admin`)
+      return normalizedProducts
+    } catch (error) {
+      console.error('[API] Error fetching products for admin:', error)
+      if (error.response) {
+        console.error('[API] Server error:', error.response.status, error.response.data)
+      } else if (error.request) {
+        console.error('[API] No response received:', error.request)
+      }
+      throw error
+    }
+  },
+
+  /**
    * Gets all products
    * @param {string} sessionId - Optional session ID for cart reservation calculation
    * @returns {Promise<Array>} List of products

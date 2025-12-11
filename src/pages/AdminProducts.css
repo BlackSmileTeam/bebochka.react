@@ -88,6 +88,15 @@
   background-color: #f7fafc;
 }
 
+.products-table tbody tr.product-unpublished {
+  background-color: #fff8e1;
+  border-left: 4px solid #ff9800;
+}
+
+.products-table tbody tr.product-unpublished:hover {
+  background-color: #ffe082;
+}
+
 .table-image {
   width: 60px;
   height: 60px;

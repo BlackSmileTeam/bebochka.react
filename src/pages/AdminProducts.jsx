@@ -18,12 +18,27 @@ function AdminProducts() {
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const data = await api.getProducts()
+      // Используем специальный метод для админа, который возвращает все товары
+      const data = await api.getAllProductsForAdmin()
       setProducts(data)
     } catch (err) {
       console.error('Ошибка загрузки товаров:', err)
     } finally {
       setLoading(false)
+    }
+  }
+  
+  // Функция для проверки, опубликован ли товар
+  const isPublished = (product) => {
+    if (!product.publishedAt) return true // Если PublishedAt не установлен, товар опубликован
+    try {
+      const publishedAt = new Date(product.publishedAt)
+      if (isNaN(publishedAt.getTime())) return true // Если дата невалидна, считаем опубликованным
+      const now = new Date()
+      return publishedAt <= now
+    } catch (error) {
+      console.error('Ошибка при проверке даты публикации:', error)
+      return true // В случае ошибки считаем опубликованным
     }
   }
 
@@ -125,12 +140,19 @@ function AdminProducts() {
                 <th>Состояние</th>
                 <th>В наличии</th>
                 <th>Цена</th>
+                <th>Публикация</th>
                 <th>Действия</th>
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
-                <tr key={product.id}>
+              {products.map((product) => {
+                const published = isPublished(product)
+                return (
+                <tr 
+                  key={product.id}
+                  className={published ? '' : 'product-unpublished'}
+                  style={published ? {} : { backgroundColor: '#fff8e1' }}
+                >
                   <td>
                     {product.images && product.images.length > 0 ? (
                       <img
@@ -163,6 +185,23 @@ function AdminProducts() {
                   </td>
                   <td>{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
                   <td>
+                    {product.publishedAt ? (
+                      published ? (
+                        <span style={{ color: '#48bb78', fontWeight: 'bold' }}>
+                          Опубликован
+                        </span>
+                      ) : (
+                        <span style={{ color: '#ed8936', fontWeight: 'bold' }}>
+                          {new Date(product.publishedAt).toLocaleString('ru-RU')}
+                        </span>
+                      )
+                    ) : (
+                      <span style={{ color: '#48bb78', fontWeight: 'bold' }}>
+                        Опубликован
+                      </span>
+                    )}
+                  </td>
+                  <td>
                     <div className="action-buttons">
                       <button
                         className="btn btn-small btn-edit"
@@ -179,7 +218,7 @@ function AdminProducts() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
