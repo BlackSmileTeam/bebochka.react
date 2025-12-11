@@ -12,7 +12,8 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     color: '',
     quantityInStock: 1,
     gender: '',
-    condition: ''
+    condition: '',
+    publishedAt: ''
   })
   const [images, setImages] = useState([])
   const [existingImages, setExistingImages] = useState([])
@@ -26,6 +27,16 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
   useEffect(() => {
     if (product) {
+      // Format PublishedAt if it exists (convert to local datetime-local format)
+      let publishedAtValue = ''
+      if (product.publishedAt || product.PublishedAt) {
+        const publishedAt = product.publishedAt || product.PublishedAt
+        // Convert UTC date to local datetime-local format
+        const date = new Date(publishedAt)
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        publishedAtValue = localDate.toISOString().slice(0, 16)
+      }
+      
       setFormData({
         name: product.name || '',
         brand: product.brand || '',
@@ -35,7 +46,8 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         color: product.color || '',
         quantityInStock: product.quantityInStock || 1,
         gender: product.gender || '',
-        condition: product.condition || ''
+        condition: product.condition || '',
+        publishedAt: publishedAtValue
       })
       setExistingImages(product.images || [])
     }
@@ -74,6 +86,13 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('quantityInStock', formData.quantityInStock || 1)
       formDataToSend.append('gender', formData.gender || '')
       formDataToSend.append('condition', formData.condition || '')
+      
+      // Add PublishedAt if provided
+      if (formData.publishedAt) {
+        // Convert local datetime to ISO string for backend
+        const publishedAtDate = new Date(formData.publishedAt)
+        formDataToSend.append('publishedAt', publishedAtDate.toISOString())
+      }
 
       if (product) {
         // For update: send existing images that should be preserved
@@ -260,6 +279,21 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 <option value="недостаток">Недостаток</option>
               </select>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="publishedAt">Дата и время публикации</label>
+            <input
+              type="datetime-local"
+              id="publishedAt"
+              name="publishedAt"
+              value={formData.publishedAt}
+              onChange={handleChange}
+              placeholder="Оставьте пустым для немедленной публикации"
+            />
+            <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+              Оставьте пустым, чтобы товар был опубликован сразу. Укажите дату и время для отложенной публикации.
+            </small>
           </div>
 
           <div className="form-group">

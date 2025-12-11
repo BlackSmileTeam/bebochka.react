@@ -262,6 +262,7 @@ export const api = {
         quantityInStock: parseInt(formData.get('quantityInStock') || 1),
         gender: formData.get('gender') || null,
         condition: formData.get('condition') || null,
+        publishedAt: formData.get('publishedAt') || null,
         images: []
       }
       
@@ -312,6 +313,7 @@ export const api = {
         availableQuantity: response.data.availableQuantity !== undefined ? response.data.availableQuantity : (response.data.AvailableQuantity !== undefined ? response.data.AvailableQuantity : response.data.quantityInStock || response.data.QuantityInStock || 1),
         gender: response.data.gender || response.data.Gender || null,
         condition: response.data.condition || response.data.Condition || null,
+        publishedAt: response.data.publishedAt || response.data.PublishedAt || null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
         updatedAt: response.data.updatedAt || response.data.UpdatedAt
       }
@@ -356,6 +358,7 @@ export const api = {
         quantityInStock: parseInt(formData.get('quantityInStock') || 1),
         gender: formData.get('gender') || null,
         condition: formData.get('condition') || null,
+        publishedAt: formData.get('publishedAt') || null,
         images: []
       }
       
@@ -400,6 +403,7 @@ export const api = {
         availableQuantity: response.data.availableQuantity !== undefined ? response.data.availableQuantity : (response.data.AvailableQuantity !== undefined ? response.data.AvailableQuantity : response.data.quantityInStock || response.data.QuantityInStock || 1),
         gender: response.data.gender || response.data.Gender || null,
         condition: response.data.condition || response.data.Condition || null,
+        publishedAt: response.data.publishedAt || response.data.PublishedAt || null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
         updatedAt: response.data.updatedAt || response.data.UpdatedAt
       }
