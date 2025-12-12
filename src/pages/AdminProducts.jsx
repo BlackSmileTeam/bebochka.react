@@ -8,7 +8,9 @@ function AdminProducts() {
   const [filteredProducts, setFilteredProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingProduct, setEditingProduct] = useState(null)
+  const [viewingProduct, setViewingProduct] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
   const [colors, setColors] = useState([])
   const [showFilters, setShowFilters] = useState(false)
   
@@ -182,6 +184,33 @@ function AdminProducts() {
   const handleEdit = (product) => {
     setEditingProduct(product)
     setShowForm(true)
+    setShowDetails(false)
+  }
+  
+  const handleRowClick = (product, event) => {
+    // Не открываем детали если кликнули на кнопку меню или внутри меню
+    if (event.target.closest('.action-menu-wrapper') || event.target.closest('.action-menu')) {
+      return
+    }
+    setViewingProduct(product)
+    setShowDetails(true)
+  }
+  
+  const handleCloseDetails = () => {
+    setShowDetails(false)
+    setViewingProduct(null)
+  }
+  
+  const handleEditFromDetails = () => {
+    if (viewingProduct) {
+      handleEdit(viewingProduct)
+    }
+  }
+  
+  // Функция для капитализации первой буквы
+  const capitalize = (str) => {
+    if (!str) return ''
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
   }
 
   const handleDelete = async (id) => {
@@ -404,6 +433,17 @@ function AdminProducts() {
         </div>
       )}
 
+      {showDetails && viewingProduct && (
+        <ProductDetailsModal
+          product={viewingProduct}
+          onClose={handleCloseDetails}
+          onEdit={handleEditFromDetails}
+          isPublished={isPublished(viewingProduct)}
+          getGenderIcon={getGenderIcon}
+          capitalize={capitalize}
+        />
+      )}
+
       {showForm && (
         <ProductForm
           product={editingProduct}
@@ -447,8 +487,9 @@ function AdminProducts() {
                 return (
                 <tr 
                   key={product.id}
-                  className={published ? '' : 'product-unpublished'}
+                  className={`product-row ${published ? '' : 'product-unpublished'}`}
                   style={published ? {} : { backgroundColor: '#fff8e1' }}
+                  onClick={(e) => handleRowClick(product, e)}
                 >
                   <td>
                     <div className="product-image-cell">
@@ -481,7 +522,7 @@ function AdminProducts() {
                   <td className="gender-cell" title={product.gender || '-'}>
                     {getGenderIcon(product.gender)}
                   </td>
-                  <td>{product.condition || '-'}</td>
+                  <td>{product.condition ? capitalize(product.condition) : '-'}</td>
                   <td className="quantity-cell">
                     <span style={{ 
                       color: (product.quantityInStock || 0) > 0 ? '#48bb78' : '#e53e3e',
@@ -566,6 +607,146 @@ function AdminProducts() {
           </table>
         </div>
       )}
+    </div>
+  )
+}
+
+// Компонент модального окна деталей товара
+function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderIcon, capitalize }) {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'
+  
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content product-details-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Детали товара</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        
+        <div className="product-details-content">
+          <div className="product-details-images">
+            {product.images && product.images.length > 0 ? (
+              <div className="product-images-grid">
+                {product.images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image.startsWith('http') ? image : `${apiUrl}${image}`}
+                    alt={`${product.name} - фото ${index + 1}`}
+                    className="product-detail-image"
+                    onError={(e) => {
+                      e.target.src = '/logo.jpg'
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="product-image-placeholder-large">
+                Нет фотографий
+              </div>
+            )}
+          </div>
+          
+          <div className="product-details-info">
+            <div className="detail-section">
+              <h3>{product.name}</h3>
+            </div>
+            
+            <div className="detail-row">
+              <span className="detail-label">Бренд:</span>
+              <span className="detail-value">{product.brand || '-'}</span>
+            </div>
+            
+            {product.description && (
+              <div className="detail-row">
+                <span className="detail-label">Описание:</span>
+                <span className="detail-value">{product.description}</span>
+              </div>
+            )}
+            
+            <div className="detail-row">
+              <span className="detail-label">Цена:</span>
+              <span className="detail-value">{product.price?.toLocaleString('ru-RU')} ₽</span>
+            </div>
+            
+            <div className="detail-row">
+              <span className="detail-label">Размер:</span>
+              <span className="detail-value">{product.size || '-'}</span>
+            </div>
+            
+            <div className="detail-row">
+              <span className="detail-label">Цвет:</span>
+              <span className="detail-value">{product.color || '-'}</span>
+            </div>
+            
+            <div className="detail-row">
+              <span className="detail-label">Пол:</span>
+              <span className="detail-value">
+                <span className="gender-icon-large" title={product.gender || '-'}>
+                  {getGenderIcon(product.gender)}
+                </span>
+                {product.gender && ` ${product.gender}`}
+              </span>
+            </div>
+            
+            <div className="detail-row">
+              <span className="detail-label">Состояние:</span>
+              <span className="detail-value">{product.condition ? capitalize(product.condition) : '-'}</span>
+            </div>
+            
+            <div className="detail-row">
+              <span className="detail-label">В наличии:</span>
+              <span className="detail-value" style={{
+                color: (product.quantityInStock || 0) > 0 ? '#48bb78' : '#e53e3e',
+                fontWeight: 'bold'
+              }}>
+                {product.quantityInStock || 0} шт.
+              </span>
+            </div>
+            
+            <div className="detail-row">
+              <span className="detail-label">Статус публикации:</span>
+              <span className="detail-value">
+                {product.publishedAt ? (
+                  isPublished ? (
+                    <span style={{ color: '#48bb78', fontWeight: 'bold' }}>Опубликован</span>
+                  ) : (
+                    <span style={{ color: '#ed8936', fontWeight: 'bold' }}>
+                      Запланировано на {new Date(product.publishedAt).toLocaleString('ru-RU')}
+                    </span>
+                  )
+                ) : (
+                  <span style={{ color: '#48bb78', fontWeight: 'bold' }}>Опубликован</span>
+                )}
+              </span>
+            </div>
+            
+            <div className="detail-row">
+              <span className="detail-label">Дата создания:</span>
+              <span className="detail-value">
+                {product.createdAt ? new Date(product.createdAt).toLocaleString('ru-RU') : '-'}
+              </span>
+            </div>
+            
+            {product.updatedAt && (
+              <div className="detail-row">
+                <span className="detail-label">Дата обновления:</span>
+                <span className="detail-value">
+                  {new Date(product.updatedAt).toLocaleString('ru-RU')}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>
+            Закрыть
+          </button>
+          <button className="btn btn-primary" onClick={onEdit}>
+            Редактировать
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
