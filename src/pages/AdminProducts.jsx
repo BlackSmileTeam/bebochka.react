@@ -283,7 +283,7 @@ function AdminProducts() {
             🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
           <button className="btn btn-primary" onClick={handleCreate}>
-            + Добавить товар
+            Добавить
           </button>
         </div>
       </div>
