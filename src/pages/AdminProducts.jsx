@@ -14,6 +14,22 @@ function AdminProducts() {
     loadProducts()
     loadColors()
   }, [])
+  
+  useEffect(() => {
+    // Close menu when clicking outside
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.action-menu-wrapper')) {
+        document.querySelectorAll('.action-menu').forEach(menu => {
+          menu.classList.remove('show')
+        })
+      }
+    }
+    
+    document.addEventListener('click', handleClickOutside)
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [products])
 
   const loadProducts = async () => {
     try {
@@ -138,9 +154,9 @@ function AdminProducts() {
                 <th>Цвет</th>
                 <th>Пол</th>
                 <th>Состояние</th>
-                <th>В наличии</th>
+                <th title="Наличие товара"><span style={{cursor: 'help'}}>📦</span></th>
                 <th>Цена</th>
-                <th>Публикация</th>
+                <th title="Статус публикации"><span style={{cursor: 'help'}}>📢</span></th>
                 <th>Действия</th>
               </tr>
             </thead>
@@ -176,45 +192,89 @@ function AdminProducts() {
                   <td>{product.gender || '-'}</td>
                   <td>{product.condition || '-'}</td>
                   <td>
-                    <span style={{ 
-                      color: (product.quantityInStock || 0) > 0 ? '#48bb78' : '#e53e3e',
-                      fontWeight: 'bold'
-                    }}>
-                      {product.quantityInStock || 0}
-                    </span>
+                    <div 
+                      className="stock-icon-wrapper"
+                      title={`В наличии: ${product.quantityInStock || 0} шт.`}
+                    >
+                      {(product.quantityInStock || 0) > 0 ? (
+                        <span className="stock-icon stock-available" title="В наличии">
+                          ✓
+                        </span>
+                      ) : (
+                        <span className="stock-icon stock-unavailable" title="Нет в наличии">
+                          ✗
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td>{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
                   <td>
-                    {product.publishedAt ? (
-                      published ? (
-                        <span style={{ color: '#48bb78', fontWeight: 'bold' }}>
-                          Опубликован
-                        </span>
+                    <div className="publication-icon-wrapper">
+                      {product.publishedAt ? (
+                        published ? (
+                          <span 
+                            className="publication-icon published" 
+                            title="Опубликован"
+                          >
+                            ✓
+                          </span>
+                        ) : (
+                          <span 
+                            className="publication-icon scheduled" 
+                            title={`Запланировано на ${new Date(product.publishedAt).toLocaleString('ru-RU')}`}
+                          >
+                            ⏰
+                          </span>
+                        )
                       ) : (
-                        <span style={{ color: '#ed8936', fontWeight: 'bold' }}>
-                          {new Date(product.publishedAt).toLocaleString('ru-RU')}
+                        <span 
+                          className="publication-icon published" 
+                          title="Опубликован"
+                        >
+                          ✓
                         </span>
-                      )
-                    ) : (
-                      <span style={{ color: '#48bb78', fontWeight: 'bold' }}>
-                        Опубликован
-                      </span>
-                    )}
+                      )}
+                    </div>
                   </td>
                   <td>
-                    <div className="action-buttons">
+                    <div className="action-menu-wrapper">
                       <button
-                        className="btn btn-small btn-edit"
-                        onClick={() => handleEdit(product)}
+                        className="btn-more"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const menu = e.currentTarget.nextElementSibling
+                          const allMenus = document.querySelectorAll('.action-menu')
+                          allMenus.forEach(m => {
+                            if (m !== menu) m.classList.remove('show')
+                          })
+                          if (menu) {
+                            menu.classList.toggle('show')
+                          }
+                        }}
+                        title="Действия"
                       >
-                        Редактировать
+                        ⋮
                       </button>
-                      <button
-                        className="btn btn-small btn-delete"
-                        onClick={() => handleDelete(product.id)}
-                      >
-                        Удалить
-                      </button>
+                      <div className="action-menu">
+                        <button
+                          className="action-menu-item edit"
+                          onClick={() => {
+                            handleEdit(product)
+                            document.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'))
+                          }}
+                        >
+                          Редактировать
+                        </button>
+                        <button
+                          className="action-menu-item delete"
+                          onClick={() => {
+                            document.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'))
+                            handleDelete(product.id)
+                          }}
+                        >
+                          Удалить
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
