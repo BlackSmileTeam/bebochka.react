@@ -1,19 +1,41 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { api } from '../services/api'
 import ProductForm from '../components/ProductForm'
 import './AdminProducts.css'
 
 function AdminProducts() {
   const [products, setProducts] = useState([])
+  const [filteredProducts, setFilteredProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingProduct, setEditingProduct] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [colors, setColors] = useState([])
+  const [showFilters, setShowFilters] = useState(false)
+  
+  // Фильтры
+  const [filters, setFilters] = useState({
+    name: '',
+    brand: '',
+    size: '',
+    color: '',
+    gender: '',
+    condition: '',
+    priceMin: '',
+    priceMax: '',
+    quantityMin: '',
+    quantityMax: '',
+    publishedStatus: 'all' // all, published, scheduled
+  })
 
   useEffect(() => {
     loadProducts()
     loadColors()
   }, [])
+  
+  useEffect(() => {
+    // Применяем фильтры при изменении товаров или фильтров
+    applyFilters()
+  }, [products, filters])
   
   useEffect(() => {
     // Close menu when clicking outside
@@ -29,12 +51,11 @@ function AdminProducts() {
     return () => {
       document.removeEventListener('click', handleClickOutside)
     }
-  }, [products])
+  }, [filteredProducts])
 
   const loadProducts = async () => {
     try {
       setLoading(true)
-      // Используем специальный метод для админа, который возвращает все товары
       const data = await api.getAllProductsForAdmin()
       setProducts(data)
     } catch (err) {
@@ -44,31 +65,107 @@ function AdminProducts() {
     }
   }
   
+  // Получаем уникальные значения для фильтров
+  const filterOptions = useMemo(() => {
+    const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort()
+    const sizes = [...new Set(products.map(p => p.size).filter(Boolean))].sort()
+    const productColors = [...new Set(products.map(p => p.color).filter(Boolean))].sort()
+    const genders = [...new Set(products.map(p => p.gender).filter(Boolean))].sort()
+    const conditions = [...new Set(products.map(p => p.condition).filter(Boolean))].sort()
+    
+    return { brands, sizes, colors: productColors, genders, conditions }
+  }, [products])
+  
+  const applyFilters = () => {
+    let filtered = [...products]
+    
+    if (filters.name) {
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(filters.name.toLowerCase())
+      )
+    }
+    
+    if (filters.brand) {
+      filtered = filtered.filter(p => p.brand === filters.brand)
+    }
+    
+    if (filters.size) {
+      filtered = filtered.filter(p => p.size === filters.size)
+    }
+    
+    if (filters.color) {
+      filtered = filtered.filter(p => p.color === filters.color)
+    }
+    
+    if (filters.gender) {
+      filtered = filtered.filter(p => p.gender === filters.gender)
+    }
+    
+    if (filters.condition) {
+      filtered = filtered.filter(p => p.condition === filters.condition)
+    }
+    
+    if (filters.priceMin) {
+      filtered = filtered.filter(p => p.price >= parseFloat(filters.priceMin))
+    }
+    
+    if (filters.priceMax) {
+      filtered = filtered.filter(p => p.price <= parseFloat(filters.priceMax))
+    }
+    
+    if (filters.quantityMin) {
+      filtered = filtered.filter(p => p.quantityInStock >= parseInt(filters.quantityMin))
+    }
+    
+    if (filters.quantityMax) {
+      filtered = filtered.filter(p => p.quantityInStock <= parseInt(filters.quantityMax))
+    }
+    
+    if (filters.publishedStatus !== 'all') {
+      filtered = filtered.filter(p => {
+        const published = isPublished(p)
+        if (filters.publishedStatus === 'published') {
+          return published
+        } else if (filters.publishedStatus === 'scheduled') {
+          return !published && p.publishedAt
+        }
+        return true
+      })
+    }
+    
+    setFilteredProducts(filtered)
+  }
+  
   // Функция для проверки, опубликован ли товар
   const isPublished = (product) => {
-    if (!product.publishedAt) return true // Если PublishedAt не установлен, товар опубликован
+    if (!product.publishedAt) return true
     try {
       const publishedAt = new Date(product.publishedAt)
-      if (isNaN(publishedAt.getTime())) return true // Если дата невалидна, считаем опубликованным
+      if (isNaN(publishedAt.getTime())) return true
       const now = new Date()
       return publishedAt <= now
     } catch (error) {
       console.error('Ошибка при проверке даты публикации:', error)
-      return true // В случае ошибки считаем опубликованным
+      return true
     }
+  }
+  
+  // Получить иконку для пола
+  const getGenderIcon = (gender) => {
+    if (!gender) return '-'
+    const genderLower = gender.toLowerCase()
+    if (genderLower.includes('мальчик') || genderLower.includes('boy')) return '👦'
+    if (genderLower.includes('девочка') || genderLower.includes('girl')) return '👧'
+    if (genderLower.includes('унисекс') || genderLower.includes('unisex')) return '👶'
+    return gender
   }
 
   const loadColors = async () => {
     try {
-      console.log('[AdminProducts] Loading colors...')
       const data = await api.getColors()
-      console.log('[AdminProducts] Colors received:', data, 'Type:', typeof data, 'IsArray:', Array.isArray(data))
-      
       if (Array.isArray(data) && data.length > 0) {
-        console.log(`[AdminProducts] Setting ${data.length} colors`)
         setColors(data)
       } else {
-        console.warn('[AdminProducts] Colors data is invalid:', data)
         setColors([])
       }
     } catch (err) {
@@ -111,6 +208,31 @@ function AdminProducts() {
     setEditingProduct(null)
     loadProducts()
   }
+  
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+  
+  const clearFilters = () => {
+    setFilters({
+      name: '',
+      brand: '',
+      size: '',
+      color: '',
+      gender: '',
+      condition: '',
+      priceMin: '',
+      priceMax: '',
+      quantityMin: '',
+      quantityMax: '',
+      publishedStatus: 'all'
+    })
+  }
+  
+  const activeFiltersCount = Object.values(filters).filter(v => v !== '' && v !== 'all').length
 
   if (loading) {
     return (
@@ -124,10 +246,163 @@ function AdminProducts() {
     <div className="container">
       <div className="admin-products-header">
         <h1>Управление товарами</h1>
-        <button className="btn btn-primary" onClick={handleCreate}>
-          + Добавить товар
-        </button>
+        <div className="header-actions">
+          <button 
+            className={`btn btn-secondary ${showFilters ? 'active' : ''}`}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+          </button>
+          <button className="btn btn-primary" onClick={handleCreate}>
+            + Добавить товар
+          </button>
+        </div>
       </div>
+
+      {showFilters && (
+        <div className="filters-panel">
+          <div className="filters-grid">
+            <div className="filter-group">
+              <label>Название</label>
+              <input
+                type="text"
+                value={filters.name}
+                onChange={(e) => handleFilterChange('name', e.target.value)}
+                placeholder="Поиск по названию..."
+              />
+            </div>
+            
+            <div className="filter-group">
+              <label>Бренд</label>
+              <select
+                value={filters.brand}
+                onChange={(e) => handleFilterChange('brand', e.target.value)}
+              >
+                <option value="">Все бренды</option>
+                {filterOptions.brands.map(brand => (
+                  <option key={brand} value={brand}>{brand}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>Размер</label>
+              <select
+                value={filters.size}
+                onChange={(e) => handleFilterChange('size', e.target.value)}
+              >
+                <option value="">Все размеры</option>
+                {filterOptions.sizes.map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>Цвет</label>
+              <select
+                value={filters.color}
+                onChange={(e) => handleFilterChange('color', e.target.value)}
+              >
+                <option value="">Все цвета</option>
+                {filterOptions.colors.map(color => (
+                  <option key={color} value={color}>{color}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>Пол</label>
+              <select
+                value={filters.gender}
+                onChange={(e) => handleFilterChange('gender', e.target.value)}
+              >
+                <option value="">Все</option>
+                {filterOptions.genders.map(gender => (
+                  <option key={gender} value={gender}>{gender}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>Состояние</label>
+              <select
+                value={filters.condition}
+                onChange={(e) => handleFilterChange('condition', e.target.value)}
+              >
+                <option value="">Все</option>
+                {filterOptions.conditions.map(condition => (
+                  <option key={condition} value={condition}>{condition}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>Цена от (₽)</label>
+              <input
+                type="number"
+                value={filters.priceMin}
+                onChange={(e) => handleFilterChange('priceMin', e.target.value)}
+                placeholder="0"
+                min="0"
+              />
+            </div>
+            
+            <div className="filter-group">
+              <label>Цена до (₽)</label>
+              <input
+                type="number"
+                value={filters.priceMax}
+                onChange={(e) => handleFilterChange('priceMax', e.target.value)}
+                placeholder="∞"
+                min="0"
+              />
+            </div>
+            
+            <div className="filter-group">
+              <label>Количество от (шт)</label>
+              <input
+                type="number"
+                value={filters.quantityMin}
+                onChange={(e) => handleFilterChange('quantityMin', e.target.value)}
+                placeholder="0"
+                min="0"
+              />
+            </div>
+            
+            <div className="filter-group">
+              <label>Количество до (шт)</label>
+              <input
+                type="number"
+                value={filters.quantityMax}
+                onChange={(e) => handleFilterChange('quantityMax', e.target.value)}
+                placeholder="∞"
+                min="0"
+              />
+            </div>
+            
+            <div className="filter-group">
+              <label>Статус публикации</label>
+              <select
+                value={filters.publishedStatus}
+                onChange={(e) => handleFilterChange('publishedStatus', e.target.value)}
+              >
+                <option value="all">Все</option>
+                <option value="published">Опубликованные</option>
+                <option value="scheduled">Запланированные</option>
+              </select>
+            </div>
+          </div>
+          
+          {activeFiltersCount > 0 && (
+            <div className="filters-actions">
+              <button className="btn btn-clear" onClick={clearFilters}>
+                Очистить фильтры
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {showForm && (
         <ProductForm
@@ -138,30 +413,36 @@ function AdminProducts() {
         />
       )}
 
-      {products.length === 0 ? (
+      {filteredProducts.length === 0 ? (
         <div className="empty-state">
-          <p>Товары не добавлены. Нажмите "Добавить товар" для начала.</p>
+          <p>
+            {products.length === 0 
+              ? 'Товары не добавлены. Нажмите "Добавить товар" для начала.'
+              : 'Товары не найдены по заданным фильтрам.'}
+          </p>
         </div>
       ) : (
         <div className="products-table-container">
+          <div className="table-info">
+            Показано: {filteredProducts.length} из {products.length} товаров
+          </div>
           <table className="products-table">
             <thead>
               <tr>
                 <th>Фото</th>
-                <th>Название</th>
                 <th>Бренд</th>
                 <th>Размер</th>
                 <th>Цвет</th>
                 <th>Пол</th>
                 <th>Состояние</th>
-                <th title="Наличие товара"><span style={{cursor: 'help'}}>📦</span></th>
+                <th>В наличии</th>
                 <th>Цена</th>
                 <th title="Статус публикации"><span style={{cursor: 'help'}}>📢</span></th>
                 <th>Действия</th>
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => {
+              {filteredProducts.map((product) => {
                 const published = isPublished(product)
                 return (
                 <tr 
@@ -170,42 +451,44 @@ function AdminProducts() {
                   style={published ? {} : { backgroundColor: '#fff8e1' }}
                 >
                   <td>
-                    {product.images && product.images.length > 0 ? (
-                      <img
-                        src={product.images[0].startsWith('http') 
-                          ? product.images[0] 
-                          : `${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}${product.images[0]}`}
-                        alt={product.name}
-                        className="table-image"
-                        onError={(e) => {
-                          e.target.src = '/logo.jpg'
-                        }}
-                      />
-                    ) : (
-                      <div className="table-image-placeholder">Нет фото</div>
-                    )}
+                    <div className="product-image-cell">
+                      {product.images && product.images.length > 0 ? (
+                        <>
+                          <img
+                            src={product.images[0].startsWith('http') 
+                              ? product.images[0] 
+                              : `${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}${product.images[0]}`}
+                            alt={product.name}
+                            className="table-image"
+                            title={product.name}
+                            onError={(e) => {
+                              e.target.src = '/logo.jpg'
+                            }}
+                          />
+                          <div className="product-name-tooltip">{product.name}</div>
+                        </>
+                      ) : (
+                        <div className="table-image-placeholder" title={product.name}>
+                          Нет фото
+                        </div>
+                      )}
+                      <div className="product-name-below">{product.name}</div>
+                    </div>
                   </td>
-                  <td>{product.name}</td>
                   <td>{product.brand || '-'}</td>
                   <td>{product.size || '-'}</td>
                   <td>{product.color || '-'}</td>
-                  <td>{product.gender || '-'}</td>
+                  <td className="gender-cell" title={product.gender || '-'}>
+                    {getGenderIcon(product.gender)}
+                  </td>
                   <td>{product.condition || '-'}</td>
-                  <td>
-                    <div 
-                      className="stock-icon-wrapper"
-                      title={`В наличии: ${product.quantityInStock || 0} шт.`}
-                    >
-                      {(product.quantityInStock || 0) > 0 ? (
-                        <span className="stock-icon stock-available" title="В наличии">
-                          ✓
-                        </span>
-                      ) : (
-                        <span className="stock-icon stock-unavailable" title="Нет в наличии">
-                          ✗
-                        </span>
-                      )}
-                    </div>
+                  <td className="quantity-cell">
+                    <span style={{ 
+                      color: (product.quantityInStock || 0) > 0 ? '#48bb78' : '#e53e3e',
+                      fontWeight: 'bold'
+                    }}>
+                      {product.quantityInStock || 0} шт.
+                    </span>
                   </td>
                   <td>{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
                   <td>
@@ -288,4 +571,3 @@ function AdminProducts() {
 }
 
 export default AdminProducts
-
