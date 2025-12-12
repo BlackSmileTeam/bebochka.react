@@ -47,6 +47,9 @@
 .btn-secondary {
   background-color: #e2e8f0;
   color: #2d3748;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .btn-secondary:hover {
@@ -414,8 +417,8 @@
 .product-details-modal {
   background: white;
   border-radius: 12px;
-  max-width: 1200px;
-  width: 100%;
+  width: 50vw;
+  max-width: 50vw;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
@@ -539,6 +542,11 @@
 @media (max-width: 768px) {
   .modal-overlay {
     padding: 1rem;
+  }
+  
+  .product-details-modal {
+    width: 90vw;
+    max-width: 90vw;
   }
   
   .product-images-grid {
