@@ -198,22 +198,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
           <div className="form-group">
             <label htmlFor="brand">Бренд</label>
-            <div className="brand-selector">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={useCustomBrand}
-                  onChange={(e) => {
-                    setUseCustomBrand(e.target.checked)
-                    if (!e.target.checked) {
-                      setBrandSearch('')
-                      setShowBrandDropdown(false)
-                    }
-                  }}
-                />
-                Ввести вручную
-              </label>
-              
+            <div className="brand-selector" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {useCustomBrand ? (
                 <input
                   type="text"
@@ -222,9 +207,10 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                   value={formData.brand}
                   onChange={handleChange}
                   placeholder="Например: Zara, H&M"
+                  style={{ flex: 1 }}
                 />
               ) : (
-                <div ref={brandDropdownRef} style={{ position: 'relative' }}>
+                <div ref={brandDropdownRef} style={{ position: 'relative', flex: 1 }}>
                   <input
                     type="text"
                     id="brand"
@@ -281,6 +267,20 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                   )}
                 </div>
               )}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}>
+                <input
+                  type="checkbox"
+                  checked={useCustomBrand}
+                  onChange={(e) => {
+                    setUseCustomBrand(e.target.checked)
+                    if (!e.target.checked) {
+                      setBrandSearch('')
+                      setShowBrandDropdown(false)
+                    }
+                  }}
+                />
+                Ввести вручную
+              </label>
             </div>
           </div>
 

@@ -12,54 +12,32 @@ const DEFAULT_MESSAGE = `Анонс!
 function AdminAnnouncements() {
   const [announcements, setAnnouncements] = useState([])
   const [products, setProducts] = useState([])
-  const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [selectedProducts, setSelectedProducts] = useState([])
-  const [brandSearch, setBrandSearch] = useState('')
-  const [customBrand, setCustomBrand] = useState('')
-  const [useCustomBrand, setUseCustomBrand] = useState(false)
   
   const [formData, setFormData] = useState({
     message: DEFAULT_MESSAGE,
-    scheduledAt: '',
-    brandFilter: ''
+    scheduledAt: ''
   })
 
   useEffect(() => {
     loadData()
   }, [])
 
-  useEffect(() => {
-    if (brandSearch) {
-      loadBrands(brandSearch)
-    }
-  }, [brandSearch])
-
   const loadData = async () => {
     try {
       setLoading(true)
-      const [announcementsData, productsData, brandsData] = await Promise.all([
+      const [announcementsData, productsData] = await Promise.all([
         api.getAnnouncements(),
-        api.getUnpublishedProducts(),
-        api.getBrands()
+        api.getUnpublishedProducts()
       ])
       setAnnouncements(announcementsData)
       setProducts(productsData)
-      setBrands(brandsData)
     } catch (err) {
       console.error('Error loading data:', err)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const loadBrands = async (search) => {
-    try {
-      const data = await api.getBrands(search)
-      setBrands(data)
-    } catch (err) {
-      console.error('Error loading brands:', err)
     }
   }
 
@@ -86,19 +64,23 @@ function AdminAnnouncements() {
 
     try {
       // datetime-local gives "YYYY-MM-DDTHH:mm" (interpreted as Moscow time)
-      // We need to send it as a datetime string that backend can parse
-      // Create a Date object treating the input as Moscow time, then send as ISO
-      // But since we want to send Moscow time, we'll construct the ISO string manually
-      // treating the components as Moscow time (which is UTC+3)
+      // We need to send this as a DateTime that represents Moscow time components
+      // Create a Date object with the components as UTC (which represents Moscow time)
       const [datePart, timePart] = formData.scheduledAt.split('T')
       const [year, month, day] = datePart.split('-').map(Number)
       const [hours, minutes] = timePart.split(':').map(Number)
       
-      // Create Date object treating input as UTC, then subtract 3 hours to get actual UTC
-      // This way when backend parses it as UTC, it will have the correct UTC time
-      // But we actually want to store Moscow time, so we'll send it as-is and backend will treat it correctly
-      // Actually, simpler: create date as UTC with the components, backend will store as-is
+      // Create Date object using UTC constructor, treating the input components as Moscow time
+      // When JSON serializes this, it will send as ISO string in UTC
+      // Backend will extract the components and treat them as Moscow time
       const scheduledAtDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
+      
+      // Log for debugging
+      console.log('Creating announcement with scheduled time:', {
+        input: formData.scheduledAt,
+        dateComponents: { year, month, day, hours, minutes },
+        scheduledAtISO: scheduledAtDate.toISOString()
+      })
       
       await api.createAnnouncement({
         message: formData.message,
@@ -108,7 +90,7 @@ function AdminAnnouncements() {
 
       alert('Анонс успешно создан!')
       setShowForm(false)
-      setFormData({ message: DEFAULT_MESSAGE, scheduledAt: '', brandFilter: '' })
+      setFormData({ message: DEFAULT_MESSAGE, scheduledAt: '' })
       setSelectedProducts([])
       loadData()
     } catch (err) {
@@ -131,11 +113,6 @@ function AdminAnnouncements() {
     }
   }
 
-  const filteredProducts = products.filter(p => {
-    if (!formData.brandFilter && !useCustomBrand) return true
-    const brandToMatch = useCustomBrand ? customBrand.toLowerCase() : formData.brandFilter.toLowerCase()
-    return p.brand?.toLowerCase().includes(brandToMatch)
-  })
 
   const formatMoscowTime = (utcDateString) => {
     if (!utcDateString) return ''
@@ -192,54 +169,9 @@ function AdminAnnouncements() {
             </div>
 
             <div className="form-group">
-              <label>Фильтр по бренду</label>
-              <div className="brand-selector">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={useCustomBrand}
-                    onChange={(e) => setUseCustomBrand(e.target.checked)}
-                  />
-                  Ввести бренд вручную
-                </label>
-                
-                {useCustomBrand ? (
-                  <input
-                    type="text"
-                    value={customBrand}
-                    onChange={(e) => setCustomBrand(e.target.value)}
-                    placeholder="Введите название бренда"
-                  />
-                ) : (
-                  <>
-                    <input
-                      type="text"
-                      value={brandSearch}
-                      onChange={(e) => setBrandSearch(e.target.value)}
-                      placeholder="Поиск бренда..."
-                      className="brand-search"
-                    />
-                    {brandSearch && brands.length > 0 && (
-                      <select
-                        value={formData.brandFilter}
-                        onChange={(e) => setFormData({ ...formData, brandFilter: e.target.value })}
-                        className="brand-dropdown"
-                      >
-                        <option value="">Все бренды</option>
-                        {brands.map(brand => (
-                          <option key={brand.id} value={brand.name}>{brand.name}</option>
-                        ))}
-                      </select>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="form-group">
               <label>Выберите товары для коллажа (до 4 изображений на коллаж) *</label>
               <div className="products-grid">
-                {filteredProducts.map(product => (
+                {products.map(product => (
                   <div
                     key={product.id}
                     className={`product-card ${selectedProducts.includes(product.id) ? 'selected' : ''}`}
@@ -261,7 +193,7 @@ function AdminAnnouncements() {
                   </div>
                 ))}
               </div>
-              {filteredProducts.length === 0 && (
+              {products.length === 0 && (
                 <p>Нет неопубликованных товаров</p>
               )}
             </div>
