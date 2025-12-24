@@ -899,5 +899,93 @@ export const api = {
       console.error('[API] Error clearing cart:', error)
       throw error
     }
+  },
+
+  /**
+   * Gets all announcements
+   * @returns {Promise<Array>} List of announcements
+   */
+  async getAnnouncements() {
+    try {
+      const response = await apiClient.get('/announcements')
+      return response.data || []
+    } catch (error) {
+      console.error('[API] Error fetching announcements:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Gets unpublished products for announcement selection
+   * @returns {Promise<Array>} List of unpublished products
+   */
+  async getUnpublishedProducts() {
+    try {
+      const response = await apiClient.get('/announcements/unpublished-products')
+      return response.data || []
+    } catch (error) {
+      console.error('[API] Error fetching unpublished products:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Creates a new announcement
+   * @param {Object} announcement - Announcement data
+   * @returns {Promise<Object>} Created announcement
+   */
+  async createAnnouncement(announcement) {
+    try {
+      const response = await apiClient.post('/announcements', announcement)
+      return response.data
+    } catch (error) {
+      console.error('[API] Error creating announcement:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Deletes an announcement
+   * @param {number} id - Announcement ID
+   * @returns {Promise<void>}
+   */
+  async deleteAnnouncement(id) {
+    try {
+      await apiClient.delete(`/announcements/${id}`)
+    } catch (error) {
+      console.error('[API] Error deleting announcement:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Gets all brands with optional search
+   * @param {string} search - Search term
+   * @returns {Promise<Array>} List of brands
+   */
+  async getBrands(search = null) {
+    try {
+      const params = search ? { search } : {}
+      const response = await apiClient.get('/brands', { params })
+      return response.data || []
+    } catch (error) {
+      console.error('[API] Error fetching brands:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Creates a new brand
+   * @param {Object} brand - Brand data
+   * @returns {Promise<Object>} Created brand
+   */
+  async createBrand(brand) {
+    try {
+      const response = await apiClient.post('/brands', brand)
+      return response.data
+    } catch (error) {
+      console.error('[API] Error creating brand:', error)
+      throw error
+    }
   }
 }

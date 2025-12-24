@@ -166,22 +166,22 @@ function AdminProducts() {
   }
 
   // Конвертировать UTC время в московское время для отображения
-  const formatMoscowTime = (utcDateString) => {
-    if (!utcDateString) return ''
+  const formatMoscowTime = (dateString) => {
+    if (!dateString) return ''
     try {
-      const utcDate = new Date(utcDateString)
-      // Add 3 hours to convert from UTC to Moscow time
-      const moscowTime = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000)
+      // PublishedAt is stored as Moscow time in database
+      // Parse and format it directly (it's already Moscow time)
+      const date = new Date(dateString)
       // Format as DD.MM.YYYY HH:mm
-      const day = String(moscowTime.getUTCDate()).padStart(2, '0')
-      const month = String(moscowTime.getUTCMonth() + 1).padStart(2, '0')
-      const year = moscowTime.getUTCFullYear()
-      const hours = String(moscowTime.getUTCHours()).padStart(2, '0')
-      const minutes = String(moscowTime.getUTCMinutes()).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
       return `${day}.${month}.${year} ${hours}:${minutes}`
     } catch (error) {
       console.error('Ошибка при форматировании времени:', error)
-      return utcDateString
+      return dateString
     }
   }
 

@@ -19,29 +19,56 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [existingImages, setExistingImages] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [brands, setBrands] = useState([])
+  const [brandSearch, setBrandSearch] = useState('')
+  const [showBrandDropdown, setShowBrandDropdown] = useState(false)
+  const [useCustomBrand, setUseCustomBrand] = useState(false)
+  const brandDropdownRef = useRef(null)
 
   // Log colors when component mounts or colors change
   useEffect(() => {
     console.log('[ProductForm] Colors prop received:', colors, 'Type:', typeof colors, 'IsArray:', Array.isArray(colors), 'Length:', colors?.length)
   }, [colors])
 
+  // Load brands when brand search changes
+  useEffect(() => {
+    if (brandSearch && !useCustomBrand) {
+      api.getBrands(brandSearch).then(data => {
+        setBrands(data)
+        setShowBrandDropdown(true)
+      }).catch(err => console.error('Error loading brands:', err))
+    } else {
+      setBrands([])
+      setShowBrandDropdown(false)
+    }
+  }, [brandSearch, useCustomBrand])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (brandDropdownRef.current && !brandDropdownRef.current.contains(event.target)) {
+        setShowBrandDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   useEffect(() => {
     if (product) {
-      // Format PublishedAt if it exists (convert from UTC to Moscow time for display)
+      // Format PublishedAt if it exists (it's stored as Moscow time in database)
       let publishedAtValue = ''
       if (product.publishedAt || product.PublishedAt) {
         const publishedAt = product.publishedAt || product.PublishedAt
-        // PublishedAt is stored in UTC in the database
-        // We need to convert it to Moscow time (UTC+3) for display in datetime-local input
-        const utcDate = new Date(publishedAt)
-        // Add 3 hours to convert from UTC to Moscow time
-        const moscowTime = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000)
-        // Format as YYYY-MM-DDTHH:mm for datetime-local input
-        const year = moscowTime.getUTCFullYear()
-        const month = String(moscowTime.getUTCMonth() + 1).padStart(2, '0')
-        const day = String(moscowTime.getUTCDate()).padStart(2, '0')
-        const hours = String(moscowTime.getUTCHours()).padStart(2, '0')
-        const minutes = String(moscowTime.getUTCMinutes()).padStart(2, '0')
+        // PublishedAt is stored as Moscow time in the database
+        // Parse it and format for datetime-local input (YYYY-MM-DDTHH:mm)
+        const date = new Date(publishedAt)
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
         publishedAtValue = `${year}-${month}-${day}T${hours}:${minutes}`
       }
       
@@ -57,6 +84,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         condition: product.condition || '',
         publishedAt: publishedAtValue
       })
+      setBrandSearch(product.brand || '')
       setExistingImages(product.images || [])
     }
   }, [product])
@@ -96,22 +124,16 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('condition', formData.condition || '')
       
       // Add PublishedAt if provided
+      // datetime-local gives "YYYY-MM-DDTHH:mm" (interpreted as Moscow time)
+      // We create a Date object treating the input as Moscow time components
       if (formData.publishedAt) {
-        // Interpret the datetime as Moscow time (UTC+3) and convert to UTC
-        // datetime-local gives us time in user's local timezone, but we want to treat it as Moscow time
-        // Format: "YYYY-MM-DDTHH:mm" (no timezone info)
-        const moscowTimeString = formData.publishedAt
-        const [datePart, timePart] = moscowTimeString.split('T')
+        const [datePart, timePart] = formData.publishedAt.split('T')
         const [year, month, day] = datePart.split('-').map(Number)
         const [hours, minutes] = timePart.split(':').map(Number)
         
-        // Create a Date object treating the input as Moscow time (UTC+3)
-        // We'll create it as if it were UTC, then subtract 3 hours (3 * 60 * 60 * 1000 ms)
-        // First create a date assuming the input is already UTC
-        const tempDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0))
-        // Then subtract 3 hours (Moscow is UTC+3, so to get UTC we subtract 3 hours)
-        const utcDate = new Date(tempDate.getTime() - 3 * 60 * 60 * 1000)
-        formDataToSend.append('publishedAt', utcDate.toISOString())
+        // Create Date object as UTC with the components (representing Moscow time)
+        const publishedAtDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
+        formDataToSend.append('publishedAt', publishedAtDate.toISOString())
       }
 
       if (product) {
@@ -176,14 +198,90 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
           <div className="form-group">
             <label htmlFor="brand">Бренд</label>
-            <input
-              type="text"
-              id="brand"
-              name="brand"
-              value={formData.brand}
-              onChange={handleChange}
-              placeholder="Например: Zara, H&M"
-            />
+            <div className="brand-selector">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={useCustomBrand}
+                  onChange={(e) => {
+                    setUseCustomBrand(e.target.checked)
+                    if (!e.target.checked) {
+                      setBrandSearch('')
+                      setShowBrandDropdown(false)
+                    }
+                  }}
+                />
+                Ввести вручную
+              </label>
+              
+              {useCustomBrand ? (
+                <input
+                  type="text"
+                  id="brand"
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleChange}
+                  placeholder="Например: Zara, H&M"
+                />
+              ) : (
+                <div ref={brandDropdownRef} style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    id="brand"
+                    name="brand"
+                    value={brandSearch}
+                    onChange={(e) => {
+                      setBrandSearch(e.target.value)
+                      if (!e.target.value) {
+                        setFormData({ ...formData, brand: '' })
+                      }
+                    }}
+                    onFocus={() => {
+                      if (brandSearch && brands.length > 0) {
+                        setShowBrandDropdown(true)
+                      }
+                    }}
+                    placeholder="Поиск бренда..."
+                  />
+                  {showBrandDropdown && brands.length > 0 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      zIndex: 1000,
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                      marginTop: '4px'
+                    }}>
+                      {brands.map(brand => (
+                        <div
+                          key={brand.id}
+                          onClick={() => {
+                            setFormData({ ...formData, brand: brand.name })
+                            setBrandSearch(brand.name)
+                            setShowBrandDropdown(false)
+                          }}
+                          style={{
+                            padding: '0.75rem',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #e2e8f0'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#f7fafc'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                        >
+                          {brand.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="form-group">
