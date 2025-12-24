@@ -144,8 +144,11 @@ function AdminProducts() {
     try {
       const publishedAt = new Date(product.publishedAt)
       if (isNaN(publishedAt.getTime())) return true
+      // Use UTC for comparison to avoid timezone issues
+      // publishedAt is stored in UTC in the database
       const now = new Date()
-      return publishedAt <= now
+      // Compare UTC timestamps
+      return publishedAt.getTime() <= now.getTime()
     } catch (error) {
       console.error('Ошибка при проверке даты публикации:', error)
       return true

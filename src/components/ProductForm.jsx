@@ -27,14 +27,22 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
   useEffect(() => {
     if (product) {
-      // Format PublishedAt if it exists (convert to local datetime-local format)
+      // Format PublishedAt if it exists (convert from UTC to Moscow time for display)
       let publishedAtValue = ''
       if (product.publishedAt || product.PublishedAt) {
         const publishedAt = product.publishedAt || product.PublishedAt
-        // Convert UTC date to local datetime-local format
-        const date = new Date(publishedAt)
-        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-        publishedAtValue = localDate.toISOString().slice(0, 16)
+        // PublishedAt is stored in UTC in the database
+        // We need to convert it to Moscow time (UTC+3) for display in datetime-local input
+        const utcDate = new Date(publishedAt)
+        // Add 3 hours to convert from UTC to Moscow time
+        const moscowTime = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000)
+        // Format as YYYY-MM-DDTHH:mm for datetime-local input
+        const year = moscowTime.getUTCFullYear()
+        const month = String(moscowTime.getUTCMonth() + 1).padStart(2, '0')
+        const day = String(moscowTime.getUTCDate()).padStart(2, '0')
+        const hours = String(moscowTime.getUTCHours()).padStart(2, '0')
+        const minutes = String(moscowTime.getUTCMinutes()).padStart(2, '0')
+        publishedAtValue = `${year}-${month}-${day}T${hours}:${minutes}`
       }
       
       setFormData({
@@ -89,9 +97,20 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       
       // Add PublishedAt if provided
       if (formData.publishedAt) {
-        // Convert local datetime to ISO string for backend
-        const publishedAtDate = new Date(formData.publishedAt)
-        formDataToSend.append('publishedAt', publishedAtDate.toISOString())
+        // Interpret the datetime as Moscow time (UTC+3) and convert to UTC
+        // datetime-local gives us time in user's local timezone, but we want to treat it as Moscow time
+        // Format: "YYYY-MM-DDTHH:mm" (no timezone info)
+        const moscowTimeString = formData.publishedAt
+        // Create date assuming it's Moscow time (UTC+3)
+        // We'll create a UTC date that represents the same moment in Moscow
+        const [datePart, timePart] = moscowTimeString.split('T')
+        const [year, month, day] = datePart.split('-').map(Number)
+        const [hours, minutes] = timePart.split(':').map(Number)
+        
+        // Create Date object treating the input as Moscow time (UTC+3)
+        // Moscow is UTC+3, so we subtract 3 hours to get UTC
+        const utcDate = new Date(Date.UTC(year, month - 1, day, hours - 3, minutes, 0, 0))
+        formDataToSend.append('publishedAt', utcDate.toISOString())
       }
 
       if (product) {
