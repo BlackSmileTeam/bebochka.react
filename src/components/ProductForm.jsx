@@ -101,15 +101,16 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         // datetime-local gives us time in user's local timezone, but we want to treat it as Moscow time
         // Format: "YYYY-MM-DDTHH:mm" (no timezone info)
         const moscowTimeString = formData.publishedAt
-        // Create date assuming it's Moscow time (UTC+3)
-        // We'll create a UTC date that represents the same moment in Moscow
         const [datePart, timePart] = moscowTimeString.split('T')
         const [year, month, day] = datePart.split('-').map(Number)
         const [hours, minutes] = timePart.split(':').map(Number)
         
-        // Create Date object treating the input as Moscow time (UTC+3)
-        // Moscow is UTC+3, so we subtract 3 hours to get UTC
-        const utcDate = new Date(Date.UTC(year, month - 1, day, hours - 3, minutes, 0, 0))
+        // Create a Date object treating the input as Moscow time (UTC+3)
+        // We'll create it as if it were UTC, then subtract 3 hours (3 * 60 * 60 * 1000 ms)
+        // First create a date assuming the input is already UTC
+        const tempDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0))
+        // Then subtract 3 hours (Moscow is UTC+3, so to get UTC we subtract 3 hours)
+        const utcDate = new Date(tempDate.getTime() - 3 * 60 * 60 * 1000)
         formDataToSend.append('publishedAt', utcDate.toISOString())
       }
 

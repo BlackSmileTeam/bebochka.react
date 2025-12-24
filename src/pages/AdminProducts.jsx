@@ -165,6 +165,26 @@ function AdminProducts() {
     return gender
   }
 
+  // Конвертировать UTC время в московское время для отображения
+  const formatMoscowTime = (utcDateString) => {
+    if (!utcDateString) return ''
+    try {
+      const utcDate = new Date(utcDateString)
+      // Add 3 hours to convert from UTC to Moscow time
+      const moscowTime = new Date(utcDate.getTime() + 3 * 60 * 60 * 1000)
+      // Format as DD.MM.YYYY HH:mm
+      const day = String(moscowTime.getUTCDate()).padStart(2, '0')
+      const month = String(moscowTime.getUTCMonth() + 1).padStart(2, '0')
+      const year = moscowTime.getUTCFullYear()
+      const hours = String(moscowTime.getUTCHours()).padStart(2, '0')
+      const minutes = String(moscowTime.getUTCMinutes()).padStart(2, '0')
+      return `${day}.${month}.${year} ${hours}:${minutes}`
+    } catch (error) {
+      console.error('Ошибка при форматировании времени:', error)
+      return utcDateString
+    }
+  }
+
   const loadColors = async () => {
     try {
       const data = await api.getColors()
@@ -548,7 +568,7 @@ function AdminProducts() {
                         ) : (
                           <span 
                             className="publication-icon scheduled" 
-                            title={`Запланировано на ${new Date(product.publishedAt).toLocaleString('ru-RU')}`}
+                            title={`Запланировано на ${formatMoscowTime(product.publishedAt)}`}
                           >
                             ⏰
                           </span>
@@ -714,7 +734,7 @@ function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderI
                     <span style={{ color: '#48bb78', fontWeight: 'bold' }}>Опубликован</span>
                   ) : (
                     <span style={{ color: '#ed8936', fontWeight: 'bold' }}>
-                      Запланировано на {new Date(product.publishedAt).toLocaleString('ru-RU')}
+                      Запланировано на {formatMoscowTime(product.publishedAt)}
                     </span>
                   )
                 ) : (
