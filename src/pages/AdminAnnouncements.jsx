@@ -45,11 +45,14 @@ function AdminAnnouncements() {
   }
 
   const handleProductToggle = (productId) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId)
+    console.log('Toggling product:', productId, 'Current selected:', selectedProducts)
+    setSelectedProducts(prev => {
+      const newSelection = prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
-    )
+      console.log('New selection:', newSelection)
+      return newSelection
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -172,11 +175,17 @@ function AdminAnnouncements() {
             <div className="form-group">
               <label>Выберите товары для коллажа (до 4 изображений на коллаж, необязательно)</label>
               <div className="products-grid">
-                {products.map(product => (
+                {products.map(product => {
+                  const productId = product.id || product.Id
+                  const isSelected = selectedProducts.includes(productId)
+                  return (
                   <div
-                    key={product.id}
-                    className={`product-card ${selectedProducts.includes(product.id) ? 'selected' : ''}`}
-                    onClick={() => handleProductToggle(product.id)}
+                    key={productId}
+                    className={`product-card ${isSelected ? 'selected' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleProductToggle(productId)
+                    }}
                   >
                     {product.images && product.images.length > 0 && (
                       <img 
@@ -185,14 +194,15 @@ function AdminAnnouncements() {
                       />
                     )}
                     <div className="product-info">
-                      <h4>{product.name}</h4>
-                      <p>{product.brand}</p>
+                      <h4>{product.name || product.Name}</h4>
+                      <p>{product.brand || product.Brand}</p>
                     </div>
-                    {selectedProducts.includes(product.id) && (
+                    {isSelected && (
                       <div className="selected-indicator">✓</div>
                     )}
                   </div>
-                ))}
+                  )
+                })}
               </div>
               {products.length === 0 && (
                 <p>Нет неопубликованных товаров</p>
