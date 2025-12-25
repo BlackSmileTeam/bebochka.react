@@ -210,7 +210,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                   style={{ flex: 1 }}
                 />
               ) : (
-                <div ref={brandDropdownRef} style={{ position: 'relative', flex: 1 }}>
+                <div ref={brandDropdownRef} style={{ position: 'relative', flex: 1, width: '100%' }}>
                   <input
                     type="text"
                     id="brand"
@@ -228,6 +228,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       }
                     }}
                     placeholder="Поиск бренда..."
+                    style={{ width: '100%' }}
                   />
                   {showBrandDropdown && brands.length > 0 && (
                     <div style={{

@@ -32,10 +32,13 @@ function AdminAnnouncements() {
         api.getAnnouncements(),
         api.getUnpublishedProducts()
       ])
-      setAnnouncements(announcementsData)
-      setProducts(productsData)
+      console.log('Loaded announcements:', announcementsData)
+      setAnnouncements(announcementsData || [])
+      setProducts(productsData || [])
     } catch (err) {
       console.error('Error loading data:', err)
+      setAnnouncements([])
+      setProducts([])
     } finally {
       setLoading(false)
     }
@@ -130,6 +133,9 @@ function AdminAnnouncements() {
     return <div className="admin-announcements-container">Загрузка...</div>
   }
 
+  // Ensure announcements is always an array
+  const safeAnnouncements = Array.isArray(announcements) ? announcements : []
+
   return (
     <div className="admin-announcements-container">
       <div className="admin-announcements-header">
@@ -205,7 +211,7 @@ function AdminAnnouncements() {
 
       <div className="announcements-list">
         <h2>Запланированные анонсы</h2>
-        {announcements.length === 0 ? (
+        {safeAnnouncements.length === 0 ? (
           <p>Нет запланированных анонсов</p>
         ) : (
           <table className="announcements-table">
@@ -220,33 +226,48 @@ function AdminAnnouncements() {
               </tr>
             </thead>
             <tbody>
-              {announcements.map(announcement => (
-                <tr key={announcement.id}>
-                  <td>{announcement.message.substring(0, 50)}...</td>
-                  <td>{formatMoscowTime(announcement.scheduledAt)}</td>
-                  <td>{announcement.productIds?.length || 0}</td>
-                  <td>{announcement.collageImages?.length || 0}</td>
-                  <td>
-                    {announcement.isSent ? (
-                      <span className="status-sent">
-                        Отправлено ({announcement.sentCount} пользователям)
-                      </span>
-                    ) : (
-                      <span className="status-pending">Запланировано</span>
-                    )}
-                  </td>
-                  <td>
-                    {!announcement.isSent && (
-                      <button
-                        className="btn btn-small btn-delete"
-                        onClick={() => handleDelete(announcement.id)}
-                      >
-                        Удалить
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {safeAnnouncements.map(announcement => {
+                const id = announcement.id || announcement.Id
+                const message = announcement.message || announcement.Message || ''
+                const scheduledAt = announcement.scheduledAt || announcement.ScheduledAt
+                const productIds = announcement.productIds || announcement.ProductIds || []
+                const collageImages = announcement.collageImages || announcement.CollageImages || []
+                const isSent = announcement.isSent || announcement.IsSent || false
+                const sentCount = announcement.sentCount || announcement.SentCount || 0
+                
+                // Safely get message substring
+                const messageDisplay = (message && typeof message === 'string' && message.length > 0)
+                  ? (message.length > 50 ? message.substring(0, 50) + '...' : message)
+                  : ''
+                
+                return (
+                  <tr key={id}>
+                    <td>{messageDisplay}</td>
+                    <td>{formatMoscowTime(scheduledAt)}</td>
+                    <td>{Array.isArray(productIds) ? productIds.length : 0}</td>
+                    <td>{Array.isArray(collageImages) ? collageImages.length : 0}</td>
+                    <td>
+                      {isSent ? (
+                        <span className="status-sent">
+                          Отправлено ({sentCount} пользователям)
+                        </span>
+                      ) : (
+                        <span className="status-pending">Запланировано</span>
+                      )}
+                    </td>
+                    <td>
+                      {!isSent && (
+                        <button
+                          className="btn btn-small btn-delete"
+                          onClick={() => handleDelete(id)}
+                        >
+                          Удалить
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}
