@@ -235,6 +235,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       top: '100%',
                       left: 0,
                       right: 0,
+                      width: '100%',
                       backgroundColor: 'white',
                       border: '1px solid #e2e8f0',
                       borderRadius: '6px',
@@ -244,25 +245,35 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                       marginTop: '4px'
                     }}>
-                      {brands.map(brand => (
-                        <div
-                          key={brand.id}
-                          onClick={() => {
-                            setFormData({ ...formData, brand: brand.name })
-                            setBrandSearch(brand.name)
-                            setShowBrandDropdown(false)
-                          }}
-                          style={{
-                            padding: '0.75rem',
-                            cursor: 'pointer',
-                            borderBottom: '1px solid #e2e8f0'
-                          }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = '#f7fafc'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-                        >
-                          {brand.name}
-                        </div>
-                      ))}
+                      {brands.map((brand, index) => {
+                        const brandName = typeof brand === 'string' ? brand : (brand.name || brand.Name || '');
+                        const brandId = typeof brand === 'string' ? brand : (brand.id || brand.Id || index);
+                        return (
+                          <div
+                            key={brandId}
+                            onClick={() => {
+                              setFormData({ ...formData, brand: brandName })
+                              setBrandSearch(brandName)
+                              setShowBrandDropdown(false)
+                            }}
+                            style={{
+                              padding: '0.75rem',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #e2e8f0',
+                              color: '#2d3748',
+                              fontSize: '0.875rem',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              minWidth: '100%'
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#f7fafc'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                          >
+                            {brandName}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

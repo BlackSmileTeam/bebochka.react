@@ -57,11 +57,6 @@ function AdminAnnouncements() {
       return
     }
 
-    if (selectedProducts.length === 0) {
-      alert('Пожалуйста, выберите хотя бы один товар')
-      return
-    }
-
     try {
       // datetime-local gives "YYYY-MM-DDTHH:mm" (interpreted as Moscow time)
       // We need to send this as a DateTime that represents Moscow time components
@@ -169,7 +164,7 @@ function AdminAnnouncements() {
             </div>
 
             <div className="form-group">
-              <label>Выберите товары для коллажа (до 4 изображений на коллаж) *</label>
+              <label>Выберите товары для коллажа (до 4 изображений на коллаж, необязательно)</label>
               <div className="products-grid">
                 {products.map(product => (
                   <div
