@@ -334,11 +334,11 @@ function AdminProducts() {
     try {
       setSendingToChannel(true)
       const result = await api.sendMessageToChannel(message)
-      if (result?.success !== false) {
+      if (result?.success) {
         alert(`Сообщение успешно отправлено в канал! (${selectedProducts.length} товар(ов))`)
         setSelectedProductIds(new Set())
       } else {
-        alert('Не удалось отправить сообщение в канал')
+        alert(result?.message || 'Не удалось отправить сообщение в канал')
       }
     } catch (err) {
       console.error('Error sending to channel:', err)

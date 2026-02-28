@@ -997,11 +997,16 @@ export const api = {
   async sendMessageToChannel(message) {
     try {
       const response = await apiClient.post('/telegram/channel/send', { message })
-      return response.data
+      const data = response.data
+      const isObject = data && typeof data === 'object'
+      const success = isObject ? (data.success ?? data.Success ?? false) : false
+      const normalizedMessage = isObject ? (data.message ?? data.Message ?? '') : ''
+      return isObject ? { ...data, success, message: normalizedMessage } : { success, message: normalizedMessage, raw: data }
     } catch (error) {
       console.error('[API] Error sending message to channel:', error)
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message)
+      const apiMessage = error.response?.data?.message || error.response?.data?.Message
+      if (apiMessage) {
+        throw new Error(apiMessage)
       }
       throw error
     }

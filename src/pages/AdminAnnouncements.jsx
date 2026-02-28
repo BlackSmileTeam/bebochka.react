@@ -20,6 +20,8 @@ function AdminAnnouncements() {
     message: DEFAULT_MESSAGE,
     scheduledAt: ''
   })
+  const [channelMessage, setChannelMessage] = useState('')
+  const [sendingChannel, setSendingChannel] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -114,6 +116,31 @@ function AdminAnnouncements() {
     }
   }
 
+  const handleSendToChannel = async (e) => {
+    e.preventDefault()
+    
+    if (!channelMessage.trim()) {
+      alert('Пожалуйста, введите сообщение')
+      return
+    }
+
+    try {
+      setSendingChannel(true)
+      const result = await api.sendMessageToChannel(channelMessage)
+      if (result?.success) {
+        alert('Сообщение успешно отправлено в канал!')
+        setChannelMessage('')
+      } else {
+        alert(result?.message || 'Не удалось отправить сообщение в канал')
+      }
+    } catch (err) {
+      console.error('Error sending message to channel:', err)
+      alert('Ошибка при отправке сообщения в канал: ' + (err.message || 'Неизвестная ошибка'))
+    } finally {
+      setSendingChannel(false)
+    }
+  }
+
 
   const formatMoscowTime = (utcDateString) => {
     if (!utcDateString) return ''
@@ -146,6 +173,32 @@ function AdminAnnouncements() {
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Отменить' : '+ Создать анонс'}
         </button>
+      </div>
+
+      <div className="channel-message-section" style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+        <h2>Отправка сообщения в канал</h2>
+        <form onSubmit={handleSendToChannel}>
+          <div className="form-group">
+            <label>Сообщение для канала *</label>
+            <textarea
+              value={channelMessage}
+              onChange={(e) => setChannelMessage(e.target.value)}
+              rows={4}
+              placeholder="Введите текст сообщения для отправки в канал..."
+              required
+              disabled={sendingChannel}
+            />
+          </div>
+          <div className="form-actions">
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              disabled={sendingChannel || !channelMessage.trim()}
+            >
+              {sendingChannel ? 'Отправка...' : '📢 Отправить в канал'}
+            </button>
+          </div>
+        </form>
       </div>
 
       {showForm && (
