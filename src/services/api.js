@@ -987,5 +987,92 @@ export const api = {
       console.error('[API] Error creating brand:', error)
       throw error
     }
+  },
+
+  /**
+   * Sends a message to Telegram channel
+   * @param {string} message - Message text to send
+   * @returns {Promise<Object>} Response with success status
+   */
+  async sendMessageToChannel(message) {
+    try {
+      const response = await apiClient.post('/telegram/channel/send', { message })
+      return response.data
+    } catch (error) {
+      console.error('[API] Error sending message to channel:', error)
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Gets all orders (admin only)
+   * @returns {Promise<Array>} List of orders
+   */
+  async getAllOrders() {
+    try {
+      const response = await apiClient.get('/orders')
+      return response.data || []
+    } catch (error) {
+      console.error('[API] Error fetching orders:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Gets an order by ID
+   * @param {number} id - Order ID
+   * @returns {Promise<Object>} Order data
+   */
+  async getOrder(id) {
+    try {
+      const response = await apiClient.get(`/orders/${id}`)
+      return response.data
+    } catch (error) {
+      console.error('[API] Error fetching order:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Updates order status
+   * @param {number} id - Order ID
+   * @param {string} status - New status
+   * @returns {Promise<Object>} Response
+   */
+  async updateOrderStatus(id, status) {
+    try {
+      const response = await apiClient.put(`/orders/${id}/status`, { status })
+      return response.data
+    } catch (error) {
+      console.error('[API] Error updating order status:', error)
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message)
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Updates multiple orders status
+   * @param {Array<number>} orderIds - Array of order IDs
+   * @param {string} status - New status
+   * @returns {Promise<Array>} Results
+   */
+  async updateOrdersStatus(orderIds, status) {
+    try {
+      const promises = orderIds.map(id => this.updateOrderStatus(id, status))
+      const results = await Promise.allSettled(promises)
+      return results.map((result, index) => ({
+        orderId: orderIds[index],
+        success: result.status === 'fulfilled',
+        error: result.status === 'rejected' ? result.reason?.message : null
+      }))
+    } catch (error) {
+      console.error('[API] Error updating orders status:', error)
+      throw error
+    }
   }
 }
