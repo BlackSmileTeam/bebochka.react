@@ -13,6 +13,8 @@ function AdminProducts() {
   const [showDetails, setShowDetails] = useState(false)
   const [colors, setColors] = useState([])
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedProductIds, setSelectedProductIds] = useState(new Set())
+  const [sendingToChannel, setSendingToChannel] = useState(false)
   
   // Фильтры
   const [filters, setFilters] = useState({
@@ -286,6 +288,66 @@ function AdminProducts() {
   
   const activeFiltersCount = Object.values(filters).filter(v => v !== '' && v !== 'all').length
 
+  const toggleProductSelection = (productId, event) => {
+    event.stopPropagation()
+    setSelectedProductIds(prev => {
+      const next = new Set(prev)
+      if (next.has(productId)) {
+        next.delete(productId)
+      } else {
+        next.add(productId)
+      }
+      return next
+    })
+  }
+
+  const toggleAllProducts = (event) => {
+    event.stopPropagation()
+    if (selectedProductIds.size === filteredProducts.length) {
+      setSelectedProductIds(new Set())
+    } else {
+      setSelectedProductIds(new Set(filteredProducts.map(p => p.id)))
+    }
+  }
+
+  const handleSendToChannel = async () => {
+    if (selectedProductIds.size === 0) {
+      alert('Выберите хотя бы один товар для отправки в канал')
+      return
+    }
+
+    const selectedProducts = filteredProducts.filter(p => selectedProductIds.has(p.id))
+    const baseUrl = window.location.origin
+    const lines = ['🛍 Новые товары в каталоге:\n']
+    selectedProducts.forEach((p, i) => {
+      const details = [p.name]
+      if (p.brand) details.push(p.brand)
+      if (p.size) details.push(`размер ${p.size}`)
+      if (p.color) details.push(p.color)
+      lines.push(`${i + 1}. ${details.join(', ')} — ${(p.price ?? 0).toLocaleString('ru-RU')} ₽`)
+    })
+    const channelUrl = 'https://t.me/bebochkaTest'
+    lines.push(`\n👉 Смотреть каталог: ${baseUrl}`)
+    lines.push(`📢 Канал: ${channelUrl}`)
+    const message = lines.join('\n')
+
+    try {
+      setSendingToChannel(true)
+      const result = await api.sendMessageToChannel(message)
+      if (result?.success !== false) {
+        alert(`Сообщение успешно отправлено в канал! (${selectedProducts.length} товар(ов))`)
+        setSelectedProductIds(new Set())
+      } else {
+        alert('Не удалось отправить сообщение в канал')
+      }
+    } catch (err) {
+      console.error('Error sending to channel:', err)
+      alert('Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'))
+    } finally {
+      setSendingToChannel(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container">
@@ -305,6 +367,16 @@ function AdminProducts() {
           >
             🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
+          {selectedProductIds.size > 0 && (
+            <button 
+              className="btn btn-secondary" 
+              onClick={handleSendToChannel}
+              disabled={sendingToChannel}
+              title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
+            >
+              {sendingToChannel ? 'Отправка...' : `📢 Отправить в канал (${selectedProductIds.size})`}
+            </button>
+          )}
           <button className="btn btn-primary" onClick={handleCreate}>
             ➕ Добавить
           </button>
@@ -464,6 +536,7 @@ function AdminProducts() {
           isPublished={isPublished(viewingProduct)}
           getGenderIcon={getGenderIcon}
           capitalize={capitalize}
+          formatMoscowTime={formatMoscowTime}
         />
       )}
 
@@ -492,6 +565,15 @@ function AdminProducts() {
           <table className="products-table">
             <thead>
               <tr>
+                <th className="checkbox-column">
+                  <input
+                    type="checkbox"
+                    checked={filteredProducts.length > 0 && selectedProductIds.size === filteredProducts.length}
+                    onChange={toggleAllProducts}
+                    onClick={(e) => e.stopPropagation()}
+                    title={selectedProductIds.size === filteredProducts.length ? 'Снять выделение' : 'Выбрать все'}
+                  />
+                </th>
                 <th>Фото</th>
                 <th>Бренд</th>
                 <th>Размер</th>
@@ -510,10 +592,18 @@ function AdminProducts() {
                 return (
                 <tr 
                   key={product.id}
-                  className={`product-row ${published ? '' : 'product-unpublished'}`}
+                  className={`product-row ${published ? '' : 'product-unpublished'} ${selectedProductIds.has(product.id) ? 'row-selected' : ''}`}
                   style={published ? {} : { backgroundColor: '#fff8e1' }}
                   onClick={(e) => handleRowClick(product, e)}
                 >
+                  <td className="checkbox-column" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedProductIds.has(product.id)}
+                      onChange={(e) => toggleProductSelection(product.id, e)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </td>
                   <td>
                     <div className="product-image-cell">
                       {product.images && product.images.length > 0 ? (
@@ -635,7 +725,7 @@ function AdminProducts() {
 }
 
 // Компонент модального окна деталей товара
-function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderIcon, capitalize }) {
+function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderIcon, capitalize, formatMoscowTime }) {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'
   
   return (

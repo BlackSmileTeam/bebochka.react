@@ -20,10 +20,32 @@
 
 .header-actions .btn {
   height: 100%;
-  width: 10em;
+  min-width: 8em;
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
+}
+
+/* Checkbox column and row selection */
+.checkbox-column {
+  width: 40px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.checkbox-column input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.products-table tbody tr.row-selected {
+  background-color: #e6f2ff !important;
+}
+
+.products-table tbody tr.row-selected:hover {
+  background-color: #cce5ff !important;
 }
 
 .btn {
