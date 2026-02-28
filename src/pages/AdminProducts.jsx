@@ -369,7 +369,7 @@ function AdminProducts() {
           </button>
           {selectedProductIds.size > 0 && (
             <button 
-              className="btn btn-secondary" 
+              className="btn btn-secondary btn-send-channel" 
               onClick={handleSendToChannel}
               disabled={sendingToChannel}
               title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}

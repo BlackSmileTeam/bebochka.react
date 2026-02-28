@@ -25,6 +25,13 @@
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+  padding: 0.75rem 1.5rem;
+}
+
+.header-actions .btn.btn-send-channel {
+  min-width: auto;
+  padding: 0.75rem 1.5rem;
+  width: auto;
 }
 
 /* Checkbox column and row selection */
