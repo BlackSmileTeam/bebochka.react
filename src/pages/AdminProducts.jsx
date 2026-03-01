@@ -721,9 +721,9 @@ function AdminProducts() {
                   e.stopPropagation()
                   toggleAllProducts(e)
                 }}
-                title={selectedProductIds.size === filteredProducts.length ? 'Снять выделение со всех' : `Выбрать все ${filteredProducts.length} товар(ов)`}
-              >
-                {selectedProductIds.size === filteredProducts.length ? '☑️ Снять выделение' : `☐ Выбрать все (${filteredProducts.length})`}
+              title={selectedProductIds.size === filteredProducts.length ? 'Снять выделение со всех' : `Выбрать все ${filteredProducts.length} товар(ов)`}
+            >
+              {selectedProductIds.size === filteredProducts.length ? '☑️ Снять выделение' : `☐ Все (${filteredProducts.length})`}
               </button>
             )}
           </div>
@@ -736,7 +736,7 @@ function AdminProducts() {
                     checked={filteredProducts.length > 0 && selectedProductIds.size === filteredProducts.length}
                     onChange={toggleAllProducts}
                     onClick={(e) => e.stopPropagation()}
-                    title={selectedProductIds.size === filteredProducts.length ? 'Снять выделение' : 'Выбрать все'}
+                    title={selectedProductIds.size === filteredProducts.length ? 'Снять выделение' : 'Все'}
                   />
                 </th>
                 <th>Фото</th>
