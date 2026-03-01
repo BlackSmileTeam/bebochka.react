@@ -501,22 +501,59 @@ function AdminProducts() {
     }
     localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
 
-    // Send products to channel - backend handles everything
+    // Send products to channel - backend handles everything in parallel
+    // We'll poll for status updates to show real-time progress
+    let pollInterval = null
     try {
       setSendingToChannel(true)
       setSendProgress({ current: 0, total })
       
-      // Send all products at once - backend will handle formatting and sending
-      const result = await api.sendProductsToChannel(productIds)
+      // Start sending products in parallel (non-blocking)
+      const sendPromise = api.sendProductsToChannel(productIds)
+      
+      // Poll for status updates while sending
+      pollInterval = setInterval(async () => {
+        try {
+          const status = await api.getSendStatus(productIds)
+          setSendProgress({ current: status.publishedCount, total: status.totalCount })
+          
+          // Update localStorage with current progress
+          const updatedOperation = {
+            ...operationInfo,
+            current: status.publishedCount
+          }
+          localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
+          
+          // If all products are published, stop polling
+          if (status.publishedCount >= status.totalCount) {
+            if (pollInterval) {
+              clearInterval(pollInterval)
+              pollInterval = null
+            }
+          }
+        } catch (err) {
+          console.error('[SendToChannel] Error polling status:', err)
+        }
+      }, 500) // Poll every 500ms for real-time updates
+      
+      // Wait for all products to be sent
+      const result = await sendPromise
       console.log('[SendToChannel] API response:', result)
       
-      // Update progress
-      setSendProgress({ current: result.successCount, total })
+      // Clear polling interval
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        pollInterval = null
+      }
       
-      // Update localStorage with actual success count
+      // Get final status
+      const finalStatus = await api.getSendStatus(productIds)
+      setSendProgress({ current: finalStatus.publishedCount, total: finalStatus.totalCount })
+      
+      // Update localStorage with final status
       const updatedOperation = {
         ...operationInfo,
-        current: result.successCount
+        current: finalStatus.publishedCount
       }
       localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
 
@@ -545,12 +582,21 @@ function AdminProducts() {
       }
     } catch (err) {
       console.error('Error sending products to channel:', err)
+      // Clear polling interval on error
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        pollInterval = null
+      }
       // Don't clear localStorage on error - allow recovery
       setToast({ 
         message: 'Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'), 
         type: 'error' 
       })
     } finally {
+      // Ensure interval is cleared
+      if (pollInterval) {
+        clearInterval(pollInterval)
+      }
       setSendingToChannel(false)
       setSendProgress({ current: 0, total: 0 })
     }

@@ -1068,6 +1068,31 @@ export const api = {
   },
 
   /**
+   * Gets the sending status for products by their IDs
+   * Returns how many products have been published (sent to channel)
+   * @param {Array<number>} productIds - Array of product IDs to check
+   * @returns {Promise<Object>} Status with count of published products
+   */
+  async getSendStatus(productIds) {
+    try {
+      const response = await apiClient.post('/telegram/channel/send-status', productIds)
+      const data = response.data
+      return {
+        totalCount: data.totalCount ?? data.TotalCount ?? 0,
+        publishedCount: data.publishedCount ?? data.PublishedCount ?? 0,
+        remainingCount: data.remainingCount ?? data.RemainingCount ?? 0
+      }
+    } catch (error) {
+      console.error('[API] Error getting send status:', error)
+      const apiMessage = error.response?.data?.message || error.response?.data?.Message
+      if (apiMessage) {
+        throw new Error(apiMessage)
+      }
+      throw error
+    }
+  },
+
+  /**
    * Gets all Telegram errors grouped by date
    * @returns {Promise<Object>} Errors grouped by date
    */
