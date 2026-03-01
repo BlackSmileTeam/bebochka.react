@@ -353,7 +353,7 @@ function AdminProducts() {
     }
 
     const selectedProducts = filteredProducts.filter(p => selectedProductIds.has(p.id))
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'
     
     // Форматируем сообщения и собираем изображения как в боте
     const productData = []
