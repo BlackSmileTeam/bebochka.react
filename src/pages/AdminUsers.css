@@ -243,13 +243,15 @@
   }
 
   .users-table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .users-table {
-    min-width: 600px;
+    width: 100%;
     font-size: 0.9rem;
+    box-sizing: border-box;
   }
 
   .users-table th,
@@ -275,14 +277,103 @@
     font-size: 1.75rem;
   }
 
-  .users-table {
-    min-width: 500px;
-    font-size: 0.85rem;
+  .users-table-container {
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .users-table th,
+  .users-table {
+    display: block;
+    width: 100%;
+    overflow-x: visible;
+    box-sizing: border-box;
+  }
+
+  .users-table thead {
+    display: none;
+  }
+
+  .users-table tbody {
+    display: block;
+  }
+
+  .users-table tr {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .users-table td {
-    padding: 0.5rem 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border: none;
+    border-bottom: 1px solid #f7fafc;
+    text-align: left;
+  }
+
+  .users-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Скрываем колонки ID, Полное имя и Создан на мобильных */
+  .users-table .id-cell,
+  .users-table .fullname-cell,
+  .users-table .created-cell {
+    display: none;
+  }
+
+  /* Имя пользователя */
+  .users-table .username-cell {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+  }
+
+  .users-table .username-cell:before {
+    content: "👤";
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Email */
+  .users-table .email-cell {
+    color: #4a5568;
+  }
+
+  .users-table .email-cell:before {
+    content: "📧";
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Действия */
+  .users-table .actions-cell {
+    justify-content: flex-end;
+    padding-top: 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .users-table .actions-cell:before {
+    display: none;
+  }
+
+  .users-table .actions-cell .btn {
+    width: auto;
+    min-width: auto;
+    padding: 0.5rem 1rem;
+    margin-right: 0;
+    font-size: 0.85rem;
   }
 
   .btn-small {

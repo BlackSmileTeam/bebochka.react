@@ -216,11 +216,11 @@ function AdminUsers() {
                 console.log('Rendering user:', user) // Debug log
                 return (
                   <tr key={user.id || user.Id}>
-                    <td>{user.id || user.Id}</td>
-                    <td>{user.username || user.Username || '-'}</td>
-                    <td>{user.email || user.Email || '-'}</td>
-                    <td>{user.fullName || user.FullName || '-'}</td>
-                    <td>
+                    <td data-label="ID" className="id-cell">{user.id || user.Id}</td>
+                    <td data-label="Имя пользователя" className="username-cell">{user.username || user.Username || '-'}</td>
+                    <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
+                    <td data-label="Полное имя" className="fullname-cell">{user.fullName || user.FullName || '-'}</td>
+                    <td data-label="Создан" className="created-cell">
                       {(() => {
                         const createdAt = user.createdAt || user.CreatedAt
                         if (!createdAt) return '-'
@@ -235,7 +235,7 @@ function AdminUsers() {
                         }
                       })()}
                     </td>
-                    <td>
+                    <td data-label="Действия" className="actions-cell">
                       <button
                         className="btn btn-small btn-edit"
                         onClick={() => setShowPasswordForm(user.id || user.Id)}
