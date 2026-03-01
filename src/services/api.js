@@ -1016,7 +1016,10 @@ export const api = {
       if (imageUrls && imageUrls.length > 0) {
         payload.imageUrls = imageUrls
       }
-      const response = await apiClient.post('/telegram/channel/send', payload)
+      // Increase timeout for Telegram channel sending (can take up to 500 seconds on backend)
+      const response = await apiClient.post('/telegram/channel/send', payload, {
+        timeout: 600000 // 10 minutes timeout for sending large images to Telegram
+      })
       const data = response.data
       const isObject = data && typeof data === 'object'
       const success = isObject ? (data.success ?? data.Success ?? false) : false
