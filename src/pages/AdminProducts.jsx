@@ -617,7 +617,12 @@ function AdminProducts() {
         
         try {
           const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
-          if (result?.success) {
+          console.log(`[SendToChannel] Product ${product.id} (${product.name}) - API response:`, result)
+          
+          // Check both success and Success (case-insensitive)
+          const isSuccess = result?.success === true || result?.Success === true
+          
+          if (isSuccess) {
             successCount++
             // Mark product as published
             publishedProductIds.push(product.id)
@@ -629,13 +634,15 @@ function AdminProducts() {
               current: successCount
             }
             localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
+            console.log(`[SendToChannel] Product ${product.id} marked as successfully sent`)
           } else {
             failCount++
+            console.warn(`[SendToChannel] Product ${product.id} failed. Response:`, result)
             // Update progress even on failure to show current position
             setSendProgress({ current: successCount + failCount, total: productData.length })
           }
         } catch (err) {
-          console.error('Error sending message to channel:', err)
+          console.error(`[SendToChannel] Error sending product ${product.id} to channel:`, err)
           failCount++
           // Update progress even on error to show current position
           setSendProgress({ current: successCount + failCount, total: productData.length })
