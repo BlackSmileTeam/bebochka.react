@@ -52,7 +52,7 @@ function AdminProducts() {
       const savedOperation = localStorage.getItem('sendingToChannel')
       if (savedOperation) {
         const operation = JSON.parse(savedOperation)
-        const { productIds, startTime, total } = operation
+        const { productIds, startTime, total, current = 0 } = operation
         
         // Check if operation is recent (within last 30 minutes)
         const operationTime = new Date(startTime)
@@ -63,22 +63,20 @@ function AdminProducts() {
           // Use already loaded products
           const data = products
           
-          // Count how many products are already published
-          const publishedCount = productIds.filter(id => {
-            const product = data.find(p => p.id === id)
-            return product && product.publishedAt
-          }).length
+          // Use saved current progress, not count of published products
+          // because products might have been published earlier
+          const savedCurrent = current || 0
           
-          // If not all products are published, restore sending state
-          if (publishedCount < total) {
+          // If not all products are sent, restore sending state
+          if (savedCurrent < total) {
             setSendingToChannel(true)
-            setSendProgress({ current: publishedCount, total })
+            setSendProgress({ current: savedCurrent, total })
             setSelectedProductIds(new Set(productIds))
             
-            // Continue sending remaining products
-            continueSendingProducts(productIds, publishedCount, total, data)
+            // Continue sending remaining products from saved progress
+            continueSendingProducts(productIds, savedCurrent, total, data)
           } else {
-            // All products are published, clear saved operation
+            // All products are sent, clear saved operation
             localStorage.removeItem('sendingToChannel')
             setToast({ 
               message: `Все товары успешно отправлены в канал! (${total} товар(ов))`, 
@@ -151,21 +149,35 @@ function AdminProducts() {
       let failCount = 0
       const publishedProductIds = []
       
+      // Get saved operation to update it
+      const savedOperation = localStorage.getItem('sendingToChannel')
+      let operationInfo = savedOperation ? JSON.parse(savedOperation) : null
+      
       for (let i = 0; i < productData.length; i++) {
         const { caption, imageUrls, productId } = productData[i]
-        setSendProgress({ current: startIndex + i + 1, total })
         
         try {
           const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
           if (result?.success) {
             successCount++
             publishedProductIds.push(productId)
+            
+            // Update progress and localStorage with actual success count
+            setSendProgress({ current: successCount, total })
+            if (operationInfo) {
+              operationInfo.current = successCount
+              localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
+            }
           } else {
             failCount++
+            // Update progress even on failure
+            setSendProgress({ current: successCount + failCount, total })
           }
         } catch (err) {
           console.error('Error sending message to channel:', err)
           failCount++
+          // Update progress even on error
+          setSendProgress({ current: successCount + failCount, total })
         }
       }
       
@@ -584,7 +596,8 @@ function AdminProducts() {
     const operationInfo = {
       productIds,
       startTime: new Date().toISOString(),
-      total: productData.length
+      total: productData.length,
+      current: 0 // Track actual number of successfully sent products
     }
     localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
 
@@ -601,14 +614,6 @@ function AdminProducts() {
       for (let i = 0; i < productData.length; i++) {
         const { caption, imageUrls } = productData[i]
         const product = selectedProducts[i]
-        setSendProgress({ current: i + 1, total: productData.length })
-        
-        // Update localStorage with current progress
-        const updatedOperation = {
-          ...operationInfo,
-          current: i + 1
-        }
-        localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
         
         try {
           const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
@@ -616,12 +621,24 @@ function AdminProducts() {
             successCount++
             // Mark product as published
             publishedProductIds.push(product.id)
+            
+            // Update progress and localStorage with actual success count
+            setSendProgress({ current: successCount, total: productData.length })
+            const updatedOperation = {
+              ...operationInfo,
+              current: successCount
+            }
+            localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
           } else {
             failCount++
+            // Update progress even on failure to show current position
+            setSendProgress({ current: successCount + failCount, total: productData.length })
           }
         } catch (err) {
           console.error('Error sending message to channel:', err)
           failCount++
+          // Update progress even on error to show current position
+          setSendProgress({ current: successCount + failCount, total: productData.length })
         }
       }
 
