@@ -194,11 +194,26 @@
 .status-sent {
   color: #48bb78;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .status-pending {
   color: #ed8936;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.status-text {
+  display: inline;
 }
 
 .btn {
@@ -243,3 +258,210 @@
   background-color: #e53e3e;
 }
 
+@media (max-width: 768px) {
+  .admin-announcements-container {
+    padding: 1rem;
+  }
+
+  .admin-announcements-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .admin-announcements-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .announcement-form,
+  .channel-message-section {
+    padding: 1.5rem;
+  }
+
+  .announcement-form h2,
+  .channel-message-section h2 {
+    font-size: 1.25rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .product-card img {
+    height: 200px;
+  }
+
+  .announcements-list {
+    padding: 1.5rem;
+  }
+
+  .announcements-table {
+    font-size: 0.9rem;
+  }
+
+  .announcements-table th,
+  .announcements-table td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-announcements-container {
+    padding: 0.75rem;
+  }
+
+  .admin-announcements-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .announcement-form,
+  .channel-message-section {
+    padding: 1rem;
+  }
+
+  .announcement-form h2,
+  .channel-message-section h2 {
+    font-size: 1.1rem;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+    max-height: 400px;
+  }
+
+  .announcements-list {
+    padding: 1rem;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .announcements-table {
+    display: block;
+    width: 100%;
+    overflow-x: visible;
+    box-sizing: border-box;
+  }
+
+  .announcements-table thead {
+    display: none;
+  }
+
+  .announcements-table tbody {
+    display: block;
+  }
+
+  .announcements-table tr {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .announcements-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border: none;
+    border-bottom: 1px solid #f7fafc;
+    text-align: left;
+  }
+
+  .announcements-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Скрываем колонки с количеством товаров и коллажей на мобильных */
+  .announcements-table .products-count-cell,
+  .announcements-table .collages-count-cell {
+    display: none;
+  }
+
+  /* Сообщение - показываем только часть */
+  .announcements-table .message-cell {
+    font-weight: 500;
+    color: #2d3748;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .announcements-table .message-cell:before {
+    content: "Сообщение:";
+    font-weight: 600;
+    color: #4a5568;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Дата */
+  .announcements-table .date-cell:before {
+    content: "📅";
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Статус - только иконка на мобильных */
+  .announcements-table .status-cell {
+    justify-content: flex-start;
+  }
+
+  .announcements-table .status-cell:before {
+    content: "Статус:";
+    font-weight: 600;
+    color: #4a5568;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .status-sent,
+  .status-pending {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .status-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+
+  .status-text {
+    display: none;
+  }
+
+  /* Действия */
+  .announcements-table .actions-cell {
+    justify-content: flex-end;
+    padding-top: 0.75rem;
+  }
+
+  .announcements-table .actions-cell:before {
+    display: none;
+  }
+
+  .announcements-table .actions-cell .btn {
+    width: auto;
+    min-width: auto;
+    padding: 0.5rem 1rem;
+  }
+}

@@ -227,37 +227,38 @@ function AdminAnnouncements() {
 
             <div className="form-group">
               <label>Выберите товары для коллажа (до 4 изображений на коллаж, необязательно)</label>
-              <div className="products-grid">
-                {products.map(product => {
-                  const productId = product.id || product.Id
-                  const isSelected = selectedProducts.includes(productId)
-                  return (
-                  <div
-                    key={productId}
-                    className={`product-card ${isSelected ? 'selected' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleProductToggle(productId)
-                    }}
-                  >
-                    {product.images && product.images.length > 0 && (
-                      <img 
-                        src={`http://89.104.67.36:55501${product.images[0]}`}
-                        alt={product.name}
-                      />
-                    )}
-                    <div className="product-info">
-                      <h4>{product.name || product.Name}</h4>
-                      <p>{product.brand || product.Brand}</p>
+              {products.length > 0 ? (
+                <div className="products-grid">
+                  {products.map(product => {
+                    const productId = product.id || product.Id
+                    const isSelected = selectedProducts.includes(productId)
+                    return (
+                    <div
+                      key={productId}
+                      className={`product-card ${isSelected ? 'selected' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleProductToggle(productId)
+                      }}
+                    >
+                      {product.images && product.images.length > 0 && (
+                        <img 
+                          src={`http://89.104.67.36:55501${product.images[0]}`}
+                          alt={product.name}
+                        />
+                      )}
+                      <div className="product-info">
+                        <h4>{product.name || product.Name}</h4>
+                        <p>{product.brand || product.Brand}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="selected-indicator">✓</div>
+                      )}
                     </div>
-                    {isSelected && (
-                      <div className="selected-indicator">✓</div>
-                    )}
-                  </div>
-                  )
-                })}
-              </div>
-              {products.length === 0 && (
+                    )
+                  })}
+                </div>
+              ) : (
                 <p>Нет неопубликованных товаров</p>
               )}
             </div>
@@ -298,27 +299,33 @@ function AdminAnnouncements() {
                 const isSent = announcement.isSent || announcement.IsSent || false
                 const sentCount = announcement.sentCount || announcement.SentCount || 0
                 
-                // Safely get message substring
+                // Safely get message substring (shorter on mobile)
+                const isMobile = window.innerWidth <= 480
+                const maxLength = isMobile ? 30 : 50
                 const messageDisplay = (message && typeof message === 'string' && message.length > 0)
-                  ? (message.length > 50 ? message.substring(0, 50) + '...' : message)
+                  ? (message.length > maxLength ? message.substring(0, maxLength) + '...' : message)
                   : ''
                 
                 return (
                   <tr key={id}>
-                    <td>{messageDisplay}</td>
-                    <td>{formatMoscowTime(scheduledAt)}</td>
-                    <td>{Array.isArray(productIds) ? productIds.length : 0}</td>
-                    <td>{Array.isArray(collageImages) ? collageImages.length : 0}</td>
-                    <td>
+                    <td data-label="Сообщение" className="message-cell">{messageDisplay}</td>
+                    <td data-label="Время отправки" className="date-cell">{formatMoscowTime(scheduledAt)}</td>
+                    <td data-label="Товаров" className="products-count-cell">{Array.isArray(productIds) ? productIds.length : 0}</td>
+                    <td data-label="Коллажей" className="collages-count-cell">{Array.isArray(collageImages) ? collageImages.length : 0}</td>
+                    <td data-label="Статус" className="status-cell">
                       {isSent ? (
-                        <span className="status-sent">
-                          Отправлено ({sentCount} пользователям)
+                        <span className="status-sent" title={`Отправлено (${sentCount} пользователям)`}>
+                          <span className="status-icon">✓</span>
+                          <span className="status-text">Отправлено ({sentCount})</span>
                         </span>
                       ) : (
-                        <span className="status-pending">Запланировано</span>
+                        <span className="status-pending" title="Запланировано">
+                          <span className="status-icon">⏰</span>
+                          <span className="status-text">Запланировано</span>
+                        </span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Действия" className="actions-cell">
                       {!isSent && (
                         <button
                           className="btn btn-small btn-delete"
