@@ -20,11 +20,17 @@
   padding: 0 1.5rem;
 }
 
-.header .container {
+.header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  width: 100%;
+  gap: 1rem;
+}
+
+.header .container {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
@@ -132,10 +138,19 @@
   cursor: pointer;
   font-size: 0.9rem;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .logout-btn:hover {
   background-color: rgba(255, 255, 255, 0.3);
+}
+
+.logout-btn-mobile {
+  display: none;
+}
+
+.logout-btn-desktop {
+  display: inline-block;
 }
 
 @media (max-width: 768px) {
@@ -144,12 +159,17 @@
   }
 
   .header .container {
-    flex-direction: column;
     padding: 0 1rem;
+  }
+
+  .header-top {
+    flex-wrap: wrap;
   }
 
   .logo {
     font-size: 1rem;
+    flex: 1;
+    min-width: 0;
   }
 
   .logo-img {
@@ -159,6 +179,19 @@
 
   .logo-text {
     font-size: 1rem;
+  }
+
+  .logout-btn-mobile {
+    display: inline-block;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    min-height: 36px;
+    align-self: flex-start;
+    margin-left: auto;
+  }
+
+  .logout-btn-desktop {
+    display: none;
   }
 
   .nav {
@@ -181,12 +214,6 @@
     min-height: 44px;
   }
 
-  .logout-btn {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-    min-height: 44px;
-  }
-
   .main {
     padding: 1.5rem 0;
   }
@@ -205,13 +232,29 @@
     padding: 0 0.75rem;
   }
 
+  .header-top {
+    gap: 0.5rem;
+  }
+
   .logo {
     font-size: 0.9rem;
+    flex: 1;
+    min-width: 0;
   }
 
   .logo-img {
     width: 35px;
     height: 35px;
+  }
+
+  .logo-text {
+    font-size: 0.85rem;
+  }
+
+  .logout-btn-mobile {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+    min-height: 32px;
   }
 
   .nav {

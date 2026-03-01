@@ -21,10 +21,25 @@ function Layout() {
     <div className="layout">
       <header className="header">
         <div className="container">
-          <Link to="/" className="logo">
-            <img src="/logo.jpg" alt="bebochka" className="logo-img" />
-            <span className="logo-text">bebochka | детский секонд-хенд</span>
-          </Link>
+          <div className="header-top">
+            <Link to="/" className="logo">
+              <img src="/logo.jpg" alt="bebochka" className="logo-img" />
+              <span className="logo-text">bebochka | детский секонд-хенд</span>
+            </Link>
+            {isAdmin && (
+              <button 
+                className="logout-btn logout-btn-mobile"
+                onClick={() => {
+                  localStorage.removeItem('authToken')
+                  localStorage.removeItem('user')
+                  window.location.href = '/'
+                }}
+                title="Выйти"
+              >
+                Выйти
+              </button>
+            )}
+          </div>
           <nav className="nav">
             {!isAdmin && (
               <>
@@ -64,11 +79,17 @@ function Layout() {
                 >
                   Пользователи
                 </Link>
+                <Link 
+                  to="/admin/orders" 
+                  className={location.pathname === '/admin/orders' ? 'active' : ''}
+                >
+                  Заказы
+                </Link>
                 <Link to="/" className="back-link">
                   На сайт
                 </Link>
                 <button 
-                  className="logout-btn"
+                  className="logout-btn logout-btn-desktop"
                   onClick={() => {
                     localStorage.removeItem('authToken')
                     localStorage.removeItem('user')
