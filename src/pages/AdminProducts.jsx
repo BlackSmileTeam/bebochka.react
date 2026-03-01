@@ -29,7 +29,7 @@ function AdminProducts() {
     condition: '',
     priceMin: '',
     priceMax: '',
-    publishedStatus: 'all' // all, published, scheduled
+    publishedStatus: 'scheduled' // all, published, scheduled - default to scheduled (unpublished)
   })
 
   useEffect(() => {
@@ -133,11 +133,19 @@ function AdminProducts() {
     
     if (filters.publishedStatus !== 'all') {
       filtered = filtered.filter(p => {
-        const published = isPublished(p)
         if (filters.publishedStatus === 'published') {
+          // Published: has PublishedAt and it's in the past (or null means published in old logic)
+          const published = isPublished(p)
           return published
         } else if (filters.publishedStatus === 'scheduled') {
-          return !published && p.publishedAt
+          // Scheduled: not published yet (null PublishedAt means scheduled/new product, or future date)
+          if (!p.publishedAt) {
+            // No PublishedAt means it's a new/scheduled product
+            return true
+          }
+          // Has PublishedAt but it's in the future
+          const published = isPublished(p)
+          return !published
         }
         return true
       })
@@ -287,7 +295,7 @@ function AdminProducts() {
       condition: '',
       priceMin: '',
       priceMax: '',
-      publishedStatus: 'all'
+      publishedStatus: 'scheduled' // Default to scheduled (unpublished)
     })
   }
 
