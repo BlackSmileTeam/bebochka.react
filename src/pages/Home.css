@@ -136,6 +136,9 @@
   padding: 0.25rem 0.75rem;
   background-color: #edf2f7;
   border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .product-footer {
@@ -263,6 +266,9 @@
     padding: 0.15rem 0.4rem;
     font-size: 0.7rem;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
   }
 
   .product-price {
@@ -340,6 +346,9 @@
   .product-condition {
     padding: 0.1rem 0.3rem;
     font-size: 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
   }
 
   .product-footer {

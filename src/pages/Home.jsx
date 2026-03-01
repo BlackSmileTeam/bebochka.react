@@ -149,7 +149,7 @@ function Home() {
                   {product.name}
                 </h3>
                 {product.brand && (
-                  <p className="product-brand">{product.brand}</p>
+                  <p className="product-brand">🏷️ {product.brand}</p>
                 )}
                 {product.description && (
                   <p className="product-description">{product.description}</p>
@@ -163,22 +163,22 @@ function Home() {
                       fontWeight: '600',
                       marginBottom: '0.5rem'
                     }}>
-                      {available > 0 ? `✓ ${available} шт.` : 'Нет в наличии'}
+                      {available > 0 ? `✓ ${available} шт.` : '❌ Нет в наличии'}
                     </div>
                   )
                 })()}
                 <div className="product-details">
                   {product.size && (
-                    <span className="product-size">{product.size}</span>
+                    <span className="product-size">📏 {product.size}</span>
                   )}
                   {product.color && (
-                    <span className="product-color">{product.color}</span>
+                    <span className="product-color">🎨 {product.color}</span>
                   )}
                   {product.gender && (
-                    <span className="product-gender">{product.gender}</span>
+                    <span className="product-gender">👤 {product.gender}</span>
                   )}
                   {product.condition && (
-                    <span className="product-condition">{product.condition}</span>
+                    <span className="product-condition">✨ {product.condition}</span>
                   )}
                 </div>
                 <div className="product-footer">
