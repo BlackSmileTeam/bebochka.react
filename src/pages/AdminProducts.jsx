@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { api } from '../services/api'
 import ProductForm from '../components/ProductForm'
 import Toast from '../components/Toast'
@@ -18,6 +18,7 @@ function AdminProducts() {
   const [sendingToChannel, setSendingToChannel] = useState(false)
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 })
   const [toast, setToast] = useState(null)
+  const hasCheckedOngoingOperation = useRef(false)
   
   // Фильтры
   const [filters, setFilters] = useState({
@@ -36,6 +37,183 @@ function AdminProducts() {
     loadProducts()
     loadColors()
   }, [])
+
+  // Check for ongoing send operation after products are loaded
+  useEffect(() => {
+    if (products.length > 0 && !hasCheckedOngoingOperation.current) {
+      hasCheckedOngoingOperation.current = true
+      checkOngoingSendOperation()
+    }
+  }, [products.length])
+
+  // Check for ongoing send operation stored in localStorage
+  const checkOngoingSendOperation = async () => {
+    try {
+      const savedOperation = localStorage.getItem('sendingToChannel')
+      if (savedOperation) {
+        const operation = JSON.parse(savedOperation)
+        const { productIds, startTime, total } = operation
+        
+        // Check if operation is recent (within last 30 minutes)
+        const operationTime = new Date(startTime)
+        const now = new Date()
+        const minutesSinceStart = (now - operationTime) / (1000 * 60)
+        
+        if (minutesSinceStart < 30) {
+          // Use already loaded products
+          const data = products
+          
+          // Count how many products are already published
+          const publishedCount = productIds.filter(id => {
+            const product = data.find(p => p.id === id)
+            return product && product.publishedAt
+          }).length
+          
+          // If not all products are published, restore sending state
+          if (publishedCount < total) {
+            setSendingToChannel(true)
+            setSendProgress({ current: publishedCount, total })
+            setSelectedProductIds(new Set(productIds))
+            
+            // Continue sending remaining products
+            continueSendingProducts(productIds, publishedCount, total, data)
+          } else {
+            // All products are published, clear saved operation
+            localStorage.removeItem('sendingToChannel')
+            setToast({ 
+              message: `Все товары успешно отправлены в канал! (${total} товар(ов))`, 
+              type: 'success' 
+            })
+          }
+        } else {
+          // Operation is too old, clear it
+          localStorage.removeItem('sendingToChannel')
+        }
+      }
+    } catch (err) {
+      console.error('Error checking ongoing send operation:', err)
+      localStorage.removeItem('sendingToChannel')
+    }
+  }
+
+  // Continue sending products that weren't sent yet
+  const continueSendingProducts = async (productIds, startIndex, total, allProducts) => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'
+    const remainingProducts = allProducts.filter(p => 
+      productIds.includes(p.id) && !p.publishedAt
+    )
+    
+    if (remainingProducts.length === 0) {
+      setSendingToChannel(false)
+      setSendProgress({ current: 0, total: 0 })
+      localStorage.removeItem('sendingToChannel')
+      setSelectedProductIds(new Set())
+      return
+    }
+    
+    // Format messages for remaining products
+    const productData = []
+    remainingProducts.forEach((p) => {
+      let caption = `🛍️ ${p.name}\n`
+      if (p.brand) caption += `🏷️ Бренд: ${p.brand}\n`
+      if (p.size) caption += `📏 Размер: ${p.size}\n`
+      if (p.color) caption += `🎨 Цвет: ${p.color}\n`
+      if (p.gender) caption += `👤 Пол: ${p.gender}\n`
+      if (p.condition) caption += `✨ Состояние: ${p.condition}\n`
+      if (p.description && p.description.trim()) {
+        caption += `\n📝 ${p.description.trim()}\n`
+      }
+      caption += `\n💰 Цена: ${(p.price ?? 0).toLocaleString('ru-RU')} ₽\n`
+      
+      const imageUrls = []
+      if (p.images && p.images.length > 0) {
+        p.images.forEach(imagePath => {
+          let fullUrl = null
+          if (imagePath.startsWith('http')) {
+            fullUrl = imagePath
+          } else if (imagePath.startsWith('/')) {
+            fullUrl = `${apiBaseUrl}${imagePath}`
+          } else {
+            fullUrl = `${apiBaseUrl}/${imagePath.trimStart('/')}`
+          }
+          if (fullUrl) {
+            imageUrls.push(fullUrl)
+          }
+        })
+      }
+      
+      productData.push({ caption, imageUrls, productId: p.id })
+    })
+    
+    // Send remaining products
+    try {
+      let successCount = startIndex
+      let failCount = 0
+      const publishedProductIds = []
+      
+      for (let i = 0; i < productData.length; i++) {
+        const { caption, imageUrls, productId } = productData[i]
+        setSendProgress({ current: startIndex + i + 1, total })
+        
+        try {
+          const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
+          if (result?.success) {
+            successCount++
+            publishedProductIds.push(productId)
+          } else {
+            failCount++
+          }
+        } catch (err) {
+          console.error('Error sending message to channel:', err)
+          failCount++
+        }
+      }
+      
+      // Update PublishedAt for successfully sent products
+      if (publishedProductIds.length > 0) {
+        try {
+          await Promise.allSettled(
+            publishedProductIds.map(productId => api.publishProduct(productId))
+          )
+          await loadProducts()
+        } catch (err) {
+          console.error('Error updating product publication status:', err)
+        }
+      }
+      
+      // Clear saved operation
+      localStorage.removeItem('sendingToChannel')
+      setSendingToChannel(false)
+      setSendProgress({ current: 0, total: 0 })
+      setSelectedProductIds(new Set())
+      
+      if (successCount > 0 && failCount === 0) {
+        setToast({ 
+          message: `Сообщения успешно отправлены в канал! (${successCount} товар(ов))`, 
+          type: 'success' 
+        })
+      } else if (successCount > 0 && failCount > 0) {
+        setToast({ 
+          message: `Отправлено: ${successCount}, Ошибок: ${failCount}`, 
+          type: 'warning' 
+        })
+      } else {
+        setToast({ 
+          message: 'Не удалось отправить сообщения в канал', 
+          type: 'error' 
+        })
+      }
+    } catch (err) {
+      console.error('Error continuing send to channel:', err)
+      setSendingToChannel(false)
+      setSendProgress({ current: 0, total: 0 })
+      localStorage.removeItem('sendingToChannel')
+      setToast({ 
+        message: 'Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'), 
+        type: 'error' 
+      })
+    }
+  }
   
   useEffect(() => {
     // Применяем фильтры при изменении товаров или фильтров
@@ -401,6 +579,15 @@ function AdminProducts() {
       productData.push({ caption, imageUrls })
     })
 
+    // Save operation info to localStorage for recovery after page reload
+    const productIds = Array.from(selectedProductIds)
+    const operationInfo = {
+      productIds,
+      startTime: new Date().toISOString(),
+      total: productData.length
+    }
+    localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
+
     // Send messages sequentially to show progress
     try {
       setSendingToChannel(true)
@@ -415,6 +602,13 @@ function AdminProducts() {
         const { caption, imageUrls } = productData[i]
         const product = selectedProducts[i]
         setSendProgress({ current: i + 1, total: productData.length })
+        
+        // Update localStorage with current progress
+        const updatedOperation = {
+          ...operationInfo,
+          current: i + 1
+        }
+        localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
         
         try {
           const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
@@ -445,6 +639,9 @@ function AdminProducts() {
         }
       }
 
+      // Clear saved operation on success
+      localStorage.removeItem('sendingToChannel')
+
       if (successCount > 0 && failCount === 0) {
         setToast({ 
           message: `Сообщения успешно отправлены в канал! (${successCount} товар(ов))`, 
@@ -464,6 +661,7 @@ function AdminProducts() {
       }
     } catch (err) {
       console.error('Error sending to channel:', err)
+      // Don't clear localStorage on error - allow recovery
       setToast({ 
         message: 'Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'), 
         type: 'error' 
