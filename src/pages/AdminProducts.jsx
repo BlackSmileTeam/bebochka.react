@@ -365,7 +365,6 @@ function AdminProducts() {
       if (p.gender) caption += `👤 Пол: ${p.gender}\n`
       if (p.condition) caption += `✨ Состояние: ${p.condition}\n`
       caption += `\n💰 Цена: ${(p.price ?? 0).toLocaleString('ru-RU')} ₽\n`
-      caption += `✅ В наличии: ${p.availableQuantity || 0} шт.\n`
       
       // Собираем URL изображений
       const imageUrls = []
