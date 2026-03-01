@@ -467,6 +467,18 @@ function AdminProducts() {
           >
             🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
+          {filteredProducts.length > 0 && (
+            <button 
+              className="btn btn-secondary" 
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleAllProducts(e)
+              }}
+              title={selectedProductIds.size === filteredProducts.length ? 'Снять выделение со всех' : `Выбрать все ${filteredProducts.length} товар(ов)`}
+            >
+              {selectedProductIds.size === filteredProducts.length ? '☑️ Снять выделение' : `☐ Выбрать все (${filteredProducts.length})`}
+            </button>
+          )}
           {selectedProductIds.size > 0 && (
             <button 
               className="btn btn-secondary btn-send-channel" 
