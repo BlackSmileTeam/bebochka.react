@@ -13,7 +13,7 @@ function AdminProducts() {
   const [showForm, setShowForm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [colors, setColors] = useState([])
-  const [showFilters, setShowFilters] = useState(false)
+  const [showFilters, setShowFilters] = useState(true) // Фильтры по умолчанию открыты
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const [sendingToChannel, setSendingToChannel] = useState(false)
   const [toast, setToast] = useState(null)
@@ -288,6 +288,40 @@ function AdminProducts() {
       publishedStatus: 'all'
     })
   }
+
+  const clearFilter = (field) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: field === 'publishedStatus' ? 'all' : ''
+    }))
+  }
+
+  const getFilterLabel = (field, value) => {
+    const labels = {
+      name: 'Название',
+      brand: 'Бренд',
+      size: 'Размер',
+      color: 'Цвет',
+      gender: 'Пол',
+      condition: 'Состояние',
+      priceMin: 'Цена от',
+      priceMax: 'Цена до',
+      quantityMin: 'Количество от',
+      quantityMax: 'Количество до',
+      publishedStatus: value === 'published' ? 'Опубликованные' : value === 'scheduled' ? 'Запланированные' : ''
+    }
+    return labels[field] || field
+  }
+
+  const getFilterDisplayValue = (field, value) => {
+    if (field === 'publishedStatus') {
+      return value === 'published' ? 'Опубликованные' : value === 'scheduled' ? 'Запланированные' : ''
+    }
+    if (field.includes('price') || field.includes('quantity')) {
+      return value ? `${value}${field.includes('price') ? ' ₽' : ' шт.'}` : ''
+    }
+    return value
+  }
   
   const activeFiltersCount = Object.values(filters).filter(v => v !== '' && v !== 'all').length
 
@@ -399,8 +433,9 @@ function AdminProducts() {
           <button 
             className={`btn btn-secondary ${showFilters ? 'active' : ''}`}
             onClick={() => setShowFilters(!showFilters)}
+            title={showFilters ? 'Скрыть фильтры' : 'Показать фильтры'}
           >
-            🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+            {showFilters ? '🔽' : '🔍'} Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
           {selectedProductIds.size > 0 && (
             <button 
@@ -420,6 +455,76 @@ function AdminProducts() {
 
       {showFilters && (
         <div className="filters-panel">
+          {/* Active filters chips */}
+          <div className="active-filters">
+            {filters.name && (
+              <span className="filter-chip">
+                {getFilterLabel('name')}: {filters.name}
+                <button onClick={() => clearFilter('name')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.brand && (
+              <span className="filter-chip">
+                {getFilterLabel('brand')}: {filters.brand}
+                <button onClick={() => clearFilter('brand')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.size && (
+              <span className="filter-chip">
+                {getFilterLabel('size')}: {filters.size}
+                <button onClick={() => clearFilter('size')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.color && (
+              <span className="filter-chip">
+                {getFilterLabel('color')}: {filters.color}
+                <button onClick={() => clearFilter('color')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.gender && (
+              <span className="filter-chip">
+                {getFilterLabel('gender')}: {filters.gender}
+                <button onClick={() => clearFilter('gender')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.condition && (
+              <span className="filter-chip">
+                {getFilterLabel('condition')}: {filters.condition}
+                <button onClick={() => clearFilter('condition')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.priceMin && (
+              <span className="filter-chip">
+                {getFilterLabel('priceMin')}: {getFilterDisplayValue('priceMin', filters.priceMin)}
+                <button onClick={() => clearFilter('priceMin')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.priceMax && (
+              <span className="filter-chip">
+                {getFilterLabel('priceMax')}: {getFilterDisplayValue('priceMax', filters.priceMax)}
+                <button onClick={() => clearFilter('priceMax')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.quantityMin && (
+              <span className="filter-chip">
+                {getFilterLabel('quantityMin')}: {getFilterDisplayValue('quantityMin', filters.quantityMin)}
+                <button onClick={() => clearFilter('quantityMin')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.quantityMax && (
+              <span className="filter-chip">
+                {getFilterLabel('quantityMax')}: {getFilterDisplayValue('quantityMax', filters.quantityMax)}
+                <button onClick={() => clearFilter('quantityMax')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.publishedStatus !== 'all' && (
+              <span className="filter-chip">
+                {getFilterLabel('publishedStatus', filters.publishedStatus)}
+                <button onClick={() => clearFilter('publishedStatus')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+          </div>
+          
           <div className="filters-grid">
             <div className="filter-group">
               <label>Название</label>
