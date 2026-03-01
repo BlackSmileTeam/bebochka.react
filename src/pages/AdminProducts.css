@@ -1047,11 +1047,19 @@
     font-size: 0.95rem;
     color: #2d3748;
     line-height: 1.3;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .products-table .product-name-mobile::after {
+    content: attr(data-brand);
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: #4a5568;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .products-table .product-details-mobile {

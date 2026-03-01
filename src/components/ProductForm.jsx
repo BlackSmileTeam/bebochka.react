@@ -22,7 +22,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [brands, setBrands] = useState([])
   const [brandSearch, setBrandSearch] = useState('')
   const [showBrandDropdown, setShowBrandDropdown] = useState(false)
-  const [useCustomBrand, setUseCustomBrand] = useState(false)
   const brandDropdownRef = useRef(null)
 
   // Log colors when component mounts or colors change
@@ -32,16 +31,25 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
   // Load brands when brand search changes
   useEffect(() => {
-    if (brandSearch && !useCustomBrand) {
+    if (brandSearch) {
+      // Update formData.brand with what user types
+      setFormData(prev => ({ ...prev, brand: brandSearch }))
+      
+      // Load brands from API
       api.getBrands(brandSearch).then(data => {
         setBrands(data)
-        setShowBrandDropdown(true)
-      }).catch(err => console.error('Error loading brands:', err))
+        setShowBrandDropdown(data.length > 0)
+      }).catch(err => {
+        console.error('Error loading brands:', err)
+        setBrands([])
+        setShowBrandDropdown(false)
+      })
     } else {
       setBrands([])
       setShowBrandDropdown(false)
+      setFormData(prev => ({ ...prev, brand: '' }))
     }
-  }, [brandSearch, useCustomBrand])
+  }, [brandSearch])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -198,101 +206,83 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
           <div className="form-group">
             <label htmlFor="brand">Бренд</label>
-            <div className="brand-selector" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {useCustomBrand ? (
-                <input
-                  type="text"
-                  id="brand"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleChange}
-                  placeholder="Например: Zara, H&M"
-                  style={{ flex: 1 }}
-                />
-              ) : (
-                <div ref={brandDropdownRef} style={{ position: 'relative', flex: 1, width: '100%' }}>
-                  <input
-                    type="text"
-                    id="brand"
-                    name="brand"
-                    value={brandSearch}
-                    onChange={(e) => {
-                      setBrandSearch(e.target.value)
-                      if (!e.target.value) {
-                        setFormData({ ...formData, brand: '' })
-                      }
-                    }}
-                    onFocus={() => {
-                      if (brandSearch && brands.length > 0) {
-                        setShowBrandDropdown(true)
-                      }
-                    }}
-                    placeholder="Поиск бренда..."
-                    style={{ width: '100%' }}
-                  />
-                  {showBrandDropdown && brands.length > 0 && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      width: '100%',
-                      backgroundColor: 'white',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
-                      maxHeight: '200px',
-                      overflowY: 'auto',
-                      zIndex: 1000,
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                      marginTop: '4px'
-                    }}>
-                      {brands.map((brand, index) => {
-                        const brandName = typeof brand === 'string' ? brand : (brand.name || brand.Name || '');
-                        const brandId = typeof brand === 'string' ? brand : (brand.id || brand.Id || index);
-                        return (
-                          <div
-                            key={brandId}
-                            onClick={() => {
-                              setFormData({ ...formData, brand: brandName })
-                              setBrandSearch(brandName)
-                              setShowBrandDropdown(false)
-                            }}
-                            style={{
-                              padding: '0.75rem',
-                              cursor: 'pointer',
-                              borderBottom: '1px solid #e2e8f0',
-                              color: '#2d3748',
-                              fontSize: '0.875rem',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              minWidth: '100%'
-                            }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = '#f7fafc'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-                          >
-                            {brandName}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+            <div ref={brandDropdownRef} style={{ position: 'relative', width: '100%' }}>
+              <input
+                type="text"
+                id="brand"
+                name="brand"
+                value={brandSearch}
+                onChange={(e) => {
+                  setBrandSearch(e.target.value)
+                }}
+                onFocus={() => {
+                  if (brandSearch && brands.length > 0) {
+                    setShowBrandDropdown(true)
+                  }
+                }}
+                onBlur={() => {
+                  // При потере фокуса сохраняем введенное значение, если оно не было выбрано из списка
+                  setTimeout(() => {
+                    setShowBrandDropdown(false)
+                    if (brandSearch && !brands.some(b => {
+                      const brandName = typeof b === 'string' ? b : (b.name || b.Name || '');
+                      return brandName.toLowerCase() === brandSearch.toLowerCase();
+                    })) {
+                      // Если бренда нет в списке, используем то что ввел пользователь
+                      setFormData(prev => ({ ...prev, brand: brandSearch }))
+                    }
+                  }, 200)
+                }}
+                placeholder="Начните вводить название бренда..."
+                style={{ width: '100%' }}
+              />
+              {showBrandDropdown && brands.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  width: '100%',
+                  backgroundColor: 'white',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                  marginTop: '4px'
+                }}>
+                  {brands.map((brand, index) => {
+                    const brandName = typeof brand === 'string' ? brand : (brand.name || brand.Name || '');
+                    const brandId = typeof brand === 'string' ? brand : (brand.id || brand.Id || index);
+                    return (
+                      <div
+                        key={brandId}
+                        onClick={() => {
+                          setFormData({ ...formData, brand: brandName })
+                          setBrandSearch(brandName)
+                          setShowBrandDropdown(false)
+                        }}
+                        style={{
+                          padding: '0.75rem',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #e2e8f0',
+                          color: '#2d3748',
+                          fontSize: '0.875rem',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          minWidth: '100%'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#f7fafc'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                      >
+                        {brandName}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}>
-                <input
-                  type="checkbox"
-                  checked={useCustomBrand}
-                  onChange={(e) => {
-                    setUseCustomBrand(e.target.checked)
-                    if (!e.target.checked) {
-                      setBrandSearch('')
-                      setShowBrandDropdown(false)
-                    }
-                  }}
-                />
-                Ввести вручную
-              </label>
             </div>
           </div>
 

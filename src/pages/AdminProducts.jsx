@@ -773,9 +773,10 @@ function AdminProducts() {
                   </td>
                   <td data-label="Информация" className="product-info-wrapper">
                     <div className="product-info-mobile">
-                      <div className="product-name-mobile">{product.name}</div>
+                      <div className="product-name-mobile" data-brand={product.brand ? ` • ${product.brand}` : ''}>
+                        {product.name}
+                      </div>
                       <div className="product-details-mobile">
-                        <span className="brand-cell">{product.brand || '-'}</span>
                         <span className="size-cell">{product.size || '-'}</span>
                         <span className="color-cell">{product.color || '-'}</span>
                         <span className="gender-cell" title={product.gender || '-'}>
