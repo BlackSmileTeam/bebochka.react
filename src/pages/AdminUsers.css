@@ -238,12 +238,79 @@
     gap: 1rem;
   }
 
+  .admin-users-header h1 {
+    font-size: 2rem;
+  }
+
   .users-table-container {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .users-table {
     min-width: 600px;
+    font-size: 0.9rem;
+  }
+
+  .users-table th,
+  .users-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .modal-content {
+    max-width: 90vw;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-users-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .users-table {
+    min-width: 500px;
+    font-size: 0.85rem;
+  }
+
+  .users-table th,
+  .users-table td {
+    padding: 0.5rem 0.4rem;
+  }
+
+  .btn-small {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    margin-right: 0.25rem;
+  }
+
+  .modal-content {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .user-form {
+    padding: 1rem;
+  }
+
+  .form-group input {
+    font-size: 16px; /* Предотвращает зум на iOS */
+    min-height: 44px;
   }
 }
 
