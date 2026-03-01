@@ -36,9 +36,11 @@
 }
 
 .header-actions .btn.btn-send-channel {
-  min-width: auto;
+  min-width: 220px;
   padding: 0.75rem 1.5rem;
   width: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .send-progress-bar {
