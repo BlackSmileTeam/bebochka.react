@@ -13,7 +13,7 @@ function AdminProducts() {
   const [showForm, setShowForm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [colors, setColors] = useState([])
-  const [showFilters, setShowFilters] = useState(true) // Фильтры по умолчанию открыты
+  const [showFiltersPopup, setShowFiltersPopup] = useState(false) // Popup с фильтрами
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const [sendingToChannel, setSendingToChannel] = useState(false)
   const [toast, setToast] = useState(null)
@@ -28,8 +28,6 @@ function AdminProducts() {
     condition: '',
     priceMin: '',
     priceMax: '',
-    quantityMin: '',
-    quantityMax: '',
     publishedStatus: 'all' // all, published, scheduled
   })
 
@@ -58,6 +56,19 @@ function AdminProducts() {
       document.removeEventListener('click', handleClickOutside)
     }
   }, [filteredProducts])
+
+  // Закрытие popup при нажатии Escape
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showFiltersPopup) {
+        setShowFiltersPopup(false)
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [showFiltersPopup])
 
   const loadProducts = async () => {
     try {
@@ -117,14 +128,6 @@ function AdminProducts() {
     
     if (filters.priceMax) {
       filtered = filtered.filter(p => p.price <= parseFloat(filters.priceMax))
-    }
-    
-    if (filters.quantityMin) {
-      filtered = filtered.filter(p => p.quantityInStock >= parseInt(filters.quantityMin))
-    }
-    
-    if (filters.quantityMax) {
-      filtered = filtered.filter(p => p.quantityInStock <= parseInt(filters.quantityMax))
     }
     
     if (filters.publishedStatus !== 'all') {
@@ -283,8 +286,6 @@ function AdminProducts() {
       condition: '',
       priceMin: '',
       priceMax: '',
-      quantityMin: '',
-      quantityMax: '',
       publishedStatus: 'all'
     })
   }
@@ -306,8 +307,6 @@ function AdminProducts() {
       condition: 'Состояние',
       priceMin: 'Цена от',
       priceMax: 'Цена до',
-      quantityMin: 'Количество от',
-      quantityMax: 'Количество до',
       publishedStatus: value === 'published' ? 'Опубликованные' : value === 'scheduled' ? 'Запланированные' : ''
     }
     return labels[field] || field
@@ -317,8 +316,8 @@ function AdminProducts() {
     if (field === 'publishedStatus') {
       return value === 'published' ? 'Опубликованные' : value === 'scheduled' ? 'Запланированные' : ''
     }
-    if (field.includes('price') || field.includes('quantity')) {
-      return value ? `${value}${field.includes('price') ? ' ₽' : ' шт.'}` : ''
+    if (field.includes('price')) {
+      return value ? `${value} ₽` : ''
     }
     return value
   }
@@ -431,11 +430,11 @@ function AdminProducts() {
         <h1>Управление товарами</h1>
         <div className="header-actions">
           <button 
-            className={`btn btn-secondary ${showFilters ? 'active' : ''}`}
-            onClick={() => setShowFilters(!showFilters)}
-            title={showFilters ? 'Скрыть фильтры' : 'Показать фильтры'}
+            className={`btn btn-secondary ${showFiltersPopup ? 'active' : ''}`}
+            onClick={() => setShowFiltersPopup(!showFiltersPopup)}
+            title="Настроить фильтры"
           >
-            {showFilters ? '🔽' : '🔍'} Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+            🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
           {selectedProductIds.size > 0 && (
             <button 
@@ -453,9 +452,9 @@ function AdminProducts() {
         </div>
       </div>
 
-      {showFilters && (
-        <div className="filters-panel">
-          {/* Active filters chips */}
+      {/* Active filters chips - показываем только если есть активные фильтры */}
+      {activeFiltersCount > 0 && (
+        <div className="active-filters-bar">
           <div className="active-filters">
             {filters.name && (
               <span className="filter-chip">
@@ -505,27 +504,30 @@ function AdminProducts() {
                 <button onClick={() => clearFilter('priceMax')} title="Удалить фильтр">×</button>
               </span>
             )}
-            {filters.quantityMin && (
-              <span className="filter-chip">
-                {getFilterLabel('quantityMin')}: {getFilterDisplayValue('quantityMin', filters.quantityMin)}
-                <button onClick={() => clearFilter('quantityMin')} title="Удалить фильтр">×</button>
-              </span>
-            )}
-            {filters.quantityMax && (
-              <span className="filter-chip">
-                {getFilterLabel('quantityMax')}: {getFilterDisplayValue('quantityMax', filters.quantityMax)}
-                <button onClick={() => clearFilter('quantityMax')} title="Удалить фильтр">×</button>
-              </span>
-            )}
             {filters.publishedStatus !== 'all' && (
               <span className="filter-chip">
                 {getFilterLabel('publishedStatus', filters.publishedStatus)}
                 <button onClick={() => clearFilter('publishedStatus')} title="Удалить фильтр">×</button>
               </span>
             )}
+            {activeFiltersCount > 0 && (
+              <button className="btn-clear-all" onClick={clearFilters} title="Очистить все фильтры">
+                Очистить все
+              </button>
+            )}
           </div>
-          
-          <div className="filters-grid">
+        </div>
+      )}
+
+      {/* Popup с фильтрами */}
+      {showFiltersPopup && (
+        <div className="filters-popup-overlay" onClick={() => setShowFiltersPopup(false)}>
+          <div className="filters-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="filters-popup-header">
+              <h3>Фильтры</h3>
+              <button className="filters-popup-close" onClick={() => setShowFiltersPopup(false)}>×</button>
+            </div>
+            <div className="filters-grid">
             <div className="filter-group">
               <label>Название</label>
               <input
@@ -624,28 +626,6 @@ function AdminProducts() {
             </div>
             
             <div className="filter-group">
-              <label>Количество от (шт)</label>
-              <input
-                type="number"
-                value={filters.quantityMin}
-                onChange={(e) => handleFilterChange('quantityMin', e.target.value)}
-                placeholder="0"
-                min="0"
-              />
-            </div>
-            
-            <div className="filter-group">
-              <label>Количество до (шт)</label>
-              <input
-                type="number"
-                value={filters.quantityMax}
-                onChange={(e) => handleFilterChange('quantityMax', e.target.value)}
-                placeholder="∞"
-                min="0"
-              />
-            </div>
-            
-            <div className="filter-group">
               <label>Статус публикации</label>
               <select
                 value={filters.publishedStatus}
@@ -658,13 +638,15 @@ function AdminProducts() {
             </div>
           </div>
           
-          {activeFiltersCount > 0 && (
-            <div className="filters-actions">
+            <div className="filters-popup-actions">
               <button className="btn btn-clear" onClick={clearFilters}>
-                Очистить фильтры
+                Очистить все
+              </button>
+              <button className="btn btn-primary" onClick={() => setShowFiltersPopup(false)}>
+                Применить
               </button>
             </div>
-          )}
+          </div>
         </div>
       )}
 
