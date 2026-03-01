@@ -1023,7 +1023,7 @@ export const api = {
    */
   async getTelegramErrors() {
     try {
-      const response = await apiClient.get('/telegramerrors')
+      const response = await apiClient.get('/TelegramErrors')
       return response.data
     } catch (error) {
       console.error('[API] Error fetching Telegram errors:', error)
@@ -1038,7 +1038,7 @@ export const api = {
    */
   async deleteTelegramError(id) {
     try {
-      await apiClient.delete(`/telegramerrors/${id}`)
+      await apiClient.delete(`/TelegramErrors/${id}`)
     } catch (error) {
       console.error('[API] Error deleting Telegram error:', error)
       throw error
@@ -1051,7 +1051,7 @@ export const api = {
    */
   async deleteAllTelegramErrors() {
     try {
-      await apiClient.delete('/telegramerrors/all')
+      await apiClient.delete('/TelegramErrors/all')
     } catch (error) {
       console.error('[API] Error deleting all Telegram errors:', error)
       throw error
