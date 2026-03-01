@@ -286,18 +286,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="description">Краткое описание</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="3"
-              placeholder="Краткое описание товара"
-            />
-          </div>
-
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="price">Цена (₽) *</label>
@@ -399,6 +387,18 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 <option value="недостаток">Недостаток</option>
               </select>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="description">Краткое описание</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="3"
+              placeholder="Краткое описание товара"
+            />
           </div>
 
           <div className="form-group">
