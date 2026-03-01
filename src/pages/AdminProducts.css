@@ -361,11 +361,12 @@
 }
 
 .table-info .btn-select-all {
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.4rem;
   font-size: 0.8rem;
   margin-left: 1rem;
   min-height: auto;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .products-table-container {
