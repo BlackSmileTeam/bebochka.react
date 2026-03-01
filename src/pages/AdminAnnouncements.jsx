@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
+import Toast from '../components/Toast'
 import './AdminAnnouncements.css'
 
 const DEFAULT_MESSAGE = `Анонс!
@@ -22,6 +23,7 @@ function AdminAnnouncements() {
   })
   const [channelMessage, setChannelMessage] = useState('')
   const [sendingChannel, setSendingChannel] = useState(false)
+  const [toast, setToast] = useState(null)
 
   useEffect(() => {
     loadData()
@@ -61,7 +63,7 @@ function AdminAnnouncements() {
     e.preventDefault()
     
     if (!formData.scheduledAt) {
-      alert('Пожалуйста, укажите время отправки')
+      setToast({ message: 'Пожалуйста, укажите время отправки', type: 'warning' })
       return
     }
 
@@ -91,28 +93,32 @@ function AdminAnnouncements() {
         productIds: selectedProducts
       })
 
-      alert('Анонс успешно создан!')
+      setToast({ message: 'Анонс успешно создан!', type: 'success' })
       setShowForm(false)
       setFormData({ message: DEFAULT_MESSAGE, scheduledAt: '' })
       setSelectedProducts([])
       loadData()
     } catch (err) {
       console.error('Error creating announcement:', err)
-      alert('Ошибка при создании анонса: ' + (err.response?.data?.message || err.message))
+      setToast({ 
+        message: 'Ошибка при создании анонса: ' + (err.response?.data?.message || err.message), 
+        type: 'error' 
+      })
     }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Вы уверены, что хотите удалить этот анонс?')) {
+    if (!window.confirm('Вы уверены, что хотите удалить этот анонс?')) {
       return
     }
 
     try {
       await api.deleteAnnouncement(id)
+      setToast({ message: 'Анонс успешно удален', type: 'success' })
       loadData()
     } catch (err) {
       console.error('Error deleting announcement:', err)
-      alert('Ошибка при удалении анонса')
+      setToast({ message: 'Ошибка при удалении анонса', type: 'error' })
     }
   }
 
@@ -120,7 +126,7 @@ function AdminAnnouncements() {
     e.preventDefault()
     
     if (!channelMessage.trim()) {
-      alert('Пожалуйста, введите сообщение')
+      setToast({ message: 'Пожалуйста, введите сообщение', type: 'warning' })
       return
     }
 
@@ -128,14 +134,20 @@ function AdminAnnouncements() {
       setSendingChannel(true)
       const result = await api.sendMessageToChannel(channelMessage)
       if (result?.success) {
-        alert('Сообщение успешно отправлено в канал!')
+        setToast({ message: 'Сообщение успешно отправлено в канал!', type: 'success' })
         setChannelMessage('')
       } else {
-        alert(result?.message || 'Не удалось отправить сообщение в канал')
+        setToast({ 
+          message: result?.message || 'Не удалось отправить сообщение в канал', 
+          type: 'error' 
+        })
       }
     } catch (err) {
       console.error('Error sending message to channel:', err)
-      alert('Ошибка при отправке сообщения в канал: ' + (err.message || 'Неизвестная ошибка'))
+      setToast({ 
+        message: 'Ошибка при отправке сообщения в канал: ' + (err.message || 'Неизвестная ошибка'), 
+        type: 'error' 
+      })
     } finally {
       setSendingChannel(false)
     }
@@ -342,6 +354,13 @@ function AdminAnnouncements() {
           </table>
         )}
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }
