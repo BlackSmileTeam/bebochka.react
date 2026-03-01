@@ -16,17 +16,22 @@
   font-size: 2rem;
 }
 
-.announcement-form {
+.announcement-form,
+.channel-message-section {
   background: white;
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
 }
 
-.announcement-form h2 {
+.announcement-form h2,
+.channel-message-section h2 {
   margin-bottom: 1.5rem;
   color: #2d3748;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .form-group {

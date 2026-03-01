@@ -175,7 +175,7 @@ function AdminAnnouncements() {
         </button>
       </div>
 
-      <div className="channel-message-section" style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+      <div className="channel-message-section">
         <h2>Отправка сообщения в канал</h2>
         <form onSubmit={handleSendToChannel}>
           <div className="form-group">
