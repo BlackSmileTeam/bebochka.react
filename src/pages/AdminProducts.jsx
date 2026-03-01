@@ -353,9 +353,10 @@ function AdminProducts() {
     }
 
     const selectedProducts = filteredProducts.filter(p => selectedProductIds.has(p.id))
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
     
-    // Форматируем сообщения как в боте
-    const messages = []
+    // Форматируем сообщения и собираем изображения как в боте
+    const productData = []
     selectedProducts.forEach((p) => {
       let caption = `🛍️ ${p.name}\n`
       if (p.brand) caption += `🏷️ Бренд: ${p.brand}\n`
@@ -365,7 +366,26 @@ function AdminProducts() {
       if (p.condition) caption += `✨ Состояние: ${p.condition}\n`
       caption += `\n💰 Цена: ${(p.price ?? 0).toLocaleString('ru-RU')} ₽\n`
       caption += `✅ В наличии: ${p.availableQuantity || 0} шт.\n`
-      messages.push(caption)
+      
+      // Собираем URL изображений
+      const imageUrls = []
+      if (p.images && p.images.length > 0) {
+        p.images.forEach(imagePath => {
+          let fullUrl = null
+          if (imagePath.startsWith('http')) {
+            fullUrl = imagePath
+          } else if (imagePath.startsWith('/')) {
+            fullUrl = `${apiBaseUrl}${imagePath}`
+          } else {
+            fullUrl = `${apiBaseUrl}/${imagePath.trimStart('/')}`
+          }
+          if (fullUrl) {
+            imageUrls.push(fullUrl)
+          }
+        })
+      }
+      
+      productData.push({ caption, imageUrls })
     })
 
     // Отправляем каждое сообщение отдельно
@@ -374,9 +394,9 @@ function AdminProducts() {
       let successCount = 0
       let failCount = 0
 
-      for (const message of messages) {
+      for (const { caption, imageUrls } of productData) {
         try {
-          const result = await api.sendMessageToChannel(message)
+          const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
           if (result?.success) {
             successCount++
           } else {

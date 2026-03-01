@@ -992,11 +992,16 @@ export const api = {
   /**
    * Sends a message to Telegram channel
    * @param {string} message - Message text to send
+   * @param {Array<string>} imageUrls - Optional list of image URLs to send with the message
    * @returns {Promise<Object>} Response with success status
    */
-  async sendMessageToChannel(message) {
+  async sendMessageToChannel(message, imageUrls = null) {
     try {
-      const response = await apiClient.post('/telegram/channel/send', { message })
+      const payload = { message }
+      if (imageUrls && imageUrls.length > 0) {
+        payload.imageUrls = imageUrls
+      }
+      const response = await apiClient.post('/telegram/channel/send', payload)
       const data = response.data
       const isObject = data && typeof data === 'object'
       const success = isObject ? (data.success ?? data.Success ?? false) : false
