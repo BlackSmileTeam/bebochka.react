@@ -206,6 +206,9 @@ function AdminOrders() {
   const getOrderId = (order) => order.id || order.Id
   const getOrderNumber = (order) => order.orderNumber || order.OrderNumber || `#${getOrderId(order)}`
   const getOrderStatus = (order) => order.status || order.Status || 'В сборке'
+  const getTelegramUserId = (order) => order.telegramUserId || order.TelegramUserId
+  const getTelegramUsername = (order) => order.telegramUsername || order.TelegramUsername || order.customerName || order.CustomerName
+  const hasTelegram = (order) => !!getTelegramUserId(order)
   const getCustomerName = (order) => order.customerName || order.CustomerName || '-'
   const getCustomerPhone = (order) => order.customerPhone || order.CustomerPhone || '-'
   const getTotalAmount = (order) => order.totalAmount || order.TotalAmount || 0
@@ -377,7 +380,25 @@ function AdminOrders() {
                               />
                             </td>
                             <td><strong>{getOrderNumber(order)}</strong></td>
-                            <td>{getCustomerName(order)}</td>
+                            <td>
+                              {hasTelegram(order) ? (
+                                <a
+                                  href={`tg://user?id=${getTelegramUserId(order)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ 
+                                    color: '#667eea', 
+                                    textDecoration: 'none',
+                                    fontWeight: 500
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {getTelegramUsername(order)}
+                                </a>
+                              ) : (
+                                getCustomerName(order)
+                              )}
+                            </td>
                             <td>{getCustomerPhone(order)}</td>
                             <td>{formatDate(order.createdAt || order.CreatedAt)}</td>
                             <td><strong>{formatPrice(getTotalAmount(order))}</strong></td>
