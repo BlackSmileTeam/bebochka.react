@@ -495,7 +495,7 @@ function AdminProducts() {
             🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
           {selectedProductIds.size > 0 && (
-            <>
+            <div className="send-channel-wrapper">
               <button 
                 className="btn btn-secondary btn-send-channel" 
                 onClick={handleSendToChannel}
@@ -514,7 +514,7 @@ function AdminProducts() {
                   />
                 </div>
               )}
-            </>
+            </div>
           )}
           <button className="btn btn-primary" onClick={handleCreate}>
             ➕ Добавить
