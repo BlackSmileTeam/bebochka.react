@@ -388,25 +388,37 @@ function AdminProducts() {
       productData.push({ caption, imageUrls })
     })
 
-    // Отправляем каждое сообщение отдельно
+    // Отправляем все сообщения параллельно для ускорения
     try {
       setSendingToChannel(true)
+      
+      // Создаем массив промисов для параллельной отправки
+      const sendPromises = productData.map(({ caption, imageUrls }) => 
+        api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
+          .then(result => ({ success: result?.success ?? false, error: null }))
+          .catch(err => {
+            console.error('Error sending message to channel:', err)
+            return { success: false, error: err }
+          })
+      )
+      
+      // Ждем завершения всех отправок параллельно
+      const results = await Promise.allSettled(sendPromises)
+      
       let successCount = 0
       let failCount = 0
-
-      for (const { caption, imageUrls } of productData) {
-        try {
-          const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
-          if (result?.success) {
+      
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          if (result.value.success) {
             successCount++
           } else {
             failCount++
           }
-        } catch (err) {
-          console.error('Error sending message to channel:', err)
+        } else {
           failCount++
         }
-      }
+      })
 
       if (successCount > 0 && failCount === 0) {
         setToast({ 
