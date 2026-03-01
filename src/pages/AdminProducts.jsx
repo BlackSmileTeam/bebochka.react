@@ -686,7 +686,7 @@ function AdminProducts() {
         <h1>Управление товарами</h1>
         <div className="header-actions">
           <button 
-            className={`btn btn-secondary ${showFiltersPopup ? 'active' : ''}`}
+            className={`btn btn-secondary btn-filters ${showFiltersPopup ? 'active' : ''}`}
             onClick={() => setShowFiltersPopup(!showFiltersPopup)}
             title="Настроить фильтры"
           >

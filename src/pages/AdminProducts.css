@@ -29,6 +29,11 @@
   height: auto;
 }
 
+.header-actions .btn.btn-filters {
+  width: auto;
+  min-width: auto;
+}
+
 .send-channel-wrapper {
   display: flex;
   flex-direction: column;
@@ -868,6 +873,10 @@
   
   .header-actions .btn {
     width: 100%;
+  }
+  
+  .header-actions .btn.btn-filters {
+    width: auto;
   }
 
   .table-info .btn-select-all {
