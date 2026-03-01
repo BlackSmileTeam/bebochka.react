@@ -96,12 +96,12 @@ function AdminProducts() {
 
   // Continue sending products that weren't sent yet
   const continueSendingProducts = async (productIds, startIndex, total, allProducts) => {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'
-    const remainingProducts = allProducts.filter(p => 
-      productIds.includes(p.id) && !p.publishedAt
-    )
+    // Find remaining products that haven't been published yet
+    const remainingProductIds = allProducts
+      .filter(p => productIds.includes(p.id) && !p.publishedAt)
+      .map(p => p.id)
     
-    if (remainingProducts.length === 0) {
+    if (remainingProductIds.length === 0) {
       setSendingToChannel(false)
       setSendProgress({ current: 0, total: 0 })
       localStorage.removeItem('sendingToChannel')
@@ -109,89 +109,25 @@ function AdminProducts() {
       return
     }
     
-    // Format messages for remaining products
-    const productData = []
-    remainingProducts.forEach((p) => {
-      let caption = `🛍️ ${p.name}\n`
-      if (p.brand) caption += `🏷️ Бренд: ${p.brand}\n`
-      if (p.size) caption += `📏 Размер: ${p.size}\n`
-      if (p.color) caption += `🎨 Цвет: ${p.color}\n`
-      if (p.gender) caption += `👤 Пол: ${p.gender}\n`
-      if (p.condition) caption += `✨ Состояние: ${p.condition}\n`
-      if (p.description && p.description.trim()) {
-        caption += `\n📝 ${p.description.trim()}\n`
-      }
-      caption += `\n💰 Цена: ${(p.price ?? 0).toLocaleString('ru-RU')} ₽\n`
-      
-      const imageUrls = []
-      if (p.images && p.images.length > 0) {
-        p.images.forEach(imagePath => {
-          let fullUrl = null
-          if (imagePath.startsWith('http')) {
-            fullUrl = imagePath
-          } else if (imagePath.startsWith('/')) {
-            fullUrl = `${apiBaseUrl}${imagePath}`
-          } else {
-            fullUrl = `${apiBaseUrl}/${imagePath.trimStart('/')}`
-          }
-          if (fullUrl) {
-            imageUrls.push(fullUrl)
-          }
-        })
-      }
-      
-      productData.push({ caption, imageUrls, productId: p.id })
-    })
-    
-    // Send remaining products
+    // Send remaining products using new endpoint - backend handles everything
     try {
-      let successCount = startIndex
-      let failCount = 0
-      const publishedProductIds = []
+      const result = await api.sendProductsToChannel(remainingProductIds)
+      console.log('[ContinueSendToChannel] API response:', result)
       
-      // Get saved operation to update it
+      // Update progress
+      const newSuccessCount = startIndex + result.successCount
+      setSendProgress({ current: newSuccessCount, total })
+      
+      // Update localStorage
       const savedOperation = localStorage.getItem('sendingToChannel')
-      let operationInfo = savedOperation ? JSON.parse(savedOperation) : null
-      
-      for (let i = 0; i < productData.length; i++) {
-        const { caption, imageUrls, productId } = productData[i]
-        
-        try {
-          const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
-          if (result?.success) {
-            successCount++
-            publishedProductIds.push(productId)
-            
-            // Update progress and localStorage with actual success count
-            setSendProgress({ current: successCount, total })
-            if (operationInfo) {
-              operationInfo.current = successCount
-              localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
-            }
-          } else {
-            failCount++
-            // Update progress even on failure
-            setSendProgress({ current: successCount + failCount, total })
-          }
-        } catch (err) {
-          console.error('Error sending message to channel:', err)
-          failCount++
-          // Update progress even on error
-          setSendProgress({ current: successCount + failCount, total })
-        }
+      if (savedOperation) {
+        const operationInfo = JSON.parse(savedOperation)
+        operationInfo.current = newSuccessCount
+        localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
       }
       
-      // Update PublishedAt for successfully sent products
-      if (publishedProductIds.length > 0) {
-        try {
-          await Promise.allSettled(
-            publishedProductIds.map(productId => api.publishProduct(productId))
-          )
-          await loadProducts()
-        } catch (err) {
-          console.error('Error updating product publication status:', err)
-        }
-      }
+      // Reload products to update status (PublishedAt is updated on backend)
+      await loadProducts()
       
       // Clear saved operation
       localStorage.removeItem('sendingToChannel')
@@ -199,14 +135,14 @@ function AdminProducts() {
       setSendProgress({ current: 0, total: 0 })
       setSelectedProductIds(new Set())
       
-      if (successCount > 0 && failCount === 0) {
+      if (result.successCount > 0 && result.failCount === 0) {
         setToast({ 
-          message: `Сообщения успешно отправлены в канал! (${successCount} товар(ов))`, 
+          message: `Сообщения успешно отправлены в канал! (${newSuccessCount} товар(ов))`, 
           type: 'success' 
         })
-      } else if (successCount > 0 && failCount > 0) {
+      } else if (result.successCount > 0 && result.failCount > 0) {
         setToast({ 
-          message: `Отправлено: ${successCount}, Ошибок: ${failCount}`, 
+          message: `Отправлено: ${newSuccessCount}, Ошибок: ${result.failCount}`, 
           type: 'warning' 
         })
       } else {
@@ -552,129 +488,53 @@ function AdminProducts() {
       return
     }
 
-    const selectedProducts = filteredProducts.filter(p => selectedProductIds.has(p.id))
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'
-    
-    // Форматируем сообщения и собираем изображения как в боте
-    const productData = []
-    selectedProducts.forEach((p) => {
-      let caption = `🛍️ ${p.name}\n`
-      if (p.brand) caption += `🏷️ Бренд: ${p.brand}\n`
-      if (p.size) caption += `📏 Размер: ${p.size}\n`
-      if (p.color) caption += `🎨 Цвет: ${p.color}\n`
-      if (p.gender) caption += `👤 Пол: ${p.gender}\n`
-      if (p.condition) caption += `✨ Состояние: ${p.condition}\n`
-      // Add description if it exists and is not empty
-      if (p.description && p.description.trim()) {
-        caption += `\n📝 ${p.description.trim()}\n`
-      }
-      caption += `\n💰 Цена: ${(p.price ?? 0).toLocaleString('ru-RU')} ₽\n`
-      
-      // Собираем URL изображений
-      const imageUrls = []
-      if (p.images && p.images.length > 0) {
-        p.images.forEach(imagePath => {
-          let fullUrl = null
-          if (imagePath.startsWith('http')) {
-            fullUrl = imagePath
-          } else if (imagePath.startsWith('/')) {
-            fullUrl = `${apiBaseUrl}${imagePath}`
-          } else {
-            fullUrl = `${apiBaseUrl}/${imagePath.trimStart('/')}`
-          }
-          if (fullUrl) {
-            imageUrls.push(fullUrl)
-          }
-        })
-      }
-      
-      productData.push({ caption, imageUrls })
-    })
+    // Get product IDs to send
+    const productIds = Array.from(selectedProductIds)
+    const total = productIds.length
 
     // Save operation info to localStorage for recovery after page reload
-    const productIds = Array.from(selectedProductIds)
     const operationInfo = {
       productIds,
       startTime: new Date().toISOString(),
-      total: productData.length,
+      total,
       current: 0 // Track actual number of successfully sent products
     }
     localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
 
-    // Send messages sequentially to show progress
+    // Send products to channel - backend handles everything
     try {
       setSendingToChannel(true)
-      setSendProgress({ current: 0, total: productData.length })
+      setSendProgress({ current: 0, total })
       
-      let successCount = 0
-      let failCount = 0
+      // Send all products at once - backend will handle formatting and sending
+      const result = await api.sendProductsToChannel(productIds)
+      console.log('[SendToChannel] API response:', result)
       
-      // Send messages one by one to track progress
-      const publishedProductIds = []
-      for (let i = 0; i < productData.length; i++) {
-        const { caption, imageUrls } = productData[i]
-        const product = selectedProducts[i]
-        
-        try {
-          const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
-          console.log(`[SendToChannel] Product ${product.id} (${product.name}) - API response:`, result)
-          
-          // Check both success and Success (case-insensitive)
-          const isSuccess = result?.success === true || result?.Success === true
-          
-          if (isSuccess) {
-            successCount++
-            // Mark product as published
-            publishedProductIds.push(product.id)
-            
-            // Update progress and localStorage with actual success count
-            setSendProgress({ current: successCount, total: productData.length })
-            const updatedOperation = {
-              ...operationInfo,
-              current: successCount
-            }
-            localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
-            console.log(`[SendToChannel] Product ${product.id} marked as successfully sent`)
-          } else {
-            failCount++
-            console.warn(`[SendToChannel] Product ${product.id} failed. Response:`, result)
-            // Update progress even on failure to show current position
-            setSendProgress({ current: successCount + failCount, total: productData.length })
-          }
-        } catch (err) {
-          console.error(`[SendToChannel] Error sending product ${product.id} to channel:`, err)
-          failCount++
-          // Update progress even on error to show current position
-          setSendProgress({ current: successCount + failCount, total: productData.length })
-        }
+      // Update progress
+      setSendProgress({ current: result.successCount, total })
+      
+      // Update localStorage with actual success count
+      const updatedOperation = {
+        ...operationInfo,
+        current: result.successCount
       }
+      localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
 
-      // Update PublishedAt for successfully sent products
-      if (publishedProductIds.length > 0) {
-        try {
-          await Promise.allSettled(
-            publishedProductIds.map(productId => api.publishProduct(productId))
-          )
-          // Reload products to update status
-          await loadProducts()
-        } catch (err) {
-          console.error('Error updating product publication status:', err)
-          // Don't fail the whole operation if status update fails
-        }
-      }
+      // Reload products to update status (PublishedAt is updated on backend)
+      await loadProducts()
 
-      // Clear saved operation on success
+      // Clear saved operation
       localStorage.removeItem('sendingToChannel')
 
-      if (successCount > 0 && failCount === 0) {
+      if (result.successCount > 0 && result.failCount === 0) {
         setToast({ 
-          message: `Сообщения успешно отправлены в канал! (${successCount} товар(ов))`, 
+          message: `Сообщения успешно отправлены в канал! (${result.successCount} товар(ов))`, 
           type: 'success' 
         })
         setSelectedProductIds(new Set())
-      } else if (successCount > 0 && failCount > 0) {
+      } else if (result.successCount > 0 && result.failCount > 0) {
         setToast({ 
-          message: `Отправлено: ${successCount}, Ошибок: ${failCount}`, 
+          message: `Отправлено: ${result.successCount}, Ошибок: ${result.failCount}`, 
           type: 'warning' 
         })
       } else {
@@ -684,7 +544,7 @@ function AdminProducts() {
         })
       }
     } catch (err) {
-      console.error('Error sending to channel:', err)
+      console.error('Error sending products to channel:', err)
       // Don't clear localStorage on error - allow recovery
       setToast({ 
         message: 'Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'), 

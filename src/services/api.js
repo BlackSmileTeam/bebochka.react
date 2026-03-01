@@ -1036,6 +1036,38 @@ export const api = {
   },
 
   /**
+   * Sends products to Telegram channel by product IDs
+   * All message formatting and image loading happens on the backend
+   * @param {Array<number>} productIds - Array of product IDs to send
+   * @returns {Promise<Object>} Response with success status and details
+   */
+  async sendProductsToChannel(productIds) {
+    try {
+      const payload = { productIds }
+      // Increase timeout for Telegram channel sending (can take up to 500 seconds per product on backend)
+      const response = await apiClient.post('/telegram/channel/send-products', payload, {
+        timeout: 600000 // 10 minutes timeout for sending large images to Telegram
+      })
+      const data = response.data
+      return {
+        success: data.success ?? data.Success ?? false,
+        successCount: data.successCount ?? data.SuccessCount ?? 0,
+        failCount: data.failCount ?? data.FailCount ?? 0,
+        totalCount: data.totalCount ?? data.TotalCount ?? 0,
+        results: data.results ?? data.Results ?? [],
+        message: data.message ?? data.Message ?? ''
+      }
+    } catch (error) {
+      console.error('[API] Error sending products to channel:', error)
+      const apiMessage = error.response?.data?.message || error.response?.data?.Message
+      if (apiMessage) {
+        throw new Error(apiMessage)
+      }
+      throw error
+    }
+  },
+
+  /**
    * Gets all Telegram errors grouped by date
    * @returns {Promise<Object>} Errors grouped by date
    */
