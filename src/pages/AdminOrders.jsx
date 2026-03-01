@@ -402,7 +402,7 @@ function AdminOrders() {
                             <td>{getCustomerPhone(order)}</td>
                             <td>{formatDate(order.createdAt || order.CreatedAt)}</td>
                             <td><strong>{formatPrice(getTotalAmount(order))}</strong></td>
-                            <td>
+                            <td className="status-cell">
                               <span 
                                 className="status-badge"
                                 style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
@@ -410,18 +410,26 @@ function AdminOrders() {
                                 {currentStatus}
                               </span>
                             </td>
-                            <td>
-                              <select
-                                value={currentStatus}
-                                onChange={(e) => handleStatusChange(orderId, e.target.value)}
-                                disabled={isUpdating}
-                                className="status-select"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {ORDER_STATUSES.map(s => (
-                                  <option key={s} value={s}>{s}</option>
-                                ))}
-                              </select>
+                            <td className="actions-cell">
+                              <div className="actions-wrapper">
+                                <span 
+                                  className="status-badge-mobile"
+                                  style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
+                                >
+                                  {currentStatus}
+                                </span>
+                                <select
+                                  value={currentStatus}
+                                  onChange={(e) => handleStatusChange(orderId, e.target.value)}
+                                  disabled={isUpdating}
+                                  className="status-select"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {ORDER_STATUSES.map(s => (
+                                    <option key={s} value={s}>{s}</option>
+                                  ))}
+                                </select>
+                              </div>
                             </td>
                           </tr>
                         )
