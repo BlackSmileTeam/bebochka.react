@@ -374,6 +374,7 @@ function AdminProducts() {
       if (p.color) caption += `🎨 Цвет: ${p.color}\n`
       if (p.gender) caption += `👤 Пол: ${p.gender}\n`
       if (p.condition) caption += `✨ Состояние: ${p.condition}\n`
+      if (p.description) caption += `\n📝 ${p.description}\n`
       caption += `\n💰 Цена: ${(p.price ?? 0).toLocaleString('ru-RU')} ₽\n`
       
       // Собираем URL изображений
