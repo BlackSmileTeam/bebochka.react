@@ -85,6 +85,12 @@ function Layout() {
                 >
                   Заказы
                 </Link>
+                <Link 
+                  to="/admin/telegram-errors" 
+                  className={location.pathname === '/admin/telegram-errors' ? 'active' : ''}
+                >
+                  Ошибки
+                </Link>
                 <Link to="/" className="back-link">
                   На сайт
                 </Link>
