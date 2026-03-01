@@ -746,7 +746,7 @@ function AdminProducts() {
                       onClick={(e) => e.stopPropagation()}
                     />
                   </td>
-                  <td>
+                  <td data-label="Фото" className="product-image-td" data-product-name={product.name}>
                     <div className="product-image-cell">
                       {product.images && product.images.length > 0 ? (
                         <>
@@ -771,14 +771,29 @@ function AdminProducts() {
                       <div className="product-name-below">{product.name}</div>
                     </div>
                   </td>
-                  <td>{product.brand || '-'}</td>
-                  <td>{product.size || '-'}</td>
-                  <td>{product.color || '-'}</td>
-                  <td className="gender-cell" title={product.gender || '-'}>
+                  <td data-label="Информация" className="product-info-wrapper">
+                    <div className="product-info-mobile">
+                      <div className="product-name-mobile">{product.name}</div>
+                      <div className="product-details-mobile">
+                        <span className="brand-cell">{product.brand || '-'}</span>
+                        <span className="size-cell">{product.size || '-'}</span>
+                        <span className="color-cell">{product.color || '-'}</span>
+                        <span className="gender-cell" title={product.gender || '-'}>
+                          {getGenderIcon(product.gender)}
+                        </span>
+                        <span className="condition-cell">{product.condition ? capitalize(product.condition) : '-'}</span>
+                      </div>
+                      <div className="price-cell">{(product.price ?? 0).toLocaleString('ru-RU')} ₽</div>
+                    </div>
+                  </td>
+                  <td data-label="Бренд" className="brand-cell desktop-only">{product.brand || '-'}</td>
+                  <td data-label="Размер" className="size-cell desktop-only">{product.size || '-'}</td>
+                  <td data-label="Цвет" className="color-cell desktop-only">{product.color || '-'}</td>
+                  <td data-label="Пол" className="gender-cell desktop-only" title={product.gender || '-'}>
                     {getGenderIcon(product.gender)}
                   </td>
-                  <td>{product.condition ? capitalize(product.condition) : '-'}</td>
-                  <td className="quantity-cell">
+                  <td data-label="Состояние" className="condition-cell desktop-only">{product.condition ? capitalize(product.condition) : '-'}</td>
+                  <td data-label="В наличии" className="quantity-cell">
                     <span style={{ 
                       color: (product.quantityInStock || 0) > 0 ? '#48bb78' : '#e53e3e',
                       fontWeight: 'bold'
@@ -786,8 +801,8 @@ function AdminProducts() {
                       {product.quantityInStock || 0} шт.
                     </span>
                   </td>
-                  <td>{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
-                  <td>
+                  <td data-label="Цена" className="price-cell desktop-only">{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
+                  <td data-label="Статус" className="publication-cell">
                     <div className="publication-icon-wrapper">
                       {product.publishedAt ? (
                         published ? (
@@ -815,7 +830,7 @@ function AdminProducts() {
                       )}
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Действия" className="actions-cell">
                     <div className="action-menu-wrapper">
                       <button
                         className="btn-more"
