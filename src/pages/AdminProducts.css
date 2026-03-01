@@ -838,6 +838,10 @@
     width: 100%;
   }
 
+  .table-info .btn-select-all {
+    width: auto;
+  }
+
   .products-table-container {
     overflow-x: hidden;
     width: 100%;
@@ -917,6 +921,10 @@
   .header-actions .btn {
     font-size: 0.875rem;
     padding: 0.5rem 0.75rem;
+  }
+
+  .table-info .btn-select-all {
+    width: auto;
   }
 
   .active-filters {
