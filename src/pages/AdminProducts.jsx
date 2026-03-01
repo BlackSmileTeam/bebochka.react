@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '../services/api'
 import ProductForm from '../components/ProductForm'
+import Toast from '../components/Toast'
 import './AdminProducts.css'
 
 function AdminProducts() {
@@ -15,6 +16,7 @@ function AdminProducts() {
   const [showFilters, setShowFilters] = useState(false)
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const [sendingToChannel, setSendingToChannel] = useState(false)
+  const [toast, setToast] = useState(null)
   
   // Фильтры
   const [filters, setFilters] = useState({
@@ -246,8 +248,9 @@ function AdminProducts() {
     try {
       await api.deleteProduct(id)
       await loadProducts()
+      setToast({ message: 'Товар успешно удален', type: 'success' })
     } catch (err) {
-      alert('Ошибка при удалении товара')
+      setToast({ message: 'Ошибка при удалении товара', type: 'error' })
       console.error(err)
     }
   }
@@ -312,37 +315,69 @@ function AdminProducts() {
 
   const handleSendToChannel = async () => {
     if (selectedProductIds.size === 0) {
-      alert('Выберите хотя бы один товар для отправки в канал')
+      setToast({ message: 'Выберите хотя бы один товар для отправки в канал', type: 'warning' })
       return
     }
 
     const selectedProducts = filteredProducts.filter(p => selectedProductIds.has(p.id))
-    const baseUrl = window.location.origin
-    const lines = ['🛍 Новые товары в каталоге:\n']
-    selectedProducts.forEach((p, i) => {
-      const details = [p.name]
-      if (p.brand) details.push(p.brand)
-      if (p.size) details.push(`размер ${p.size}`)
-      if (p.color) details.push(p.color)
-      lines.push(`${i + 1}. ${details.join(', ')} — ${(p.price ?? 0).toLocaleString('ru-RU')} ₽`)
+    
+    // Форматируем сообщения как в боте
+    const messages = []
+    selectedProducts.forEach((p) => {
+      let caption = `🛍️ ${p.name}\n`
+      if (p.brand) caption += `🏷️ Бренд: ${p.brand}\n`
+      if (p.size) caption += `📏 Размер: ${p.size}\n`
+      if (p.color) caption += `🎨 Цвет: ${p.color}\n`
+      if (p.gender) caption += `👤 Пол: ${p.gender}\n`
+      if (p.condition) caption += `✨ Состояние: ${p.condition}\n`
+      caption += `\n💰 Цена: ${(p.price ?? 0).toLocaleString('ru-RU')} ₽\n`
+      caption += `✅ В наличии: ${p.availableQuantity || 0} шт.\n`
+      messages.push(caption)
     })
-    const channelUrl = 'https://t.me/bebochkaTest'
-    lines.push(`\n👉 Смотреть каталог: ${baseUrl}`)
-    lines.push(`📢 Канал: ${channelUrl}`)
-    const message = lines.join('\n')
 
+    // Отправляем каждое сообщение отдельно
     try {
       setSendingToChannel(true)
-      const result = await api.sendMessageToChannel(message)
-      if (result?.success) {
-        alert(`Сообщение успешно отправлено в канал! (${selectedProducts.length} товар(ов))`)
+      let successCount = 0
+      let failCount = 0
+
+      for (const message of messages) {
+        try {
+          const result = await api.sendMessageToChannel(message)
+          if (result?.success) {
+            successCount++
+          } else {
+            failCount++
+          }
+        } catch (err) {
+          console.error('Error sending message to channel:', err)
+          failCount++
+        }
+      }
+
+      if (successCount > 0 && failCount === 0) {
+        setToast({ 
+          message: `Сообщения успешно отправлены в канал! (${successCount} товар(ов))`, 
+          type: 'success' 
+        })
         setSelectedProductIds(new Set())
+      } else if (successCount > 0 && failCount > 0) {
+        setToast({ 
+          message: `Отправлено: ${successCount}, Ошибок: ${failCount}`, 
+          type: 'warning' 
+        })
       } else {
-        alert(result?.message || 'Не удалось отправить сообщение в канал')
+        setToast({ 
+          message: 'Не удалось отправить сообщения в канал', 
+          type: 'error' 
+        })
       }
     } catch (err) {
       console.error('Error sending to channel:', err)
-      alert('Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'))
+      setToast({ 
+        message: 'Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'), 
+        type: 'error' 
+      })
     } finally {
       setSendingToChannel(false)
     }
@@ -719,6 +754,13 @@ function AdminProducts() {
             </tbody>
           </table>
         </div>
+      )}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   )
