@@ -34,6 +34,21 @@
   width: auto;
 }
 
+.send-progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.send-progress-fill {
+  height: 100%;
+  background-color: #48bb78;
+  transition: width 0.3s ease;
+}
+
 /* Checkbox column and row selection */
 .checkbox-column {
   width: 40px;

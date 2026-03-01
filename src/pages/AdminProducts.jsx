@@ -16,6 +16,7 @@ function AdminProducts() {
   const [showFiltersPopup, setShowFiltersPopup] = useState(false) // Popup с фильтрами
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const [sendingToChannel, setSendingToChannel] = useState(false)
+  const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 })
   const [toast, setToast] = useState(null)
   
   // Фильтры
@@ -387,37 +388,31 @@ function AdminProducts() {
       productData.push({ caption, imageUrls })
     })
 
-    // Отправляем все сообщения параллельно для ускорения
+    // Send messages sequentially to show progress
     try {
       setSendingToChannel(true)
-      
-      // Создаем массив промисов для параллельной отправки
-      const sendPromises = productData.map(({ caption, imageUrls }) => 
-        api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
-          .then(result => ({ success: result?.success ?? false, error: null }))
-          .catch(err => {
-            console.error('Error sending message to channel:', err)
-            return { success: false, error: err }
-          })
-      )
-      
-      // Ждем завершения всех отправок параллельно
-      const results = await Promise.allSettled(sendPromises)
+      setSendProgress({ current: 0, total: productData.length })
       
       let successCount = 0
       let failCount = 0
       
-      results.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          if (result.value.success) {
+      // Send messages one by one to track progress
+      for (let i = 0; i < productData.length; i++) {
+        const { caption, imageUrls } = productData[i]
+        setSendProgress({ current: i + 1, total: productData.length })
+        
+        try {
+          const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
+          if (result?.success) {
             successCount++
           } else {
             failCount++
           }
-        } else {
+        } catch (err) {
+          console.error('Error sending message to channel:', err)
           failCount++
         }
-      })
+      }
 
       if (successCount > 0 && failCount === 0) {
         setToast({ 
@@ -444,6 +439,7 @@ function AdminProducts() {
       })
     } finally {
       setSendingToChannel(false)
+      setSendProgress({ current: 0, total: 0 })
     }
   }
 
@@ -468,14 +464,26 @@ function AdminProducts() {
             🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
           {selectedProductIds.size > 0 && (
-            <button 
-              className="btn btn-secondary btn-send-channel" 
-              onClick={handleSendToChannel}
-              disabled={sendingToChannel}
-              title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
-            >
-              {sendingToChannel ? 'Отправка...' : `📢 Отправить в канал (${selectedProductIds.size})`}
-            </button>
+            <>
+              <button 
+                className="btn btn-secondary btn-send-channel" 
+                onClick={handleSendToChannel}
+                disabled={sendingToChannel}
+                title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
+              >
+                {sendingToChannel 
+                  ? `📢 Отправка... (${sendProgress.current}/${sendProgress.total})` 
+                  : `📢 Отправить в канал (${selectedProductIds.size})`}
+              </button>
+              {sendingToChannel && sendProgress.total > 0 && (
+                <div className="send-progress-bar">
+                  <div 
+                    className="send-progress-fill" 
+                    style={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
+                  />
+                </div>
+              )}
+            </>
           )}
           <button className="btn btn-primary" onClick={handleCreate}>
             ➕ Добавить

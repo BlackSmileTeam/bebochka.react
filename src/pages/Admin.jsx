@@ -27,6 +27,11 @@ function Admin() {
             <h2>Заказы</h2>
             <p>Просматривайте и управляйте заказами пользователей</p>
           </Link>
+          <Link to="/admin/telegram-errors" className="admin-card">
+            <div className="admin-card-icon">⚠️</div>
+            <h2>Ошибки Telegram</h2>
+            <p>Просматривайте ошибки отправки в канал</p>
+          </Link>
         </div>
       </div>
     </div>

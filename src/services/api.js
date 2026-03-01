@@ -1018,6 +1018,47 @@ export const api = {
   },
 
   /**
+   * Gets all Telegram errors grouped by date
+   * @returns {Promise<Object>} Errors grouped by date
+   */
+  async getTelegramErrors() {
+    try {
+      const response = await apiClient.get('/telegramerrors')
+      return response.data
+    } catch (error) {
+      console.error('[API] Error fetching Telegram errors:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Deletes a Telegram error by ID
+   * @param {number} id - Error ID
+   * @returns {Promise<void>}
+   */
+  async deleteTelegramError(id) {
+    try {
+      await apiClient.delete(`/telegramerrors/${id}`)
+    } catch (error) {
+      console.error('[API] Error deleting Telegram error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Deletes all Telegram errors
+   * @returns {Promise<void>}
+   */
+  async deleteAllTelegramErrors() {
+    try {
+      await apiClient.delete('/telegramerrors/all')
+    } catch (error) {
+      console.error('[API] Error deleting all Telegram errors:', error)
+      throw error
+    }
+  },
+
+  /**
    * Gets all orders (admin only)
    * @returns {Promise<Array>} List of orders
    */
