@@ -385,6 +385,21 @@ export const api = {
   },
 
   /**
+   * Marks a product as published by setting PublishedAt to current time
+   * @param {number} id - Product ID
+   * @returns {Promise<Object>} Updated product
+   */
+  async publishProduct(id) {
+    try {
+      const response = await apiClient.patch(`/products/${id}/publish`)
+      return response.data
+    } catch (error) {
+      console.error('[API] Error publishing product:', error)
+      throw error
+    }
+  },
+
+  /**
    * Updates an existing product
    * @param {number} id - Product ID
    * @param {FormData} formData - Updated product form data

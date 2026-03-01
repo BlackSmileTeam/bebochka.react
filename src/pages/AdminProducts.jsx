@@ -156,18 +156,19 @@ function AdminProducts() {
   
   // Функция для проверки, опубликован ли товар
   const isPublished = (product) => {
-    if (!product.publishedAt) return true
+    // If PublishedAt is null, product is not published (newly created)
+    if (!product.publishedAt) return false
     try {
       const publishedAt = new Date(product.publishedAt)
-      if (isNaN(publishedAt.getTime())) return true
+      if (isNaN(publishedAt.getTime())) return false
       // Use UTC for comparison to avoid timezone issues
       // publishedAt is stored in UTC in the database
       const now = new Date()
-      // Compare UTC timestamps
+      // Compare UTC timestamps - only return true if publishedAt is in the past
       return publishedAt.getTime() <= now.getTime()
     } catch (error) {
       console.error('Ошибка при проверке даты публикации:', error)
-      return true
+      return false
     }
   }
   
@@ -405,20 +406,38 @@ function AdminProducts() {
       let failCount = 0
       
       // Send messages one by one to track progress
+      const publishedProductIds = []
       for (let i = 0; i < productData.length; i++) {
         const { caption, imageUrls } = productData[i]
+        const product = selectedProducts[i]
         setSendProgress({ current: i + 1, total: productData.length })
         
         try {
           const result = await api.sendMessageToChannel(caption, imageUrls.length > 0 ? imageUrls : null)
           if (result?.success) {
             successCount++
+            // Mark product as published
+            publishedProductIds.push(product.id)
           } else {
             failCount++
           }
         } catch (err) {
           console.error('Error sending message to channel:', err)
           failCount++
+        }
+      }
+
+      // Update PublishedAt for successfully sent products
+      if (publishedProductIds.length > 0) {
+        try {
+          await Promise.allSettled(
+            publishedProductIds.map(productId => api.publishProduct(productId))
+          )
+          // Reload products to update status
+          await loadProducts()
+        } catch (err) {
+          console.error('Error updating product publication status:', err)
+          // Don't fail the whole operation if status update fails
         }
       }
 
@@ -1032,7 +1051,7 @@ function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderI
                     </span>
                   )
                 ) : (
-                  <span style={{ color: '#48bb78', fontWeight: 'bold' }}>Опубликован</span>
+                  <span style={{ color: '#e53e3e', fontWeight: 'bold' }}>Не опубликован</span>
                 )}
               </span>
             </div>

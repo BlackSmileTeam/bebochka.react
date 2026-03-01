@@ -542,6 +542,11 @@
   background-color: #fff8e1;
 }
 
+.publication-icon.unpublished {
+  color: #e53e3e;
+  background-color: #fff5f5;
+}
+
 /* Action menu styles */
 .action-menu-wrapper {
   position: relative;
