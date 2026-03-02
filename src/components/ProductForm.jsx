@@ -20,10 +20,11 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     size: '',
     color: '',
     quantityInStock: 1,
-    gender: '',
+    gender: 'мальчик',
     condition: '',
     publishedAt: ''
   })
+  const [scheduleSend, setScheduleSend] = useState(false)
   const [images, setImages] = useState([])
   const [existingImages, setExistingImages] = useState([])
   const [loading, setLoading] = useState(false)
@@ -35,6 +36,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [nameSuggestions, setNameSuggestions] = useState([])
   const [showNameDropdown, setShowNameDropdown] = useState(false)
   const nameDropdownRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   // Log colors when component mounts or colors change
   useEffect(() => {
@@ -118,12 +120,15 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         size: product.size || '',
         color: product.color || '',
         quantityInStock: product.quantityInStock || 1,
-        gender: product.gender || '',
+        gender: product.gender || 'мальчик',
         condition: product.condition || '',
         publishedAt: publishedAtValue
       })
+      setScheduleSend(!!(product.publishedAt || product.PublishedAt))
       setBrandSearch(product.brand || '')
       setExistingImages(product.images || [])
+    } else {
+      setScheduleSend(false)
     }
   }, [product])
 
@@ -136,8 +141,15 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   }
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files)
-    setImages(files)
+    const files = e.target.files
+    if (files && files.length > 0) {
+      setImages(prev => [...prev, ...Array.from(files)])
+    }
+    e.target.value = ''
+  }
+
+  const handleRemoveNewImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleRemoveExistingImage = (index) => {
@@ -147,6 +159,10 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    if (!product && images.length === 0) {
+      setError('Добавьте хотя бы одно фото')
+      return
+    }
     setLoading(true)
 
     try {
@@ -161,10 +177,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('gender', formData.gender || '')
       formDataToSend.append('condition', formData.condition || '')
       
-      // Add PublishedAt if provided
+      // Add PublishedAt if "отправить ко времени" is checked
       // datetime-local gives "YYYY-MM-DDTHH:mm" (interpreted as Moscow time)
-      // We create a Date object treating the input as Moscow time components
-      if (formData.publishedAt) {
+      if (scheduleSend && formData.publishedAt) {
         const [datePart, timePart] = formData.publishedAt.split('T')
         const [year, month, day] = datePart.split('-').map(Number)
         const [hours, minutes] = timePart.split(':').map(Number)
@@ -422,20 +437,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 </small>
               )}
             </div>
-
-            <div className="form-group">
-              <label htmlFor="quantityInStock">Количество в наличии *</label>
-              <input
-                type="number"
-                id="quantityInStock"
-                name="quantityInStock"
-                value={formData.quantityInStock}
-                onChange={handleChange}
-                required
-                min="1"
-                placeholder="1"
-              />
-            </div>
           </div>
 
           <div className="form-row">
@@ -483,18 +484,29 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="publishedAt">Дата и время публикации</label>
-            <input
-              type="datetime-local"
-              id="publishedAt"
-              name="publishedAt"
-              value={formData.publishedAt}
-              onChange={handleChange}
-              placeholder="Оставьте пустым для немедленной публикации"
-            />
-            <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-              Оставьте пустым, чтобы товар был опубликован сразу. Укажите дату и время для отложенной публикации.
-            </small>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={scheduleSend}
+                onChange={(e) => setScheduleSend(e.target.checked)}
+              />
+              Отправить ко времени
+            </label>
+            {scheduleSend && (
+              <>
+                <input
+                  type="datetime-local"
+                  id="publishedAt"
+                  name="publishedAt"
+                  value={formData.publishedAt}
+                  onChange={handleChange}
+                  style={{ marginTop: '8px' }}
+                />
+                <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                  Укажите дату и время публикации (МСК).
+                </small>
+              </>
+            )}
           </div>
 
           <div className="form-group">
@@ -502,14 +514,29 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               {product ? 'Добавить новые фотографии' : 'Фотографии *'}
             </label>
             <input
+              ref={fileInputRef}
               type="file"
               id="images"
               name="images"
               onChange={handleImageChange}
               multiple
               accept="image/*"
-              required={!product && images.length === 0}
+              style={{ display: 'none' }}
             />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {images.length === 0 ? 'Выбрать файлы' : 'Добавить ещё фото'}
+              </button>
+              {images.length > 0 && (
+                <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                  Выбрано: {images.length}
+                </span>
+              )}
+            </div>
             {images.length > 0 && (
               <div className="image-preview">
                 {Array.from(images).map((file, index) => (
@@ -519,6 +546,14 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       alt={`Preview ${index}`}
                       className="preview-image"
                     />
+                    <button
+                      type="button"
+                      className="remove-image"
+                      onClick={() => handleRemoveNewImage(index)}
+                      title="Удалить фото"
+                    >
+                      ×
+                    </button>
                   </div>
                 ))}
               </div>
