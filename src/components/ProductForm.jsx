@@ -2,6 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import './ProductForm.css'
 
+// Типы одежды для автозаполнения названия товара
+const PRODUCT_NAME_SUGGESTIONS = [
+  'Футболка', 'Куртка', 'Платье', 'Брюки', 'Шорты', 'Юбка', 'Свитер', 'Кардиган',
+  'Жилет', 'Комбинезон', 'Сарафан', 'Боди', 'Пижама', 'Халат', 'Пальто', 'Пуховик',
+  'Джинсы', 'Леггинсы', 'Лосины', 'Костюм', 'Водолазка', 'Блузка', 'Рубашка',
+  'Майка', 'Толстовка', 'Худи', 'Шапка', 'Шарф', 'Варежки', 'Носки', 'Колготки',
+  'Плащ', 'Жакет', 'Парка', 'Анорак', 'Спортивный костюм', 'Кроп-топ', 'Топ'
+]
+
 function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -23,6 +32,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [brandSearch, setBrandSearch] = useState('')
   const [showBrandDropdown, setShowBrandDropdown] = useState(false)
   const brandDropdownRef = useRef(null)
+  const [nameSuggestions, setNameSuggestions] = useState([])
+  const [showNameDropdown, setShowNameDropdown] = useState(false)
+  const nameDropdownRef = useRef(null)
 
   // Log colors when component mounts or colors change
   useEffect(() => {
@@ -51,11 +63,29 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     }
   }, [brandSearch])
 
-  // Close dropdown when clicking outside
+  // Name autocomplete: filter suggestions when user types
+  useEffect(() => {
+    const query = (formData.name || '').trim().toLowerCase()
+    if (query.length >= 2) {
+      const filtered = PRODUCT_NAME_SUGGESTIONS.filter(s =>
+        s.toLowerCase().includes(query)
+      )
+      setNameSuggestions(filtered)
+      setShowNameDropdown(filtered.length > 0)
+    } else {
+      setNameSuggestions([])
+      setShowNameDropdown(false)
+    }
+  }, [formData.name])
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (brandDropdownRef.current && !brandDropdownRef.current.contains(event.target)) {
         setShowBrandDropdown(false)
+      }
+      if (nameDropdownRef.current && !nameDropdownRef.current.contains(event.target)) {
+        setShowNameDropdown(false)
       }
     }
 
@@ -193,15 +223,65 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
           <div className="form-group">
             <label htmlFor="name">Название товара *</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              placeholder="Например: Платье розовое"
-            />
+            <div ref={nameDropdownRef} style={{ position: 'relative', width: '100%' }}>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                onFocus={() => {
+                  if (formData.name.trim().length >= 2 && nameSuggestions.length > 0) {
+                    setShowNameDropdown(true)
+                  }
+                }}
+                required
+                placeholder="Например: Футболка, Платье..."
+              />
+              {showNameDropdown && nameSuggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  width: '100%',
+                  backgroundColor: 'white',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                  marginTop: '4px'
+                }}>
+                  {nameSuggestions.map((suggestion) => (
+                    <div
+                      key={suggestion}
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        setFormData(prev => ({ ...prev, name: suggestion }))
+                        setShowNameDropdown(false)
+                      }}
+                      style={{
+                        padding: '0.75rem',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #e2e8f0',
+                        color: '#2d3748',
+                        fontSize: '0.875rem',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        minWidth: '100%'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#f7fafc'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="form-group">
@@ -258,8 +338,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                     return (
                       <div
                         key={brandId}
-                        onClick={() => {
-                          setFormData({ ...formData, brand: brandName })
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          setFormData(prev => ({ ...prev, brand: brandName }))
                           setBrandSearch(brandName)
                           setShowBrandDropdown(false)
                         }}

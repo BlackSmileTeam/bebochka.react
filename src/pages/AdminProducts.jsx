@@ -137,12 +137,12 @@ function AdminProducts() {
       
       if (result.successCount > 0 && result.failCount === 0) {
         setToast({ 
-          message: `Сообщения успешно отправлены в канал! (${newSuccessCount} товар(ов))`, 
+          message: `Доставлено в канал: ${newSuccessCount} товар(ов)`, 
           type: 'success' 
         })
       } else if (result.successCount > 0 && result.failCount > 0) {
         setToast({ 
-          message: `Отправлено: ${newSuccessCount}, Ошибок: ${result.failCount}`, 
+          message: `Доставлено в канал: ${newSuccessCount}, Ошибок: ${result.failCount}`, 
           type: 'warning' 
         })
       } else {
@@ -565,13 +565,13 @@ function AdminProducts() {
 
       if (result.successCount > 0 && result.failCount === 0) {
         setToast({ 
-          message: `Сообщения успешно отправлены в канал! (${result.successCount} товар(ов))`, 
+          message: `Доставлено в канал: ${result.successCount} товар(ов)`, 
           type: 'success' 
         })
         setSelectedProductIds(new Set())
       } else if (result.successCount > 0 && result.failCount > 0) {
         setToast({ 
-          message: `Отправлено: ${result.successCount}, Ошибок: ${result.failCount}`, 
+          message: `Доставлено в канал: ${result.successCount}, Ошибок: ${result.failCount}`, 
           type: 'warning' 
         })
       } else {
@@ -631,7 +631,7 @@ function AdminProducts() {
                 title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
               >
                 {sendingToChannel 
-                  ? `📢 Отправка... (${sendProgress.current}/${sendProgress.total})` 
+                  ? `📢 Доставлено в канал: ${sendProgress.current}/${sendProgress.total}` 
                   : `📢 Отправить в канал (${selectedProductIds.size})`}
               </button>
               {sendingToChannel && sendProgress.total > 0 && (
@@ -912,7 +912,6 @@ function AdminProducts() {
                 <th>Цвет</th>
                 <th>Пол</th>
                 <th>Состояние</th>
-                <th>В наличии</th>
                 <th>Цена</th>
                 <th title="Статус публикации"><span style={{cursor: 'help'}}>📢</span></th>
                 <th>Действия</th>
@@ -984,14 +983,6 @@ function AdminProducts() {
                     {getGenderIcon(product.gender)}
                   </td>
                   <td data-label="Состояние" className="condition-cell desktop-only">{product.condition ? capitalize(product.condition) : '-'}</td>
-                  <td data-label="В наличии" className="quantity-cell">
-                    <span style={{ 
-                      color: (product.quantityInStock || 0) > 0 ? '#48bb78' : '#e53e3e',
-                      fontWeight: 'bold'
-                    }}>
-                      {product.quantityInStock || 0} шт.
-                    </span>
-                  </td>
                   <td data-label="Цена" className="price-cell desktop-only">{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
                   <td data-label="Статус" className="publication-cell">
                     <div className="publication-icon-wrapper">
@@ -1159,16 +1150,6 @@ function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderI
             <div className="detail-row">
               <span className="detail-label">Состояние:</span>
               <span className="detail-value">{product.condition ? capitalize(product.condition) : '-'}</span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">В наличии:</span>
-              <span className="detail-value" style={{
-                color: (product.quantityInStock || 0) > 0 ? '#48bb78' : '#e53e3e',
-                fontWeight: 'bold'
-              }}>
-                {product.quantityInStock || 0} шт.
-              </span>
             </div>
             
             <div className="detail-row">
