@@ -484,7 +484,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           </div>
 
           <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               <input
                 type="checkbox"
                 checked={scheduleSend}
