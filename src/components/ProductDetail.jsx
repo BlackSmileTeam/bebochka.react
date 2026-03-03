@@ -46,6 +46,21 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   const images = product.images || []
   const apiUrl = import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'
 
+  const publishedAtRaw = product.publishedAt ?? product.PublishedAt
+  const createdAtRaw = product.createdAt ?? product.CreatedAt
+  const updatedAtRaw = product.updatedAt ?? product.UpdatedAt
+
+  const publishedAt = publishedAtRaw ? new Date(publishedAtRaw) : null
+  const createdAt = createdAtRaw ? new Date(createdAtRaw) : null
+  const updatedAt = updatedAtRaw ? new Date(updatedAtRaw) : null
+
+  const formatDateTime = (d) =>
+    d instanceof Date && !Number.isNaN(d.getTime())
+      ? d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
+      : '—'
+
+  const isScheduled = publishedAt ? publishedAt.getTime() > Date.now() : false
+
   const getImageUrl = (imagePath) => {
     if (imagePath.startsWith('http')) {
       return imagePath
@@ -130,12 +145,19 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
 
           {/* Информация о товаре */}
           <div className="product-detail-info">
+            <div className="product-detail-top">
+              <div className={`publish-badge ${isScheduled ? 'scheduled' : 'published'}`}>
+                {isScheduled ? 'Запланировано' : 'Опубликовано'}
+                {publishedAt ? ` · ${formatDateTime(publishedAt)}` : ''}
+              </div>
+              <div className="product-detail-dates">
+                <div className="product-detail-date-line">Создан: {formatDateTime(createdAt)}</div>
+                <div className="product-detail-date-line">Обновлён: {formatDateTime(updatedAt)}</div>
+              </div>
+            </div>
+
             <h2 className="product-detail-name">{product.name}</h2>
-            <div className="product-detail-stock" style={{
-              color: available > 0 ? '#48bb78' : '#e53e3e',
-              fontWeight: 'bold',
-              marginBottom: '0.5rem'
-            }}>
+            <div className={`product-detail-stock ${available > 0 ? 'in-stock' : 'out-of-stock'}`}>
               {available > 0 ? `В наличии: ${available} шт.` : 'Нет в наличии'}
             </div>
             
