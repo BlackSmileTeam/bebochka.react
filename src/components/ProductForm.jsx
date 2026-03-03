@@ -226,11 +226,17 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={loading ? undefined : onClose}>
+      <div className="modal-content product-form-modal" onClick={(e) => e.stopPropagation()}>
+        {loading && (
+          <div className="product-form-loading-overlay" aria-hidden="true">
+            <div className="product-form-spinner" />
+            <p className="product-form-loading-text">Сохранение карточки…</p>
+          </div>
+        )}
         <div className="modal-header">
           <h2>{product ? 'Редактировать товар' : 'Добавить товар'}</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <button type="button" className="modal-close" onClick={onClose} disabled={loading} aria-label="Закрыть">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="product-form">
@@ -586,11 +592,12 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           </div>
 
           <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>
               Отмена
             </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Сохранение...' : (product ? 'Сохранить' : 'Добавить')}
+            <button type="submit" className="btn btn-primary btn-with-spinner" disabled={loading}>
+              {loading && <span className="btn-spinner" aria-hidden="true" />}
+              {loading ? 'Сохранение…' : (product ? 'Сохранить' : 'Добавить')}
             </button>
           </div>
         </form>
