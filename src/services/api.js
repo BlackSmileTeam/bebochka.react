@@ -1228,7 +1228,7 @@ export const api = {
       console.error('[API] Error deleting order:', error)
       throw error
     }
-  }
+  },
 
   /**
    * Removes an item from an order (admin only). Deletes user's Telegram comment, restores stock, may assign product to next in queue.
