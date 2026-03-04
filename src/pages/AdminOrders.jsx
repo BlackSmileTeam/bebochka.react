@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Fragment } from 'react'
 import { api } from '../services/api'
 import './AdminOrders.css'
 
@@ -24,9 +24,12 @@ function AdminOrders() {
   const [selectedOrders, setSelectedOrders] = useState(new Set())
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all')
   const [expandedGroups, setExpandedGroups] = useState(new Set(ORDER_STATUSES))
+  const [expandedOrderIds, setExpandedOrderIds] = useState(new Set())
   const [updatingStatuses, setUpdatingStatuses] = useState(new Set())
   const [bulkUpdating, setBulkUpdating] = useState(false)
   const [deletingOrderId, setDeletingOrderId] = useState(null)
+  const [deletingItemKey, setDeletingItemKey] = useState(null)
+  const [imageModalUrl, setImageModalUrl] = useState(null)
 
   useEffect(() => {
     loadOrders()
@@ -234,6 +237,42 @@ function AdminOrders() {
   const getCustomerPhone = (order) => order.customerPhone || order.CustomerPhone || '-'
   const getTotalAmount = (order) => order.totalAmount || order.TotalAmount || 0
 
+  const getOrderItems = (order) => order.orderItems || order.OrderItems || []
+  const getItemImageUrl = (item) => {
+    const path = item.imageUrl || item.ImageUrl
+    if (!path) return null
+    if (path.startsWith('http')) return path
+    const base = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
+      : 'http://89.104.67.36:55501'
+    return base + (path.startsWith('/') ? path : '/' + path)
+  }
+
+  const toggleOrderExpanded = (orderId) => {
+    setExpandedOrderIds(prev => {
+      const next = new Set(prev)
+      if (next.has(orderId)) next.delete(orderId)
+      else next.add(orderId)
+      return next
+    })
+  }
+
+  const handleDeleteOrderItem = async (orderId, itemId) => {
+    if (!window.confirm('Удалить товар из заказа? Комментарий пользователя в Telegram будет удалён, товар перейдёт следующему в очереди.')) return
+    const key = `${orderId}-${itemId}`
+    try {
+      setDeletingItemKey(key)
+      await api.deleteOrderItem(orderId, itemId)
+      await loadOrders()
+      setExpandedOrderIds(prev => new Set(prev).add(orderId))
+    } catch (err) {
+      console.error('Ошибка удаления позиции:', err)
+      alert('Ошибка при удалении позиции: ' + (err.message || 'Неизвестная ошибка'))
+    } finally {
+      setDeletingItemKey(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container">
@@ -361,6 +400,7 @@ function AdminOrders() {
                   <table className="orders-table">
                     <thead>
                       <tr>
+                        <th className="expand-column"></th>
                         <th className="checkbox-column">
                           <input
                             type="checkbox"
@@ -386,79 +426,145 @@ function AdminOrders() {
                         const isSelected = selectedOrders.has(orderId)
                         const isUpdating = updatingStatuses.has(orderId)
                         const currentStatus = getOrderStatus(order)
+                        const items = getOrderItems(order)
+                        const isOrderExpanded = expandedOrderIds.has(orderId)
 
                         return (
-                          <tr 
-                            key={orderId}
-                            className={isSelected ? 'row-selected' : ''}
-                          >
-                            <td className="checkbox-column">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleOrderSelection(orderId)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </td>
-                            <td><strong>{getOrderNumber(order)}</strong></td>
-                            <td className="client-cell">
-                              {hasTelegramUser(order) ? (
-                                <a
-                                  href={`tg://user?id=${getTelegramUserId(order)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="client-link-telegram"
+                          <Fragment key={orderId}>
+                            <tr
+                              className={isSelected ? 'row-selected' : ''}
+                            >
+                              <td className="expand-column">
+                                {items.length > 0 && (
+                                  <button
+                                    type="button"
+                                    className="btn-expand-items"
+                                    onClick={(e) => { e.stopPropagation(); toggleOrderExpanded(orderId) }}
+                                    title={isOrderExpanded ? 'Свернуть товары' : 'Развернуть товары'}
+                                  >
+                                    {isOrderExpanded ? '▼' : '▶'}
+                                  </button>
+                                )}
+                              </td>
+                              <td className="checkbox-column">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleOrderSelection(orderId)}
                                   onClick={(e) => e.stopPropagation()}
-                                  title="Открыть чат с пользователем в Telegram"
-                                >
-                                  {getCustomerName(order)}
-                                </a>
-                              ) : (
-                                getCustomerName(order)
-                              )}
-                            </td>
-                            <td>{getCustomerPhone(order)}</td>
-                            <td>{formatDate(order.createdAt || order.CreatedAt)}</td>
-                            <td><strong>{formatPrice(getTotalAmount(order))}</strong></td>
-                            <td className="status-cell">
-                              <span 
-                                className="status-badge"
-                                style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
-                              >
-                                {currentStatus}
-                              </span>
-                            </td>
-                            <td className="actions-cell">
-                              <div className="actions-wrapper">
+                                />
+                              </td>
+                              <td><strong>{getOrderNumber(order)}</strong></td>
+                              <td className="client-cell">
+                                {hasTelegramUser(order) ? (
+                                  <a
+                                    href={`tg://user?id=${getTelegramUserId(order)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="client-link-telegram"
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="Открыть чат с пользователем в Telegram"
+                                  >
+                                    {getCustomerName(order)}
+                                  </a>
+                                ) : (
+                                  getCustomerName(order)
+                                )}
+                              </td>
+                              <td>{getCustomerPhone(order)}</td>
+                              <td>{formatDate(order.createdAt || order.CreatedAt)}</td>
+                              <td><strong>{formatPrice(getTotalAmount(order))}</strong></td>
+                              <td className="status-cell">
                                 <span 
-                                  className="status-badge-mobile"
+                                  className="status-badge"
                                   style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
                                 >
                                   {currentStatus}
                                 </span>
-                                <select
-                                  value={currentStatus}
-                                  onChange={(e) => handleStatusChange(orderId, e.target.value)}
-                                  disabled={isUpdating}
-                                  className="status-select"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {ORDER_STATUSES.map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                  ))}
-                                </select>
-                                <button
-                                  type="button"
-                                  className="btn-delete-order"
-                                  onClick={(e) => { e.stopPropagation(); handleDeleteOrder(orderId) }}
-                                  disabled={deletingOrderId === orderId}
-                                  title="Удалить заказ из базы данных"
-                                >
-                                  {deletingOrderId === orderId ? '…' : '🗑️'}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                              </td>
+                              <td className="actions-cell">
+                                <div className="actions-wrapper">
+                                  <span 
+                                    className="status-badge-mobile"
+                                    style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
+                                  >
+                                    {currentStatus}
+                                  </span>
+                                  <select
+                                    value={currentStatus}
+                                    onChange={(e) => handleStatusChange(orderId, e.target.value)}
+                                    disabled={isUpdating}
+                                    className="status-select"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {ORDER_STATUSES.map(s => (
+                                      <option key={s} value={s}>{s}</option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    className="btn-delete-order"
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteOrder(orderId) }}
+                                    disabled={deletingOrderId === orderId}
+                                    title="Удалить заказ из базы данных"
+                                  >
+                                    {deletingOrderId === orderId ? '…' : '🗑️'}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                            {isOrderExpanded && items.length > 0 && (
+                              <tr key={`${orderId}-items`} className="order-items-tr">
+                                <td colSpan={9} className="order-items-td">
+                                  <div className="order-items-list">
+                                    {items.map(item => {
+                                      const itemId = item.id ?? item.Id
+                                      const imgUrl = getItemImageUrl(item)
+                                      const name = item.productName ?? item.ProductName ?? '—'
+                                      const size = item.size ?? item.Size ?? ''
+                                      const brand = item.brand ?? item.Brand ?? ''
+                                      const color = item.color ?? item.Color ?? ''
+                                      const key = `${orderId}-${itemId}`
+                                      const isDeleting = deletingItemKey === key
+                                      return (
+                                        <div key={itemId} className="order-item-card">
+                                          {imgUrl ? (
+                                            <div 
+                                              className="order-item-photo"
+                                              onClick={() => setImageModalUrl(imgUrl)}
+                                              role="button"
+                                              tabIndex={0}
+                                              onKeyDown={(e) => e.key === 'Enter' && setImageModalUrl(imgUrl)}
+                                              title="Открыть в полном размере"
+                                            >
+                                              <img src={imgUrl} alt="" />
+                                            </div>
+                                          ) : (
+                                            <div className="order-item-photo order-item-photo-placeholder">фото</div>
+                                          )}
+                                          <div className="order-item-info">
+                                            <strong>{name}</strong>
+                                            {size && <span className="order-item-meta">Размер: {size}</span>}
+                                            {brand && <span className="order-item-meta">Бренд: {brand}</span>}
+                                            {color && <span className="order-item-meta">Цвет: {color}</span>}
+                                          </div>
+                                          <button
+                                            type="button"
+                                            className="btn-delete-item"
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteOrderItem(orderId, itemId) }}
+                                            disabled={isDeleting}
+                                            title="Удалить товар из заказа"
+                                          >
+                                            {isDeleting ? '…' : 'Удалить'}
+                                          </button>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
                         )
                       })}
                     </tbody>
@@ -473,6 +579,19 @@ function AdminOrders() {
       {totalOrders === 0 && (
         <div className="empty-state">
           <p>Заказы не найдены</p>
+        </div>
+      )}
+
+      {imageModalUrl && (
+        <div
+          className="image-modal-overlay"
+          onClick={() => setImageModalUrl(null)}
+          onKeyDown={(e) => e.key === 'Escape' && setImageModalUrl(null)}
+          role="button"
+          tabIndex={0}
+          aria-label="Закрыть"
+        >
+          <img src={imageModalUrl} alt="" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>

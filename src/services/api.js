@@ -1229,4 +1229,19 @@ export const api = {
       throw error
     }
   }
+
+  /**
+   * Removes an item from an order (admin only). Deletes user's Telegram comment, restores stock, may assign product to next in queue.
+   * @param {number} orderId - Order ID
+   * @param {number} itemId - Order item ID
+   * @returns {Promise<void>}
+   */
+  async deleteOrderItem(orderId, itemId) {
+    try {
+      await apiClient.delete(`/orders/${orderId}/items/${itemId}`)
+    } catch (error) {
+      console.error('[API] Error deleting order item:', error)
+      throw error
+    }
+  }
 }
