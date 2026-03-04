@@ -417,7 +417,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="form-row">
+          <div className="form-row-3">
             <div className="form-group">
               <label htmlFor="color">Цвет</label>
               <select
@@ -443,9 +443,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 </small>
               )}
             </div>
-          </div>
-
-          <div className="form-row">
             <div className="form-group">
               <label htmlFor="gender">Пол</label>
               <select
@@ -460,7 +457,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 <option value="унисекс">Унисекс</option>
               </select>
             </div>
-
             <div className="form-group">
               <label htmlFor="condition">Состояние</label>
               <select
