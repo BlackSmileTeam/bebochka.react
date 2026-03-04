@@ -417,7 +417,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="form-row-3">
+          <div className="form-row">
             <div className="form-group">
               <label htmlFor="color">Цвет</label>
               <select
@@ -457,20 +457,21 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 <option value="унисекс">Унисекс</option>
               </select>
             </div>
-            <div className="form-group">
-              <label htmlFor="condition">Состояние</label>
-              <select
-                id="condition"
-                name="condition"
-                value={formData.condition}
-                onChange={handleChange}
-              >
-                <option value="">Выберите состояние</option>
-                <option value="новая">Новая</option>
-                <option value="отличное">Отличное</option>
-                <option value="недостаток">Недостаток</option>
-              </select>
-            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="condition">Состояние</label>
+            <select
+              id="condition"
+              name="condition"
+              value={formData.condition}
+              onChange={handleChange}
+            >
+              <option value="">Выберите состояние</option>
+              <option value="новая">Новая</option>
+              <option value="отличное">Отличное</option>
+              <option value="недостаток">Недостаток</option>
+            </select>
           </div>
 
           <div className="form-group">
@@ -524,12 +525,14 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               multiple
               accept="image/*"
               style={{ display: 'none' }}
+              disabled={loading}
             />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
               >
                 {images.length === 0 ? 'Выбрать файлы' : 'Добавить ещё фото'}
               </button>
@@ -553,6 +556,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       className="remove-image"
                       onClick={() => handleRemoveNewImage(index)}
                       title="Удалить фото"
+                      disabled={loading}
                     >
                       ×
                     </button>
@@ -577,6 +581,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                         type="button"
                         className="remove-image"
                         onClick={() => handleRemoveExistingImage(index)}
+                        disabled={loading}
                       >
                         ×
                       </button>

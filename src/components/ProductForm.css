@@ -218,6 +218,16 @@
   justify-content: center;
 }
 
+.remove-image:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .existing-images {
   margin-top: 1rem;
 }

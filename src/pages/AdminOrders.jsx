@@ -26,6 +26,7 @@ function AdminOrders() {
   const [expandedGroups, setExpandedGroups] = useState(new Set(ORDER_STATUSES))
   const [updatingStatuses, setUpdatingStatuses] = useState(new Set())
   const [bulkUpdating, setBulkUpdating] = useState(false)
+  const [deletingOrderId, setDeletingOrderId] = useState(null)
 
   useEffect(() => {
     loadOrders()
@@ -203,12 +204,32 @@ function AdminOrders() {
     return (price ?? 0).toLocaleString('ru-RU') + ' ₽'
   }
 
+  const handleDeleteOrder = async (orderId) => {
+    const order = orders.find(o => (o.id || o.Id) === orderId)
+    const orderNumber = order ? (order.orderNumber || order.OrderNumber) : orderId
+    if (!window.confirm(`Удалить заказ ${orderNumber} из списка и из базы данных? Это действие нельзя отменить.`)) return
+    try {
+      setDeletingOrderId(orderId)
+      await api.deleteOrder(orderId)
+      await loadOrders()
+    } catch (err) {
+      console.error('Ошибка удаления заказа:', err)
+      alert('Ошибка при удалении заказа: ' + (err.message || 'Неизвестная ошибка'))
+    } finally {
+      setDeletingOrderId(null)
+    }
+  }
+
   const getOrderId = (order) => order.id || order.Id
   const getOrderNumber = (order) => order.orderNumber || order.OrderNumber || `#${getOrderId(order)}`
   const getOrderStatus = (order) => order.status || order.Status || 'В сборке'
-  const getTelegramUserId = (order) => order.telegramUserId || order.TelegramUserId
+  const getTelegramUserId = (order) => order.telegramUserId ?? order.TelegramUserId
   const getTelegramUsername = (order) => order.telegramUsername || order.TelegramUsername || order.customerName || order.CustomerName
-  const hasTelegram = (order) => !!getTelegramUserId(order)
+  // Ссылка только на пользователя: id в Telegram у пользователей положительный, у чатов/обсуждений — отрицательный
+  const hasTelegramUser = (order) => {
+    const id = getTelegramUserId(order)
+    return id != null && Number(id) > 0
+  }
   const getCustomerName = (order) => order.customerName || order.CustomerName || '-'
   const getCustomerPhone = (order) => order.customerPhone || order.CustomerPhone || '-'
   const getTotalAmount = (order) => order.totalAmount || order.TotalAmount || 0
@@ -381,14 +402,14 @@ function AdminOrders() {
                             </td>
                             <td><strong>{getOrderNumber(order)}</strong></td>
                             <td className="client-cell">
-                              {hasTelegram(order) ? (
+                              {hasTelegramUser(order) ? (
                                 <a
                                   href={`tg://user?id=${getTelegramUserId(order)}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="client-link-telegram"
                                   onClick={(e) => e.stopPropagation()}
-                                  title="Открыть чат в Telegram"
+                                  title="Открыть чат с пользователем в Telegram"
                                 >
                                   {getCustomerName(order)}
                                 </a>
@@ -426,6 +447,15 @@ function AdminOrders() {
                                     <option key={s} value={s}>{s}</option>
                                   ))}
                                 </select>
+                                <button
+                                  type="button"
+                                  className="btn-delete-order"
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteOrder(orderId) }}
+                                  disabled={deletingOrderId === orderId}
+                                  title="Удалить заказ из базы данных"
+                                >
+                                  {deletingOrderId === orderId ? '…' : '🗑️'}
+                                </button>
                               </div>
                             </td>
                           </tr>

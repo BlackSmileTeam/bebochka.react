@@ -1214,5 +1214,19 @@ export const api = {
       console.error('[API] Error updating orders status:', error)
       throw error
     }
+  },
+
+  /**
+   * Deletes an order and its items from the database (admin only).
+   * @param {number} id - Order ID
+   * @returns {Promise<void>}
+   */
+  async deleteOrder(id) {
+    try {
+      await apiClient.delete(`/orders/${id}`)
+    } catch (error) {
+      console.error('[API] Error deleting order:', error)
+      throw error
+    }
   }
 }
