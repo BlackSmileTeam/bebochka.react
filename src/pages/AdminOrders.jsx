@@ -2,17 +2,28 @@ import { useState, useEffect, useMemo, Fragment } from 'react'
 import { api } from '../services/api'
 import './AdminOrders.css'
 
-function OrderDiscountSingleModal({ orderId, order, getOrderNumber, hasDiscount, onClose, onApply, onRemove }) {
+function OrderDiscountSingleModal({ orderId, order, getOrderNumber, getCustomerName, getTotalAmount, getFinalAmount, formatPrice, hasDiscount, onClose, onApply, onRemove }) {
   const [percent, setPercent] = useState(10)
+  const total = order ? getTotalAmount(order) : 0
+  const sumAfter = total * (100 - percent) / 100
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <div className="modal-content modal-content--single-discount" onClick={e => e.stopPropagation()}>
         <h3>Скидка для заказа {order ? getOrderNumber(order) : `#${orderId}`}</h3>
+        {order && (
+          <p className="modal-order-info">
+            Клиент: <strong>{getCustomerName(order)}</strong>
+          </p>
+        )}
         <div className="sale-input-row">
           <label>Скидка, %</label>
           <input type="number" min={0} max={100} value={percent} onChange={e => setPercent(Number(e.target.value) || 0)} />
         </div>
-        <div className="modal-actions">
+        <div className="modal-discount-sums">
+          <span>Текущая сумма: <strong>{formatPrice(total)}</strong></span>
+          <span>Со скидкой: <strong>{formatPrice(sumAfter)}</strong></span>
+        </div>
+        <div className="modal-actions modal-actions--inline">
           <button type="button" className="btn btn-secondary" onClick={onClose}>Закрыть</button>
           {hasDiscount && (
             <button type="button" className="btn btn-cancel-discount" onClick={onRemove}>Отменить скидку</button>
@@ -75,6 +86,8 @@ function AdminOrders() {
   const [saleCond3, setSaleCond3] = useState(25)
   const [saleCond5, setSaleCond5] = useState(30)
   const [applyingDiscount, setApplyingDiscount] = useState(false)
+  const [groupBy, setGroupBy] = useState('status')
+  const [orderRowMenuOpen, setOrderRowMenuOpen] = useState(null)
 
   useEffect(() => {
     loadOrders()
@@ -104,13 +117,18 @@ function AdminOrders() {
     return orders.filter(hasOrderDiscount)
   }, [orders, discountFilter])
 
+  const getCustomerKey = (order) => {
+    const name = order.customerName || order.CustomerName || '-'
+    const phone = order.customerPhone || order.CustomerPhone || ''
+    return `${name}|${phone}`
+  }
+
   // Группировка заказов по статусам
   const groupedOrders = useMemo(() => {
     const grouped = {}
     ORDER_STATUSES.forEach(status => {
       grouped[status] = []
     })
-    
     const statusMap = { 'В пути': 'На доставке', 'Доставлен': 'Отправлен' }
     ordersForGrouping.forEach(order => {
       let status = order.status || order.Status || ORDER_STATUSES[0]
@@ -121,8 +139,6 @@ function AdminOrders() {
         grouped[ORDER_STATUSES[0]].push(order)
       }
     })
-
-    // Сортировка внутри каждой группы по дате создания (новые сверху)
     Object.keys(grouped).forEach(status => {
       grouped[status].sort((a, b) => {
         const dateA = new Date(a.createdAt || a.CreatedAt || 0)
@@ -130,17 +146,37 @@ function AdminOrders() {
         return dateB - dateA
       })
     })
-
     return grouped
   }, [ordersForGrouping])
 
-  // Фильтрация по выбранному статусу
+  // Группировка по клиенту (все заказы клиента во всех статусах)
+  const groupedByClient = useMemo(() => {
+    const map = {}
+    ordersForGrouping.forEach(order => {
+      const key = getCustomerKey(order)
+      if (!map[key]) map[key] = []
+      map[key].push(order)
+    })
+    Object.keys(map).forEach(key => {
+      map[key].sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.CreatedAt || 0)
+        const dateB = new Date(b.createdAt || b.CreatedAt || 0)
+        return dateB - dateA
+      })
+    })
+    return map
+  }, [ordersForGrouping])
+
+  // Фильтрация по выбранному статусу (только для groupBy === 'status')
   const filteredGroups = useMemo(() => {
+    if (groupBy === 'client') {
+      return groupedByClient
+    }
     if (selectedStatusFilter === 'all') {
       return groupedOrders
     }
     return { [selectedStatusFilter]: groupedOrders[selectedStatusFilter] || [] }
-  }, [groupedOrders, selectedStatusFilter])
+  }, [groupBy, groupedOrders, groupedByClient, selectedStatusFilter])
 
   const toggleOrderSelection = (orderId) => {
     setSelectedOrders(prev => {
@@ -154,11 +190,10 @@ function AdminOrders() {
     })
   }
 
-  const toggleGroupSelection = (status) => {
-    const groupOrders = filteredGroups[status] || []
-    const groupOrderIds = groupOrders.map(o => o.id || o.Id)
-    const allSelected = groupOrderIds.every(id => selectedOrders.has(id))
-    
+  const toggleGroupSelection = (groupKey) => {
+    const groupOrders = filteredGroups[groupKey] || []
+    const groupOrderIds = groupOrders.map(o => getOrderId(o))
+    const allSelected = groupOrderIds.length > 0 && groupOrderIds.every(id => selectedOrders.has(id))
     setSelectedOrders(prev => {
       const next = new Set(prev)
       if (allSelected) {
@@ -177,17 +212,25 @@ function AdminOrders() {
     setSelectedOrders(allSelected ? new Set() : new Set(allOrderIds))
   }
 
-  const toggleGroupExpansion = (status) => {
+  const toggleGroupExpansion = (groupKey) => {
     setExpandedGroups(prev => {
       const next = new Set(prev)
-      if (next.has(status)) {
-        next.delete(status)
+      if (next.has(groupKey)) {
+        next.delete(groupKey)
       } else {
-        next.add(status)
+        next.add(groupKey)
       }
       return next
     })
   }
+
+  useEffect(() => {
+    if (groupBy === 'client') {
+      setExpandedGroups(new Set(Object.keys(groupedByClient)))
+    } else {
+      setExpandedGroups(new Set(ORDER_STATUSES))
+    }
+  }, [groupBy, groupedByClient])
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
@@ -372,11 +415,19 @@ function AdminOrders() {
 
   const handleToggleInParcel = async (orderId, itemId, currentAddedToParcel) => {
     const key = `${orderId}-${itemId}`
+    const nextValue = !currentAddedToParcel
     try {
       setInParcelTogglingKey(key)
-      await api.setOrderItemInParcel(orderId, itemId, !currentAddedToParcel)
-      await loadOrders()
-      setExpandedOrderIds(prev => new Set(prev).add(orderId))
+      await api.setOrderItemInParcel(orderId, itemId, nextValue)
+      setOrders(prev => prev.map(o => {
+        if (getOrderId(o) !== orderId) return o
+        const items = (o.orderItems || o.OrderItems || []).map(it => {
+          const itId = it.id ?? it.Id
+          if (itId !== itemId) return it
+          return { ...it, addedToParcel: nextValue, AddedToParcel: nextValue }
+        })
+        return { ...o, orderItems: items, OrderItems: items }
+      }))
     } catch (err) {
       console.error('Ошибка отметки «в посылку»:', err)
       alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
@@ -442,7 +493,7 @@ function AdminOrders() {
     <div className="container">
       <div className="admin-orders-header">
         <h1>Управление заказами</h1>
-        <div className="header-actions">
+        <div className="header-actions header-actions--row">
           {selectedCount > 0 && (
             <button
               type="button"
@@ -452,8 +503,9 @@ function AdminOrders() {
               🏷️ Распродажа
             </button>
           )}
-          <button 
-            className="btn btn-secondary" 
+          <button
+            type="button"
+            className="btn btn-secondary"
             onClick={loadOrders}
             disabled={loading}
           >
@@ -462,22 +514,32 @@ function AdminOrders() {
         </div>
       </div>
 
-      {/* Фильтры по статусам и скидке */}
+      {/* Группировка и фильтры */}
       <div className="status-filters">
+        <div className="group-by-row">
+          <span className="group-by-label">Группировка:</span>
+          <button
+            type="button"
+            className={`group-by-btn ${groupBy === 'status' ? 'active' : ''}`}
+            onClick={() => setGroupBy('status')}
+          >
+            По статусу
+          </button>
+          <button
+            type="button"
+            className={`group-by-btn ${groupBy === 'client' ? 'active' : ''}`}
+            onClick={() => setGroupBy('client')}
+          >
+            По клиенту
+          </button>
+        </div>
         <button
           className={`status-filter-btn ${selectedStatusFilter === 'all' ? 'active' : ''}`}
           onClick={() => setSelectedStatusFilter('all')}
         >
           Все ({totalOrders})
         </button>
-        <button
-          className={`filter-discount-btn ${discountFilter === 'withDiscount' ? 'active' : ''}`}
-          onClick={() => setDiscountFilter(discountFilter === 'withDiscount' ? 'all' : 'withDiscount')}
-          title="Показать только заказы со скидкой"
-        >
-          🏷️ Со скидкой ({orders.filter(hasOrderDiscount).length})
-        </button>
-        {ORDER_STATUSES.map(status => {
+        {groupBy === 'status' && ORDER_STATUSES.map(status => {
           const count = (groupedOrders[status] || []).length
           return (
             <button
@@ -490,6 +552,13 @@ function AdminOrders() {
             </button>
           )
         })}
+        <button
+          className={`filter-discount-btn ${discountFilter === 'withDiscount' ? 'active' : ''}`}
+          onClick={() => setDiscountFilter(discountFilter === 'withDiscount' ? 'all' : 'withDiscount')}
+          title="Показать только заказы со скидкой"
+        >
+          🏷️ Со скидкой ({orders.filter(hasOrderDiscount).length})
+        </button>
       </div>
 
       {/* Массовые действия */}
@@ -534,19 +603,20 @@ function AdminOrders() {
 
       {/* Группированный список заказов */}
       <div className="orders-groups">
-        {Object.entries(filteredGroups).map(([status, statusOrders]) => {
+        {Object.entries(filteredGroups).map(([groupKey, statusOrders]) => {
           if (statusOrders.length === 0) return null
-          
-          const isExpanded = expandedGroups.has(status)
+          const isExpanded = expandedGroups.has(groupKey)
           const groupOrderIds = statusOrders.map(o => getOrderId(o))
           const allGroupSelected = groupOrderIds.length > 0 && groupOrderIds.every(id => selectedOrders.has(id))
           const someGroupSelected = groupOrderIds.some(id => selectedOrders.has(id))
+          const groupTitle = groupBy === 'client' ? getCustomerName(statusOrders[0]) : groupKey
+          const groupColor = groupBy === 'status' ? STATUS_COLORS[groupKey] : '#718096'
 
           return (
-            <div key={status} className="order-group">
-              <div 
+            <div key={groupKey} className="order-group">
+              <div
                 className="order-group-header"
-                style={{ borderLeftColor: STATUS_COLORS[status] }}
+                style={{ borderLeftColor: groupColor }}
               >
                 <div className="group-header-left">
                   <input
@@ -555,19 +625,19 @@ function AdminOrders() {
                     ref={input => {
                       if (input) input.indeterminate = someGroupSelected && !allGroupSelected
                     }}
-                    onChange={() => toggleGroupSelection(status)}
+                    onChange={() => toggleGroupSelection(groupKey)}
                     onClick={(e) => e.stopPropagation()}
                   />
-                  <h2 
-                    onClick={() => toggleGroupExpansion(status)}
-                    style={{ cursor: 'pointer', color: STATUS_COLORS[status] }}
+                  <h2
+                    onClick={() => toggleGroupExpansion(groupKey)}
+                    style={{ cursor: 'pointer', color: groupColor }}
                   >
-                    {status} ({statusOrders.length})
+                    {groupTitle} ({statusOrders.length})
                   </h2>
                 </div>
                 <button
                   className="expand-btn"
-                  onClick={() => toggleGroupExpansion(status)}
+                  onClick={() => toggleGroupExpansion(groupKey)}
                 >
                   {isExpanded ? '▼' : '▶'}
                 </button>
@@ -586,7 +656,7 @@ function AdminOrders() {
                             ref={input => {
                               if (input) input.indeterminate = someGroupSelected && !allGroupSelected
                             }}
-                            onChange={() => toggleGroupSelection(status)}
+                            onChange={() => toggleGroupSelection(groupKey)}
                           />
                         </th>
                         <SortableTh sortKey="number">Номер</SortableTh>
@@ -594,8 +664,7 @@ function AdminOrders() {
                         <SortableTh sortKey="phone">Телефон</SortableTh>
                         <SortableTh sortKey="date">Дата</SortableTh>
                         <SortableTh sortKey="amount">Сумма</SortableTh>
-                        <th>Статус</th>
-                        <th>Действия</th>
+                        <th>Статус и действия</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -662,24 +731,8 @@ function AdminOrders() {
                                   <span className="order-sum-original"> ({formatPrice(getTotalAmount(order))})</span>
                                 )}
                               </td>
-                              <td className="status-cell">
-                                <span 
-                                  className="status-badge"
-                                  style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
-                                  title={STATUS_TOOLTIPS[currentStatus] || currentStatus}
-                                >
-                                  {currentStatus}
-                                </span>
-                              </td>
-                              <td className="actions-cell">
-                                <div className="actions-wrapper">
-                                  <span 
-                                    className="status-badge-mobile"
-                                    style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
-                                    title={STATUS_TOOLTIPS[currentStatus]}
-                                  >
-                                    {currentStatus}
-                                  </span>
+                              <td className="status-actions-cell">
+                                <div className="status-actions-wrapper">
                                   <select
                                     value={currentStatus}
                                     onChange={(e) => handleStatusChange(orderId, e.target.value)}
@@ -692,31 +745,36 @@ function AdminOrders() {
                                       <option key={s} value={s}>{s}</option>
                                     ))}
                                   </select>
-                                  <div className="order-row-menu">
+                                  <div className="order-row-dropdown">
                                     <button
                                       type="button"
                                       className="btn-order-menu-trigger"
-                                      onClick={(e) => { e.stopPropagation(); setOrderDiscountModal(orderId) }}
-                                      title="Скидка для заказа"
+                                      onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(orderRowMenuOpen === orderId ? null : orderId) }}
+                                      title="Ещё"
+                                      aria-expanded={orderRowMenuOpen === orderId}
                                     >
-                                      🏷️
+                                      ⋯
                                     </button>
-                                    <button
-                                      type="button"
-                                      className="btn-delete-order"
-                                      onClick={(e) => { e.stopPropagation(); handleDeleteOrder(orderId) }}
-                                      disabled={deletingOrderId === orderId}
-                                      title="Удалить заказ из базы данных"
-                                    >
-                                      {deletingOrderId === orderId ? '…' : '🗑️'}
-                                    </button>
+                                    {orderRowMenuOpen === orderId && (
+                                      <>
+                                        <div className="order-row-dropdown-backdrop" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null) }} />
+                                        <div className="order-row-dropdown-menu">
+                                          <button type="button" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null); setOrderDiscountModal(orderId) }}>
+                                            🏷️ Скидка
+                                          </button>
+                                          <button type="button" className="order-row-dropdown-delete" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null); handleDeleteOrder(orderId) }} disabled={deletingOrderId === orderId}>
+                                            {deletingOrderId === orderId ? '…' : '🗑️ Удалить'}
+                                          </button>
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               </td>
                             </tr>
                             {isOrderExpanded && items.length > 0 && (
                               <tr key={`${orderId}-items`} className="order-items-tr">
-                                <td colSpan={9} className="order-items-td">
+                                <td colSpan={8} className="order-items-td">
                                   <div className="order-items-list">
                                     {items.map(item => {
                                       const itemId = item.id ?? item.Id
@@ -868,6 +926,10 @@ function AdminOrders() {
           orderId={orderDiscountModal}
           order={orders.find(o => getOrderId(o) === orderDiscountModal)}
           getOrderNumber={getOrderNumber}
+          getCustomerName={getCustomerName}
+          getTotalAmount={getTotalAmount}
+          getFinalAmount={getFinalAmount}
+          formatPrice={formatPrice}
           hasDiscount={(() => { const o = orders.find(ord => getOrderId(ord) === orderDiscountModal); return o && hasOrderDiscount(o) })()}
           onClose={() => setOrderDiscountModal(null)}
           onApply={(percent) => handleSetOrderDiscountPercent(orderDiscountModal, percent)}
