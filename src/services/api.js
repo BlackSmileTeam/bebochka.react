@@ -1134,6 +1134,20 @@ export const api = {
   },
 
   /**
+   * Gets Telegram webhook diagnostics (getWebhookInfo + suggested URL). Token is not returned.
+   * @returns {Promise<{ configured: boolean, ok?: boolean, error?: string, currentWebhookUrl?: string, pendingUpdateCount?: number, lastErrorDateUnix?: number, lastErrorMessage?: string, suggestedWebhookUrl: string }>}
+   */
+  async getTelegramWebhookDiagnostics() {
+    try {
+      const response = await apiClient.get('/TelegramErrors/webhook-diagnostics')
+      return response.data
+    } catch (error) {
+      console.error('[API] Error fetching Telegram webhook diagnostics:', error)
+      throw error
+    }
+  },
+
+  /**
    * Gets all orders (admin only)
    * @returns {Promise<Array>} List of orders
    */

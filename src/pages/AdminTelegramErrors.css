@@ -58,6 +58,99 @@
   background-color: #e53e3e;
 }
 
+.webhook-diagnostics {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.webhook-diagnostics h2 {
+  font-size: 1.25rem;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+}
+
+.diagnostics-loading {
+  color: #718096;
+  margin: 0;
+}
+
+.diagnostics-error {
+  color: #c53030;
+  margin: 0 0 0.75rem 0;
+}
+
+.diagnostics-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.diagnostics-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.diagnostics-label {
+  font-weight: 500;
+  color: #4a5568;
+  min-width: 12rem;
+}
+
+.diagnostics-value {
+  color: #2d3748;
+}
+
+.diagnostics-value em {
+  color: #718096;
+}
+
+.diagnostics-url {
+  background: #f7fafc;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.diagnostics-setwebhook {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.diagnostics-note {
+  color: #718096;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.diagnostics-setwebhook p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: #2d3748;
+}
+
+.diagnostics-request {
+  background: #2d3748;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0 0 1rem 0;
+}
+
+.diagnostics-setwebhook .btn {
+  margin-top: 0.5rem;
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem;
