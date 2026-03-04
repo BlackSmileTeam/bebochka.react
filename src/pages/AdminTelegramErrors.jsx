@@ -59,21 +59,6 @@ function AdminTelegramErrors() {
     }
   }
 
-  const handleDeleteAll = async () => {
-    if (!window.confirm('Удалить все ошибки?')) {
-      return
-    }
-
-    try {
-      await api.deleteAllTelegramErrors()
-      setToast({ message: 'Все ошибки удалены', type: 'success' })
-      loadErrors()
-    } catch (err) {
-      console.error('Error deleting all errors:', err)
-      setToast({ message: 'Ошибка при удалении', type: 'error' })
-    }
-  }
-
   const formatDate = (dateString) => {
     const date = new Date(dateString)
     const today = new Date()
@@ -117,11 +102,6 @@ function AdminTelegramErrors() {
           <button className="btn btn-secondary" onClick={loadErrors}>
             🔄 Обновить
           </button>
-          {totalErrors > 0 && (
-            <button className="btn btn-danger" onClick={handleDeleteAll}>
-              🗑️ Удалить все
-            </button>
-          )}
         </div>
       </div>
 
