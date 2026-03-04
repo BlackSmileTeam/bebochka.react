@@ -1229,5 +1229,40 @@ export const api = {
       console.error('[API] Error deleting order item:', error)
       throw error
     }
+  },
+
+  /**
+   * Marks an order item as added to parcel or not (admin only).
+   * @param {number} orderId - Order ID
+   * @param {number} itemId - Order item ID
+   * @param {boolean} addedToParcel
+   * @returns {Promise<void>}
+   */
+  async setOrderItemInParcel(orderId, itemId, addedToParcel) {
+    try {
+      await apiClient.patch(`/orders/${orderId}/items/${itemId}/in-parcel`, { addedToParcel })
+    } catch (error) {
+      console.error('[API] Error setting order item in-parcel:', error)
+      throw error
+    }
+  },
+
+  async applyDiscount(orderIds, discountType, fixedPercent, condition1, condition3, condition5Plus) {
+    await apiClient.post('/orders/apply-discount', {
+      orderIds,
+      discountType,
+      fixedDiscountPercent: fixedPercent,
+      condition1ItemPercent: condition1,
+      condition3ItemsPercent: condition3,
+      condition5PlusPercent: condition5Plus
+    })
+  },
+
+  async removeOrderDiscount(orderId) {
+    await apiClient.delete(`/orders/${orderId}/discount`)
+  },
+
+  async setOrderDiscount(orderId, percent) {
+    await apiClient.put(`/orders/${orderId}/discount`, { percent })
   }
 }

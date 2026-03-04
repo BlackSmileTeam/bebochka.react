@@ -2,20 +2,53 @@ import { useState, useEffect, useMemo, Fragment } from 'react'
 import { api } from '../services/api'
 import './AdminOrders.css'
 
+function OrderDiscountSingleModal({ orderId, order, getOrderNumber, hasDiscount, onClose, onApply, onRemove }) {
+  const [percent, setPercent] = useState(10)
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <h3>Скидка для заказа {order ? getOrderNumber(order) : `#${orderId}`}</h3>
+        <div className="sale-input-row">
+          <label>Скидка, %</label>
+          <input type="number" min={0} max={100} value={percent} onChange={e => setPercent(Number(e.target.value) || 0)} />
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="btn btn-secondary" onClick={onClose}>Закрыть</button>
+          {hasDiscount && (
+            <button type="button" className="btn btn-cancel-discount" onClick={onRemove}>Отменить скидку</button>
+          )}
+          <button type="button" className="btn btn-primary" onClick={() => onApply(percent)}>Применить</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const ORDER_STATUSES = [
-  'В сборке',
+  'Формирование заказа',
   'Ожидает оплату',
-  'В пути',
-  'Доставлен',
+  'В сборке',
+  'На доставке',
+  'Отправлен',
   'Отменен'
 ]
 
 const STATUS_COLORS = {
-  'В сборке': '#ed8936',
+  'Формирование заказа': '#a0aec0',
   'Ожидает оплату': '#4299e1',
-  'В пути': '#667eea',
-  'Доставлен': '#48bb78',
+  'В сборке': '#ed8936',
+  'На доставке': '#667eea',
+  'Отправлен': '#48bb78',
   'Отменен': '#e53e3e'
+}
+
+const STATUS_TOOLTIPS = {
+  'Формирование заказа': 'Начальный статус: покупатель собирает корзину, можно добавлять товары в заказ',
+  'Ожидает оплату': 'Покупатель оформил заказ. Отправлено сообщение об успешном оформлении и необходимости оплаты. Добавлять товары в заказ нельзя',
+  'В сборке': 'Заказ собирается и подготавливается к отправке',
+  'На доставке': 'Заказ собран, упакован; ожидаются данные от покупателя (адрес, способ отправки)',
+  'Отправлен': 'Финальный статус. Карточка товара более не доступна для публикации в канал',
+  'Отменен': 'Заказ отменён'
 }
 
 function AdminOrders() {
@@ -29,7 +62,19 @@ function AdminOrders() {
   const [bulkUpdating, setBulkUpdating] = useState(false)
   const [deletingOrderId, setDeletingOrderId] = useState(null)
   const [deletingItemKey, setDeletingItemKey] = useState(null)
+  const [inParcelTogglingKey, setInParcelTogglingKey] = useState(null)
   const [imageModalUrl, setImageModalUrl] = useState(null)
+  const [sortBy, setSortBy] = useState(null)
+  const [sortDir, setSortDir] = useState('desc')
+  const [discountFilter, setDiscountFilter] = useState('all')
+  const [saleModalOpen, setSaleModalOpen] = useState(false)
+  const [orderDiscountModal, setOrderDiscountModal] = useState(null)
+  const [saleType, setSaleType] = useState('fixed')
+  const [saleFixedPercent, setSaleFixedPercent] = useState(10)
+  const [saleCond1, setSaleCond1] = useState(20)
+  const [saleCond3, setSaleCond3] = useState(25)
+  const [saleCond5, setSaleCond5] = useState(30)
+  const [applyingDiscount, setApplyingDiscount] = useState(false)
 
   useEffect(() => {
     loadOrders()
@@ -48,6 +93,17 @@ function AdminOrders() {
     }
   }
 
+  const hasOrderDiscount = (order) => {
+    const t = order.discountType || order.DiscountType || 'None'
+    return t && t !== 'None'
+  }
+
+  // Фильтр по скидке: все заказы или только со скидкой
+  const ordersForGrouping = useMemo(() => {
+    if (discountFilter !== 'withDiscount') return orders
+    return orders.filter(hasOrderDiscount)
+  }, [orders, discountFilter])
+
   // Группировка заказов по статусам
   const groupedOrders = useMemo(() => {
     const grouped = {}
@@ -55,12 +111,14 @@ function AdminOrders() {
       grouped[status] = []
     })
     
-    orders.forEach(order => {
-      const status = order.status || order.Status || 'В сборке'
+    const statusMap = { 'В пути': 'На доставке', 'Доставлен': 'Отправлен' }
+    ordersForGrouping.forEach(order => {
+      let status = order.status || order.Status || ORDER_STATUSES[0]
+      status = statusMap[status] || status
       if (grouped[status]) {
         grouped[status].push(order)
       } else {
-        grouped['В сборке'].push(order)
+        grouped[ORDER_STATUSES[0]].push(order)
       }
     })
 
@@ -74,7 +132,7 @@ function AdminOrders() {
     })
 
     return grouped
-  }, [orders])
+  }, [ordersForGrouping])
 
   // Фильтрация по выбранному статусу
   const filteredGroups = useMemo(() => {
@@ -225,17 +283,56 @@ function AdminOrders() {
 
   const getOrderId = (order) => order.id || order.Id
   const getOrderNumber = (order) => order.orderNumber || order.OrderNumber || `#${getOrderId(order)}`
-  const getOrderStatus = (order) => order.status || order.Status || 'В сборке'
+  const getOrderStatus = (order) => order.status || order.Status || ORDER_STATUSES[0]
   const getTelegramUserId = (order) => order.telegramUserId ?? order.TelegramUserId
   const getTelegramUsername = (order) => order.telegramUsername || order.TelegramUsername || order.customerName || order.CustomerName
-  // Ссылка только на пользователя: id в Telegram у пользователей положительный, у чатов/обсуждений — отрицательный
-  const hasTelegramUser = (order) => {
-    const id = getTelegramUserId(order)
-    return id != null && Number(id) > 0
-  }
+  // Ссылка на профиль/чат: из API (CustomerProfileLink) или собираем из telegramUserId
+  const getCustomerProfileLink = (order) => order.customerProfileLink || order.CustomerProfileLink || (getTelegramUserId(order) != null && Number(getTelegramUserId(order)) > 0 ? `tg://user?id=${getTelegramUserId(order)}` : null)
+  const hasClientLink = (order) => !!getCustomerProfileLink(order)
   const getCustomerName = (order) => order.customerName || order.CustomerName || '-'
   const getCustomerPhone = (order) => order.customerPhone || order.CustomerPhone || '-'
   const getTotalAmount = (order) => order.totalAmount || order.TotalAmount || 0
+  const getFinalAmount = (order) => order.finalAmount ?? order.FinalAmount ?? getTotalAmount(order)
+
+  const getOrderSortValue = (order, key) => {
+    switch (key) {
+      case 'number': return (order.orderNumber || order.OrderNumber || '').toLowerCase()
+      case 'client': return getCustomerName(order).toLowerCase()
+      case 'phone': return getCustomerPhone(order).toLowerCase()
+      case 'date': return new Date(order.createdAt || order.CreatedAt || 0).getTime()
+      case 'amount': return Number(getTotalAmount(order)) || 0
+      default: return 0
+    }
+  }
+
+  const handleSort = (key) => {
+    if (sortBy === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(key)
+      setSortDir(key === 'client' || key === 'phone' ? 'asc' : 'desc')
+    }
+  }
+
+  const sortOrdersInGroup = (statusOrders) => {
+    if (!sortBy) return statusOrders
+    const dir = sortDir === 'asc' ? 1 : -1
+    return [...statusOrders].sort((a, b) => {
+      const va = getOrderSortValue(a, sortBy)
+      const vb = getOrderSortValue(b, sortBy)
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir
+      return String(va).localeCompare(String(vb), undefined, { numeric: true }) * dir
+    })
+  }
+
+  const SortableTh = ({ sortKey, children }) => (
+    <th className="sortable-th">
+      <button type="button" className="th-sort-btn" onClick={() => handleSort(sortKey)}>
+        {children}
+        <span className="sort-icon">{sortBy === sortKey ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ⇅'}</span>
+      </button>
+    </th>
+  )
 
   const getOrderItems = (order) => order.orderItems || order.OrderItems || []
   const getItemImageUrl = (item) => {
@@ -273,6 +370,63 @@ function AdminOrders() {
     }
   }
 
+  const handleToggleInParcel = async (orderId, itemId, currentAddedToParcel) => {
+    const key = `${orderId}-${itemId}`
+    try {
+      setInParcelTogglingKey(key)
+      await api.setOrderItemInParcel(orderId, itemId, !currentAddedToParcel)
+      await loadOrders()
+      setExpandedOrderIds(prev => new Set(prev).add(orderId))
+    } catch (err) {
+      console.error('Ошибка отметки «в посылку»:', err)
+      alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
+    } finally {
+      setInParcelTogglingKey(null)
+    }
+  }
+
+  const handleApplySale = async () => {
+    const ids = Array.from(selectedOrders)
+    if (ids.length === 0) return
+    try {
+      setApplyingDiscount(true)
+      if (saleType === 'fixed') {
+        await api.applyDiscount(ids, 'Fixed', saleFixedPercent, null, null, null)
+      } else {
+        await api.applyDiscount(ids, 'ByCondition', null, saleCond1, saleCond3, saleCond5)
+      }
+      setSaleModalOpen(false)
+      await loadOrders()
+    } catch (err) {
+      console.error('Ошибка применения скидки:', err)
+      alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
+    } finally {
+      setApplyingDiscount(false)
+    }
+  }
+
+  const handleRemoveOrderDiscount = async (orderId) => {
+    try {
+      await api.removeOrderDiscount(orderId)
+      await loadOrders()
+      setSaleModalOpen(false)
+    } catch (err) {
+      console.error('Ошибка отмены скидки:', err)
+      alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
+    }
+  }
+
+  const handleSetOrderDiscountPercent = async (orderId, percent) => {
+    try {
+      await api.setOrderDiscount(orderId, percent)
+      setOrderDiscountModal(null)
+      await loadOrders()
+    } catch (err) {
+      console.error('Ошибка установки скидки:', err)
+      alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
+    }
+  }
+
   if (loading) {
     return (
       <div className="container">
@@ -289,6 +443,15 @@ function AdminOrders() {
       <div className="admin-orders-header">
         <h1>Управление заказами</h1>
         <div className="header-actions">
+          {selectedCount > 0 && (
+            <button
+              type="button"
+              className="btn btn-sale"
+              onClick={() => setSaleModalOpen(true)}
+            >
+              🏷️ Распродажа
+            </button>
+          )}
           <button 
             className="btn btn-secondary" 
             onClick={loadOrders}
@@ -299,13 +462,20 @@ function AdminOrders() {
         </div>
       </div>
 
-      {/* Фильтры по статусам */}
+      {/* Фильтры по статусам и скидке */}
       <div className="status-filters">
         <button
           className={`status-filter-btn ${selectedStatusFilter === 'all' ? 'active' : ''}`}
           onClick={() => setSelectedStatusFilter('all')}
         >
           Все ({totalOrders})
+        </button>
+        <button
+          className={`filter-discount-btn ${discountFilter === 'withDiscount' ? 'active' : ''}`}
+          onClick={() => setDiscountFilter(discountFilter === 'withDiscount' ? 'all' : 'withDiscount')}
+          title="Показать только заказы со скидкой"
+        >
+          🏷️ Со скидкой ({orders.filter(hasOrderDiscount).length})
         </button>
         {ORDER_STATUSES.map(status => {
           const count = (groupedOrders[status] || []).length
@@ -329,6 +499,14 @@ function AdminOrders() {
             Выбрано: <strong>{selectedCount}</strong> заказ(ов)
           </div>
           <div className="bulk-actions-buttons">
+            <button
+              type="button"
+              className="btn btn-small btn-sale-inline"
+              onClick={() => setSaleModalOpen(true)}
+              disabled={bulkUpdating}
+            >
+              🏷️ Распродажа
+            </button>
             {ORDER_STATUSES.map(status => (
               <button
                 key={status}
@@ -411,17 +589,17 @@ function AdminOrders() {
                             onChange={() => toggleGroupSelection(status)}
                           />
                         </th>
-                        <th>Номер</th>
-                        <th>Клиент</th>
-                        <th>Телефон</th>
-                        <th>Дата</th>
-                        <th>Сумма</th>
+                        <SortableTh sortKey="number">Номер</SortableTh>
+                        <SortableTh sortKey="client">Клиент</SortableTh>
+                        <SortableTh sortKey="phone">Телефон</SortableTh>
+                        <SortableTh sortKey="date">Дата</SortableTh>
+                        <SortableTh sortKey="amount">Сумма</SortableTh>
                         <th>Статус</th>
                         <th>Действия</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {statusOrders.map(order => {
+                      {sortOrdersInGroup(statusOrders).map(order => {
                         const orderId = getOrderId(order)
                         const isSelected = selectedOrders.has(orderId)
                         const isUpdating = updatingStatuses.has(orderId)
@@ -454,16 +632,21 @@ function AdminOrders() {
                                   onClick={(e) => e.stopPropagation()}
                                 />
                               </td>
-                              <td><strong>{getOrderNumber(order)}</strong></td>
+                              <td>
+                                <strong>{getOrderNumber(order)}</strong>
+                                {hasOrderDiscount(order) && (
+                                  <span className="order-discount-icon" title="У заказа есть скидка">🏷️</span>
+                                )}
+                              </td>
                               <td className="client-cell">
-                                {hasTelegramUser(order) ? (
+                                {hasClientLink(order) ? (
                                   <a
-                                    href={`tg://user?id=${getTelegramUserId(order)}`}
+                                    href={getCustomerProfileLink(order)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="client-link-telegram"
                                     onClick={(e) => e.stopPropagation()}
-                                    title="Открыть чат с пользователем в Telegram"
+                                    title="Открыть профиль/чат в Telegram"
                                   >
                                     {getCustomerName(order)}
                                   </a>
@@ -473,11 +656,17 @@ function AdminOrders() {
                               </td>
                               <td>{getCustomerPhone(order)}</td>
                               <td>{formatDate(order.createdAt || order.CreatedAt)}</td>
-                              <td><strong>{formatPrice(getTotalAmount(order))}</strong></td>
+                              <td>
+                                <strong>{formatPrice(getFinalAmount(order))}</strong>
+                                {hasOrderDiscount(order) && getFinalAmount(order) !== getTotalAmount(order) && (
+                                  <span className="order-sum-original"> ({formatPrice(getTotalAmount(order))})</span>
+                                )}
+                              </td>
                               <td className="status-cell">
                                 <span 
                                   className="status-badge"
                                   style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
+                                  title={STATUS_TOOLTIPS[currentStatus] || currentStatus}
                                 >
                                   {currentStatus}
                                 </span>
@@ -487,6 +676,7 @@ function AdminOrders() {
                                   <span 
                                     className="status-badge-mobile"
                                     style={{ backgroundColor: STATUS_COLORS[currentStatus] }}
+                                    title={STATUS_TOOLTIPS[currentStatus]}
                                   >
                                     {currentStatus}
                                   </span>
@@ -496,20 +686,31 @@ function AdminOrders() {
                                     disabled={isUpdating}
                                     className="status-select"
                                     onClick={(e) => e.stopPropagation()}
+                                    title={STATUS_TOOLTIPS[currentStatus]}
                                   >
                                     {ORDER_STATUSES.map(s => (
                                       <option key={s} value={s}>{s}</option>
                                     ))}
                                   </select>
-                                  <button
-                                    type="button"
-                                    className="btn-delete-order"
-                                    onClick={(e) => { e.stopPropagation(); handleDeleteOrder(orderId) }}
-                                    disabled={deletingOrderId === orderId}
-                                    title="Удалить заказ из базы данных"
-                                  >
-                                    {deletingOrderId === orderId ? '…' : '🗑️'}
-                                  </button>
+                                  <div className="order-row-menu">
+                                    <button
+                                      type="button"
+                                      className="btn-order-menu-trigger"
+                                      onClick={(e) => { e.stopPropagation(); setOrderDiscountModal(orderId) }}
+                                      title="Скидка для заказа"
+                                    >
+                                      🏷️
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn-delete-order"
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteOrder(orderId) }}
+                                      disabled={deletingOrderId === orderId}
+                                      title="Удалить заказ из базы данных"
+                                    >
+                                      {deletingOrderId === orderId ? '…' : '🗑️'}
+                                    </button>
+                                  </div>
                                 </div>
                               </td>
                             </tr>
@@ -524,10 +725,12 @@ function AdminOrders() {
                                       const size = item.size ?? item.Size ?? ''
                                       const brand = item.brand ?? item.Brand ?? ''
                                       const color = item.color ?? item.Color ?? ''
+                                      const addedToParcel = !!(item.addedToParcel ?? item.AddedToParcel)
                                       const key = `${orderId}-${itemId}`
                                       const isDeleting = deletingItemKey === key
+                                      const isTogglingInParcel = inParcelTogglingKey === key
                                       return (
-                                        <div key={itemId} className="order-item-card">
+                                        <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}`}>
                                           {imgUrl ? (
                                             <div 
                                               className="order-item-photo"
@@ -548,15 +751,26 @@ function AdminOrders() {
                                             {brand && <span className="order-item-meta">Бренд: {brand}</span>}
                                             {color && <span className="order-item-meta">Цвет: {color}</span>}
                                           </div>
-                                          <button
-                                            type="button"
-                                            className="btn-delete-item"
-                                            onClick={(e) => { e.stopPropagation(); handleDeleteOrderItem(orderId, itemId) }}
-                                            disabled={isDeleting}
-                                            title="Удалить товар из заказа"
-                                          >
-                                            {isDeleting ? '…' : 'Удалить'}
-                                          </button>
+                                          <div className="order-item-actions">
+                                            <button
+                                              type="button"
+                                              className="btn-in-parcel"
+                                              onClick={(e) => { e.stopPropagation(); handleToggleInParcel(orderId, itemId, addedToParcel) }}
+                                              disabled={isTogglingInParcel}
+                                              title={addedToParcel ? 'Убрать отметку «в посылке»' : 'Отметить: добавлен в посылку'}
+                                            >
+                                              {isTogglingInParcel ? '…' : (addedToParcel ? '✓ В посылке' : 'В посылку')}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              className="btn-delete-item"
+                                              onClick={(e) => { e.stopPropagation(); handleDeleteOrderItem(orderId, itemId) }}
+                                              disabled={isDeleting}
+                                              title="Удалить товар из заказа"
+                                            >
+                                              {isDeleting ? '…' : 'Удалить'}
+                                            </button>
+                                          </div>
                                         </div>
                                       )
                                     })}
@@ -580,6 +794,85 @@ function AdminOrders() {
         <div className="empty-state">
           <p>Заказы не найдены</p>
         </div>
+      )}
+
+      {/* Модальное окно распродажи */}
+      {saleModalOpen && (
+        <div className="modal-overlay" onClick={() => !applyingDiscount && setSaleModalOpen(false)}>
+          <div className="modal-content sale-modal" onClick={e => e.stopPropagation()}>
+            <h3>Распродажа</h3>
+            <p className="modal-sub">Выбрано заказов: {selectedCount}</p>
+            <div className="sale-type-row">
+              <label>
+                <input type="radio" checked={saleType === 'fixed'} onChange={() => setSaleType('fixed')} />
+                Фиксированная скидка
+              </label>
+              <label>
+                <input type="radio" checked={saleType === 'byCondition'} onChange={() => setSaleType('byCondition')} />
+                Скидка по условию
+              </label>
+            </div>
+            {saleType === 'fixed' && (
+              <div className="sale-input-row">
+                <label>Скидка, %</label>
+                <input type="number" min={0} max={100} value={saleFixedPercent} onChange={e => setSaleFixedPercent(Number(e.target.value) || 0)} />
+              </div>
+            )}
+            {saleType === 'byCondition' && (
+              <div className="sale-conditions">
+                <div className="sale-input-row">
+                  <label>1 вещь, %</label>
+                  <input type="number" min={0} max={100} value={saleCond1} onChange={e => setSaleCond1(Number(e.target.value) || 0)} />
+                </div>
+                <div className="sale-input-row">
+                  <label>3 вещи, %</label>
+                  <input type="number" min={0} max={100} value={saleCond3} onChange={e => setSaleCond3(Number(e.target.value) || 0)} />
+                </div>
+                <div className="sale-input-row">
+                  <label>5 и более, %</label>
+                  <input type="number" min={0} max={100} value={saleCond5} onChange={e => setSaleCond5(Number(e.target.value) || 0)} />
+                </div>
+              </div>
+            )}
+            <div className="sale-selected-list">
+              <strong>Выбранные заказы (можно снять скидку):</strong>
+              {Array.from(selectedOrders).map(oid => {
+                const order = orders.find(o => getOrderId(o) === oid)
+                return (
+                  <div key={oid} className="sale-selected-item">
+                    <span>{getOrderNumber(order || {})} — {order ? getCustomerName(order) : ''}</span>
+                    {order && hasOrderDiscount(order) && (
+                      <button type="button" className="btn-cancel-discount" onClick={() => handleRemoveOrderDiscount(oid)}>
+                        Отменить скидку
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setSaleModalOpen(false)} disabled={applyingDiscount}>
+                Закрыть
+              </button>
+              <button type="button" className="btn btn-primary" onClick={handleApplySale} disabled={applyingDiscount}>
+                {applyingDiscount ? 'Применяем…' : 'Применить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно скидки для одного заказа */}
+      {orderDiscountModal != null && (
+        <OrderDiscountSingleModal
+          orderId={orderDiscountModal}
+          order={orders.find(o => getOrderId(o) === orderDiscountModal)}
+          getOrderNumber={getOrderNumber}
+          hasDiscount={(() => { const o = orders.find(ord => getOrderId(ord) === orderDiscountModal); return o && hasOrderDiscount(o) })()}
+          onClose={() => setOrderDiscountModal(null)}
+          onApply={(percent) => handleSetOrderDiscountPercent(orderDiscountModal, percent)}
+          onRemove={() => { handleRemoveOrderDiscount(orderDiscountModal); setOrderDiscountModal(null) }}
+        />
       )}
 
       {imageModalUrl && (
