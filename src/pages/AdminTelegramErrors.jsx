@@ -8,26 +8,10 @@ function AdminTelegramErrors() {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
   const [expandedDates, setExpandedDates] = useState(new Set())
-  const [diagnostics, setDiagnostics] = useState(null)
-  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false)
 
   useEffect(() => {
     loadErrors()
-    loadDiagnostics()
   }, [])
-
-  const loadDiagnostics = async () => {
-    try {
-      setDiagnosticsLoading(true)
-      const data = await api.getTelegramWebhookDiagnostics()
-      setDiagnostics(data)
-    } catch (err) {
-      console.error('Error loading webhook diagnostics:', err)
-      setDiagnostics({ configured: false, error: 'Не удалось загрузить диагностику' })
-    } finally {
-      setDiagnosticsLoading(false)
-    }
-  }
 
   const loadErrors = async () => {
     try {
@@ -140,71 +124,6 @@ function AdminTelegramErrors() {
           )}
         </div>
       </div>
-
-      <section className="webhook-diagnostics">
-        <h2>Диагностика вебхука</h2>
-        {diagnosticsLoading ? (
-          <p className="diagnostics-loading">Загрузка…</p>
-        ) : diagnostics ? (
-          <div className="diagnostics-content">
-            {diagnostics.error && (
-              <p className="diagnostics-error">{diagnostics.error}</p>
-            )}
-            {diagnostics.configured && (
-              <>
-                <div className="diagnostics-row">
-                  <span className="diagnostics-label">Текущий URL вебхука:</span>
-                  <span className="diagnostics-value">
-                    {diagnostics.currentWebhookUrl || <em>не установлен</em>}
-                  </span>
-                </div>
-                <div className="diagnostics-row">
-                  <span className="diagnostics-label">Ожидающих обновлений:</span>
-                  <span className="diagnostics-value">{diagnostics.pendingUpdateCount ?? '—'}</span>
-                </div>
-                {(diagnostics.lastErrorMessage || diagnostics.lastErrorDateUnix) && (
-                  <div className="diagnostics-row">
-                    <span className="diagnostics-label">Последняя ошибка Telegram:</span>
-                    <span className="diagnostics-value">
-                      {diagnostics.lastErrorMessage || ''}
-                      {diagnostics.lastErrorDateUnix && (
-                        <small> ({new Date(diagnostics.lastErrorDateUnix * 1000).toLocaleString('ru-RU')})</small>
-                      )}
-                    </span>
-                  </div>
-                )}
-                {diagnostics.suggestedWebhookUrl && (
-                  <div className="diagnostics-row">
-                    <span className="diagnostics-label">Рекомендуемый URL для вебхука:</span>
-                    <code className="diagnostics-url">{diagnostics.suggestedWebhookUrl}</code>
-                  </div>
-                )}
-              </>
-            )}
-            {diagnostics.suggestedWebhookUrl && (
-              <div className="diagnostics-setwebhook">
-                <p className="diagnostics-note">
-                  Telegram принимает только <strong>HTTPS</strong>. Для HTTP-сервера используйте туннель (ngrok и т.п.) или настройте SSL перед API.
-                </p>
-                <p>Полный запрос для установки вебхука (подставьте свой токен бота вместо <code>&lt;ВАШ_ТОКЕН&gt;</code>):</p>
-                <pre className="diagnostics-request">
-{`POST https://api.telegram.org/bot<ВАШ_ТОКЕН>/setWebhook
-Content-Type: application/x-www-form-urlencoded
-
-url=${encodeURIComponent(diagnostics.suggestedWebhookUrl || '')}`}
-                </pre>
-                <p>Или GET (скопируйте в браузер, замените токен):</p>
-                <pre className="diagnostics-request">
-{`https://api.telegram.org/bot<ВАШ_ТОКЕН>/setWebhook?url=${encodeURIComponent(diagnostics.suggestedWebhookUrl || '')}`}
-                </pre>
-                <button type="button" className="btn btn-secondary" onClick={loadDiagnostics}>
-                  🔄 Обновить диагностику
-                </button>
-              </div>
-            )}
-          </div>
-        ) : null}
-      </section>
 
       {totalErrors === 0 ? (
         <div className="empty-state">
