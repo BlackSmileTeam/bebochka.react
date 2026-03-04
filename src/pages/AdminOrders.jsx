@@ -39,7 +39,7 @@ const ORDER_STATUSES = [
   'Формирование заказа',
   'Ожидает оплату',
   'В сборке',
-  'На доставке',
+  'На доставку',
   'Отправлен',
   'Отменен'
 ]
@@ -48,7 +48,7 @@ const STATUS_COLORS = {
   'Формирование заказа': '#a0aec0',
   'Ожидает оплату': '#4299e1',
   'В сборке': '#ed8936',
-  'На доставке': '#667eea',
+  'На доставку': '#667eea',
   'Отправлен': '#48bb78',
   'Отменен': '#e53e3e'
 }
@@ -57,7 +57,7 @@ const STATUS_TOOLTIPS = {
   'Формирование заказа': 'Начальный статус: покупатель собирает корзину, можно добавлять товары в заказ',
   'Ожидает оплату': 'Покупатель оформил заказ. Отправлено сообщение об успешном оформлении и необходимости оплаты. Добавлять товары в заказ нельзя',
   'В сборке': 'Заказ собирается и подготавливается к отправке',
-  'На доставке': 'Заказ собран, упакован; ожидаются данные от покупателя (адрес, способ отправки)',
+  'На доставку': 'Заказ собран, упакован; ожидаются данные от покупателя (адрес, способ отправки)',
   'Отправлен': 'Финальный статус. Карточка товара более не доступна для публикации в канал',
   'Отменен': 'Заказ отменён'
 }
@@ -88,6 +88,9 @@ function AdminOrders() {
   const [applyingDiscount, setApplyingDiscount] = useState(false)
   const [groupBy, setGroupBy] = useState('status')
   const [orderRowMenuOpen, setOrderRowMenuOpen] = useState(null)
+  const [filtersExpanded, setFiltersExpanded] = useState(false)
+  const [orderDetailsOrderId, setOrderDetailsOrderId] = useState(null)
+  const [imageCarousel, setImageCarousel] = useState(null)
 
   useEffect(() => {
     loadOrders()
@@ -129,7 +132,7 @@ function AdminOrders() {
     ORDER_STATUSES.forEach(status => {
       grouped[status] = []
     })
-    const statusMap = { 'В пути': 'На доставке', 'Доставлен': 'Отправлен' }
+    const statusMap = { 'В пути': 'На доставку', 'Доставлен': 'Отправлен' }
     ordersForGrouping.forEach(order => {
       let status = order.status || order.Status || ORDER_STATUSES[0]
       status = statusMap[status] || status
@@ -330,7 +333,7 @@ function AdminOrders() {
   const getTelegramUserId = (order) => order.telegramUserId ?? order.TelegramUserId
   const getTelegramUsername = (order) => order.telegramUsername || order.TelegramUsername || order.customerName || order.CustomerName
   // Ссылка на профиль/чат: из API (CustomerProfileLink) или собираем из telegramUserId
-  const getCustomerProfileLink = (order) => order.customerProfileLink || order.CustomerProfileLink || (getTelegramUserId(order) != null && Number(getTelegramUserId(order)) > 0 ? `tg://user?id=${getTelegramUserId(order)}` : null)
+  const getCustomerProfileLink = (order) => order.customerProfileLink || order.CustomerProfileLink || (getTelegramUserId(order) != null && Number(getTelegramUserId(order)) > 0 ? `tg://openmessage?user_id=${getTelegramUserId(order)}` : null)
   const hasClientLink = (order) => !!getCustomerProfileLink(order)
   const getCustomerName = (order) => order.customerName || order.CustomerName || '-'
   const getCustomerPhone = (order) => order.customerPhone || order.CustomerPhone || '-'
@@ -368,8 +371,8 @@ function AdminOrders() {
     })
   }
 
-  const SortableTh = ({ sortKey, children }) => (
-    <th className="sortable-th">
+  const SortableTh = ({ sortKey, children, className }) => (
+    <th className={`sortable-th ${className || ''}`}>
       <button type="button" className="th-sort-btn" onClick={() => handleSort(sortKey)}>
         {children}
         <span className="sort-icon">{sortBy === sortKey ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ⇅'}</span>
@@ -386,6 +389,22 @@ function AdminOrders() {
       ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
       : 'http://89.104.67.36:55501'
     return base + (path.startsWith('/') ? path : '/' + path)
+  }
+
+  const openPhotoCarousel = async (productId, initialUrl) => {
+    setImageCarousel({ urls: [initialUrl], currentIndex: 0 })
+    try {
+      const product = await api.getProduct(productId)
+      const images = product?.images || product?.Images || []
+      const base = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : 'http://89.104.67.36:55501'
+      const fullUrls = images.map(p => (p && (p.startsWith('http') ? p : base + (p.startsWith('/') ? p : '/' + p))))
+      if (fullUrls.length > 0) {
+        const idx = fullUrls.findIndex(u => u === initialUrl)
+        setImageCarousel({ urls: fullUrls, currentIndex: idx >= 0 ? idx : 0 })
+      }
+    } catch (_) {
+      /* keep single image */
+    }
   }
 
   const toggleOrderExpanded = (orderId) => {
@@ -515,7 +534,16 @@ function AdminOrders() {
       </div>
 
       {/* Группировка и фильтры */}
-      <div className="status-filters">
+      <div className={`status-filters ${filtersExpanded ? 'status-filters--expanded' : 'status-filters--collapsed'}`}>
+        <button
+          type="button"
+          className="status-filters-toggle-btn"
+          onClick={() => setFiltersExpanded(!filtersExpanded)}
+          aria-expanded={filtersExpanded}
+        >
+          {filtersExpanded ? '▼ Скрыть фильтры' : '▶ Фильтры'}
+        </button>
+        <div className="status-filters-body">
         <div className="group-by-row">
           <span className="group-by-label">Группировка:</span>
           <button
@@ -559,6 +587,7 @@ function AdminOrders() {
         >
           🏷️ Со скидкой ({orders.filter(hasOrderDiscount).length})
         </button>
+        </div>
       </div>
 
       {/* Массовые действия */}
@@ -659,10 +688,11 @@ function AdminOrders() {
                             onChange={() => toggleGroupSelection(groupKey)}
                           />
                         </th>
-                        <SortableTh sortKey="number">Номер</SortableTh>
-                        <SortableTh sortKey="client">Клиент</SortableTh>
-                        <SortableTh sortKey="phone">Телефон</SortableTh>
-                        <SortableTh sortKey="date">Дата</SortableTh>
+                        <SortableTh sortKey="number" className="th-number">Номер</SortableTh>
+                        <SortableTh sortKey="client" className="th-client">Клиент</SortableTh>
+                        <SortableTh sortKey="phone" className="th-phone">Телефон</SortableTh>
+                        <SortableTh sortKey="date" className="th-date">Дата</SortableTh>
+                        <th className="th-open-details">Подробнее</th>
                         <SortableTh sortKey="amount">Сумма</SortableTh>
                         <th>Статус и действия</th>
                       </tr>
@@ -701,13 +731,13 @@ function AdminOrders() {
                                   onClick={(e) => e.stopPropagation()}
                                 />
                               </td>
-                              <td>
+                              <td className="td-number">
                                 <strong>{getOrderNumber(order)}</strong>
                                 {hasOrderDiscount(order) && (
                                   <span className="order-discount-icon" title="У заказа есть скидка">🏷️</span>
                                 )}
                               </td>
-                              <td className="client-cell">
+                              <td className="td-client client-cell">
                                 {hasClientLink(order) ? (
                                   <a
                                     href={getCustomerProfileLink(order)}
@@ -723,8 +753,13 @@ function AdminOrders() {
                                   getCustomerName(order)
                                 )}
                               </td>
-                              <td>{getCustomerPhone(order)}</td>
-                              <td>{formatDate(order.createdAt || order.CreatedAt)}</td>
+                              <td className="td-phone">{getCustomerPhone(order)}</td>
+                              <td className="td-date">{formatDate(order.createdAt || order.CreatedAt)}</td>
+                              <td className="td-open-details">
+                                <button type="button" className="btn-open-order-details" onClick={(e) => { e.stopPropagation(); setOrderDetailsOrderId(orderId) }}>
+                                  Подробнее
+                                </button>
+                              </td>
                               <td>
                                 <strong>{formatPrice(getFinalAmount(order))}</strong>
                                 {hasOrderDiscount(order) && getFinalAmount(order) !== getTotalAmount(order) && (
@@ -774,7 +809,7 @@ function AdminOrders() {
                             </tr>
                             {isOrderExpanded && items.length > 0 && (
                               <tr key={`${orderId}-items`} className="order-items-tr">
-                                <td colSpan={8} className="order-items-td">
+                                <td colSpan={9} className="order-items-td">
                                   <div className="order-items-list">
                                     {items.map(item => {
                                       const itemId = item.id ?? item.Id
@@ -792,11 +827,11 @@ function AdminOrders() {
                                           {imgUrl ? (
                                             <div 
                                               className="order-item-photo"
-                                              onClick={() => setImageModalUrl(imgUrl)}
+                                              onClick={() => openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)}
                                               role="button"
                                               tabIndex={0}
-                                              onKeyDown={(e) => e.key === 'Enter' && setImageModalUrl(imgUrl)}
-                                              title="Открыть в полном размере"
+                                              onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)}
+                                              title="Открыть фото (карусель)"
                                             >
                                               <img src={imgUrl} alt="" />
                                             </div>
@@ -935,6 +970,108 @@ function AdminOrders() {
           onApply={(percent) => handleSetOrderDiscountPercent(orderDiscountModal, percent)}
           onRemove={() => { handleRemoveOrderDiscount(orderDiscountModal); setOrderDiscountModal(null) }}
         />
+      )}
+
+      {/* Детали заказа (модалка) */}
+      {orderDetailsOrderId != null && (() => {
+        const order = orders.find(o => getOrderId(o) === orderDetailsOrderId)
+        if (!order) return null
+        const items = getOrderItems(order)
+        const currentStatus = getOrderStatus(order)
+        const isUpdating = updatingStatuses.has(orderDetailsOrderId)
+        return (
+          <div className="modal-overlay order-details-overlay" onClick={() => setOrderDetailsOrderId(null)}>
+            <div className="modal-content order-details-modal" onClick={e => e.stopPropagation()}>
+              <div className="order-details-header">
+                <h3>Заказ {getOrderNumber(order)}</h3>
+                <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
+              </div>
+              <div className="order-details-body">
+                <p><strong>Номер:</strong> {getOrderNumber(order)}</p>
+                <p><strong>Телефон:</strong> {getCustomerPhone(order)}</p>
+                <p><strong>Клиент:</strong> {hasClientLink(order) ? (
+                  <a href={getCustomerProfileLink(order)} target="_blank" rel="noopener noreferrer" className="client-link-telegram">{getCustomerName(order)}</a>
+                ) : getCustomerName(order)}</p>
+                <p><strong>Дата:</strong> {formatDate(order.createdAt || order.CreatedAt)}</p>
+                <p><strong>Сумма:</strong> {formatPrice(getFinalAmount(order))}{hasOrderDiscount(order) && getFinalAmount(order) !== getTotalAmount(order) && ` (${formatPrice(getTotalAmount(order))})`}</p>
+                <div className="order-details-actions">
+                  <label>Статус:</label>
+                  <select
+                    value={currentStatus}
+                    onChange={(e) => handleStatusChange(orderDetailsOrderId, e.target.value)}
+                    disabled={isUpdating}
+                    className="status-select"
+                  >
+                    {ORDER_STATUSES.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <button type="button" className="btn btn-secondary" onClick={() => { setOrderDetailsOrderId(null); setOrderDiscountModal(orderDetailsOrderId) }}>🏷️ Скидка</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => { setOrderDetailsOrderId(null); handleDeleteOrder(orderDetailsOrderId) }} disabled={deletingOrderId === orderDetailsOrderId}>🗑️ Удалить</button>
+                </div>
+                <h4>Товары</h4>
+                <div className="order-items-list order-details-items">
+                  {items.map(item => {
+                    const itemId = item.id ?? item.Id
+                    const imgUrl = getItemImageUrl(item)
+                    const name = item.productName ?? item.ProductName ?? '—'
+                    const size = item.size ?? item.Size ?? ''
+                    const brand = item.brand ?? item.Brand ?? ''
+                    const color = item.color ?? item.Color ?? ''
+                    const addedToParcel = !!(item.addedToParcel ?? item.AddedToParcel)
+                    const key = `${orderDetailsOrderId}-${itemId}`
+                    const isDeleting = deletingItemKey === key
+                    const isTogglingInParcel = inParcelTogglingKey === key
+                    return (
+                      <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}`}>
+                        {imgUrl ? (
+                          <div className="order-item-photo" onClick={() => openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} title="Открыть фото">
+                            <img src={imgUrl} alt="" />
+                          </div>
+                        ) : (
+                          <div className="order-item-photo order-item-photo-placeholder">фото</div>
+                        )}
+                        <div className="order-item-info">
+                          <strong>{name}</strong>
+                          {size && <span className="order-item-meta">Размер: {size}</span>}
+                          {brand && <span className="order-item-meta">Бренд: {brand}</span>}
+                          {color && <span className="order-item-meta">Цвет: {color}</span>}
+                        </div>
+                        <div className="order-item-actions">
+                          <button type="button" className="btn-in-parcel" onClick={() => handleToggleInParcel(orderDetailsOrderId, itemId, addedToParcel)} disabled={isTogglingInParcel}>
+                            {isTogglingInParcel ? '…' : (addedToParcel ? '✓ В посылке' : 'В посылку')}
+                          </button>
+                          <button type="button" className="btn-delete-item" onClick={() => handleDeleteOrderItem(orderDetailsOrderId, itemId)} disabled={isDeleting}>{isDeleting ? '…' : 'Удалить'}</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Карусель фото товара */}
+      {imageCarousel && (
+        <div className="modal-overlay image-carousel-overlay" onClick={() => setImageCarousel(null)}>
+          <div className="image-carousel-modal" onClick={e => e.stopPropagation()}>
+            <button type="button" className="carousel-close" onClick={() => setImageCarousel(null)} aria-label="Закрыть">×</button>
+            <img src={imageCarousel.urls[imageCarousel.currentIndex]} alt="" className="carousel-image" />
+            {imageCarousel.urls.length > 1 && (
+              <>
+                <button type="button" className="carousel-prev" onClick={(e) => { e.stopPropagation(); setImageCarousel(prev => ({ ...prev, currentIndex: (prev.currentIndex - 1 + prev.urls.length) % prev.urls.length })) }}>‹</button>
+                <button type="button" className="carousel-next" onClick={(e) => { e.stopPropagation(); setImageCarousel(prev => ({ ...prev, currentIndex: (prev.currentIndex + 1) % prev.urls.length })) }}>›</button>
+                <div className="carousel-dots">
+                  {imageCarousel.urls.map((_, i) => (
+                    <button key={i} type="button" className={`carousel-dot ${i === imageCarousel.currentIndex ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setImageCarousel(prev => ({ ...prev, currentIndex: i })) }} aria-label={`Фото ${i + 1}`} />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       {imageModalUrl && (
