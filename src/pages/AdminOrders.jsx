@@ -380,20 +380,17 @@ function AdminOrders() {
                               />
                             </td>
                             <td><strong>{getOrderNumber(order)}</strong></td>
-                            <td>
+                            <td className="client-cell">
                               {hasTelegram(order) ? (
                                 <a
                                   href={`tg://user?id=${getTelegramUserId(order)}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  style={{ 
-                                    color: '#667eea', 
-                                    textDecoration: 'none',
-                                    fontWeight: 500
-                                  }}
+                                  className="client-link-telegram"
                                   onClick={(e) => e.stopPropagation()}
+                                  title="Открыть чат в Telegram"
                                 >
-                                  {getTelegramUsername(order)}
+                                  {getCustomerName(order)}
                                 </a>
                               ) : (
                                 getCustomerName(order)
