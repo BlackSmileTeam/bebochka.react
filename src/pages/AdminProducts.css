@@ -87,6 +87,7 @@
 }
 
 .emoji-settings-anchor {
+  display: flex;
   position: relative;
   flex-shrink: 0;
 }
@@ -133,6 +134,21 @@
   transition: all 0.15s;
   text-align: left;
   width: 100%;
+}
+
+.emoji-option-image {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.emoji-option-label {
+  flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .emoji-option:hover {

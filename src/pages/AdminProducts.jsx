@@ -36,13 +36,13 @@ function AdminProducts() {
   })
 
   const CHANNEL_EMOJIS = useMemo(() => [
-    { id: '5411324292317085002', label: 'Эмоджи 1' },
-    { id: '5408952177584534542', label: 'Эмоджи 2' },
-    { id: '5411236430171107971', label: 'Эмоджи 3' },
-    { id: '5411234342817002517', label: 'Эмоджи 4' },
-    { id: '5408859831492704655', label: 'Эмоджи 5' },
-    { id: '5411111760155408332', label: 'Эмоджи 6' },
-    { id: '5375191050283414804', label: 'Эмоджи 7' }
+    { id: '5411324292317085002', label: 'Коричневая звёздочка', image: '/channel-emoji-1.png' },
+    { id: '5408952177584534542', label: 'Белая звёздочка', image: '/channel-emoji-2.png' },
+    { id: '5411236430171107971', label: 'Коричневое сердечко', image: '/channel-emoji-3.png' },
+    { id: '5411234342817002517', label: 'Бежевое сердечко', image: '/channel-emoji-4.png' },
+    { id: '5408859831492704655', label: 'Розовый бантик', image: '/channel-emoji-5.png' },
+    { id: '5411111760155408332', label: 'Голубой бантик', image: '/channel-emoji-6.png' },
+    { id: '5375191050283414804', label: 'Жемчужинка', image: '/channel-emoji-7.png' }
   ], [])
 
   useEffect(() => {
@@ -701,7 +701,14 @@ function AdminProducts() {
                               className={`emoji-option ${channelEmojiId === e.id ? 'selected' : ''}`}
                               onClick={() => handleSelectChannelEmoji(e.id)}
                             >
-                              {e.label}
+                              {e.image && (
+                                <img
+                                  src={e.image}
+                                  alt={e.label}
+                                  className="emoji-option-image"
+                                />
+                              )}
+                              <span className="emoji-option-label">{e.label}</span>
                             </button>
                           ))}
                         </div>
