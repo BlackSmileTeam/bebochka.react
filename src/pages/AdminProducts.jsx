@@ -17,6 +17,8 @@ function AdminProducts() {
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
   const [sendingToChannel, setSendingToChannel] = useState(false)
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 })
+  const [showEmojiSettings, setShowEmojiSettings] = useState(false)
+  const [channelEmojiId, setChannelEmojiId] = useState(null)
   const [toast, setToast] = useState(null)
   const hasCheckedOngoingOperation = useRef(false)
   
@@ -33,9 +35,28 @@ function AdminProducts() {
     publishedStatus: 'scheduled' // all, published, scheduled - default to scheduled (unpublished)
   })
 
+  const CHANNEL_EMOJIS = useMemo(() => [
+    { id: '5411324292317085002', label: 'Эмоджи 1' },
+    { id: '5408952177584534542', label: 'Эмоджи 2' },
+    { id: '5411236430171107971', label: 'Эмоджи 3' },
+    { id: '5411234342817002517', label: 'Эмоджи 4' },
+    { id: '5408859831492704655', label: 'Эмоджи 5' },
+    { id: '5411111760155408332', label: 'Эмоджи 6' },
+    { id: '5375191050283414804', label: 'Эмоджи 7' }
+  ], [])
+
   useEffect(() => {
     loadProducts()
     loadColors()
+    // Load preferred channel emoji for current admin
+    ;(async () => {
+      try {
+        const emojiId = await api.getMyChannelEmoji()
+        if (emojiId) setChannelEmojiId(emojiId)
+      } catch (e) {
+        console.error('Failed to load channel emoji preference', e)
+      }
+    })()
   }, [])
 
   // Check for ongoing send operation after products are loaded
@@ -91,6 +112,24 @@ function AdminProducts() {
     } catch (err) {
       console.error('Error checking ongoing send operation:', err)
       localStorage.removeItem('sendingToChannel')
+    }
+  }
+
+  const handleSelectChannelEmoji = async (emojiId) => {
+    try {
+      const savedId = await api.setMyChannelEmoji(emojiId)
+      setChannelEmojiId(savedId)
+      setShowEmojiSettings(false)
+      setToast({
+        message: 'Эмоджи для канала сохранён',
+        type: 'success'
+      })
+    } catch (e) {
+      console.error('Failed to save channel emoji', e)
+      setToast({
+        message: 'Не удалось сохранить эмоджи для канала',
+        type: 'error'
+      })
     }
   }
 
@@ -433,6 +472,12 @@ function AdminProducts() {
     }))
   }
 
+  const formatCondition = (c) => {
+    if (!c) return '-'
+    if (c === 'новая') return 'Новая вещь'
+    return capitalize(c)
+  }
+
   const getFilterLabel = (field, value) => {
     const labels = {
       name: 'Название',
@@ -634,6 +679,31 @@ function AdminProducts() {
                   ? `📢 Доставлено в канал: ${sendProgress.current}/${sendProgress.total}` 
                   : `📢 Отправить в канал (${selectedProductIds.size})`}
               </button>
+              <button
+                type="button"
+                className="btn btn-icon btn-emoji-settings"
+                onClick={() => setShowEmojiSettings(!showEmojiSettings)}
+                title="Выбрать эмоджи для канала"
+              >
+                ⚙️
+              </button>
+              {showEmojiSettings && (
+                <div className="emoji-settings-popup">
+                  <div className="emoji-settings-title">Эмоджи для постов в канале</div>
+                  <div className="emoji-settings-list">
+                    {CHANNEL_EMOJIS.map(e => (
+                      <button
+                        key={e.id}
+                        type="button"
+                        className={`emoji-option ${channelEmojiId === e.id ? 'selected' : ''}`}
+                        onClick={() => handleSelectChannelEmoji(e.id)}
+                      >
+                        {e.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {sendingToChannel && sendProgress.total > 0 && (
                 <div className="send-progress-bar">
                   <div 
@@ -686,7 +756,7 @@ function AdminProducts() {
             )}
             {filters.condition && (
               <span className="filter-chip">
-                {getFilterLabel('condition')}: {filters.condition}
+                {getFilterLabel('condition')}: {formatCondition(filters.condition)}
                 <button onClick={() => clearFilter('condition')} title="Удалить фильтр">×</button>
               </span>
             )}
@@ -796,7 +866,7 @@ function AdminProducts() {
               >
                 <option value="">Все</option>
                 {filterOptions.conditions.map(condition => (
-                  <option key={condition} value={condition}>{condition}</option>
+                  <option key={condition} value={condition}>{formatCondition(condition)}</option>
                 ))}
               </select>
             </div>
@@ -971,7 +1041,7 @@ function AdminProducts() {
                         <span className="gender-cell" title={product.gender || '-'}>
                           {getGenderIcon(product.gender)}
                         </span>
-                        <span className="condition-cell">{product.condition ? capitalize(product.condition) : '-'}</span>
+                        <span className="condition-cell">{formatCondition(product.condition)}</span>
                       </div>
                       <div className="price-cell">{(product.price ?? 0).toLocaleString('ru-RU')} ₽</div>
                     </div>
@@ -1149,7 +1219,7 @@ function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderI
             
             <div className="detail-row">
               <span className="detail-label">Состояние:</span>
-              <span className="detail-value">{product.condition ? capitalize(product.condition) : '-'}</span>
+              <span className="detail-value">{formatCondition(product.condition)}</span>
             </div>
             
             <div className="detail-row">

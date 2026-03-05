@@ -178,7 +178,7 @@ function Home() {
                     <span className="product-gender">👤 {product.gender}</span>
                   )}
                   {product.condition && (
-                    <span className="product-condition">✨ {product.condition}</span>
+                    <span className="product-condition">✨ {product.condition === 'новая' ? 'Новая вещь' : product.condition}</span>
                   )}
                 </div>
                 <div className="product-footer">

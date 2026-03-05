@@ -189,7 +189,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               )}
               {product.condition && (
                 <div className="product-detail-spec">
-                  <strong>Состояние:</strong> {product.condition}
+                  <strong>Состояние:</strong> {product.condition === 'новая' ? 'Новая вещь' : product.condition}
                 </div>
               )}
             </div>

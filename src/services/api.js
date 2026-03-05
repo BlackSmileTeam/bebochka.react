@@ -1068,6 +1068,36 @@ export const api = {
   },
 
   /**
+   * Gets current admin user's preferred channel emoji (Telegram custom_emoji_id)
+   * @returns {Promise<string|null>}
+   */
+  async getMyChannelEmoji() {
+    try {
+      const response = await apiClient.get('/users/me/channel-emoji')
+      return response.data?.emojiId ?? null
+    } catch (error) {
+      console.error('[API] Error getting channel emoji preference:', error)
+      return null
+    }
+  },
+
+  /**
+   * Updates current admin user's preferred channel emoji (Telegram custom_emoji_id)
+   * @param {string|null} emojiId
+   * @returns {Promise<string|null>}
+   */
+  async setMyChannelEmoji(emojiId) {
+    try {
+      const payload = { emojiId }
+      const response = await apiClient.post('/users/me/channel-emoji', payload)
+      return response.data?.emojiId ?? null
+    } catch (error) {
+      console.error('[API] Error setting channel emoji preference:', error)
+      throw error
+    }
+  },
+
+  /**
    * Gets the sending status for products by their IDs
    * Returns how many products have been published (sent to channel)
    * @param {Array<number>} productIds - Array of product IDs to check

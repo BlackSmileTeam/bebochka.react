@@ -30,8 +30,8 @@
 }
 
 .header-actions .btn.btn-filters {
-  width: auto;
-  min-width: auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .send-channel-wrapper {
@@ -876,7 +876,7 @@
   }
   
   .header-actions .btn.btn-filters {
-    width: auto;
+    width: 100%;
   }
 
   .table-info .btn-select-all {
