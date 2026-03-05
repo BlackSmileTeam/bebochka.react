@@ -667,56 +667,62 @@ function AdminProducts() {
           >
             🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
-          {selectedProductIds.size > 0 && (
-            <div className="send-channel-wrapper">
-              <button 
-                className="btn btn-secondary btn-send-channel" 
-                onClick={handleSendToChannel}
-                disabled={sendingToChannel}
-                title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
-              >
-                {sendingToChannel 
-                  ? `📢 Доставлено в канал: ${sendProgress.current}/${sendProgress.total}` 
-                  : `📢 Отправить в канал (${selectedProductIds.size})`}
-              </button>
-              <button
-                type="button"
-                className="btn btn-icon btn-emoji-settings"
-                onClick={() => setShowEmojiSettings(!showEmojiSettings)}
-                title="Выбрать эмоджи для канала"
-              >
-                ⚙️
-              </button>
-              {showEmojiSettings && (
-                <div className="emoji-settings-popup">
-                  <div className="emoji-settings-title">Эмоджи для постов в канале</div>
-                  <div className="emoji-settings-list">
-                    {CHANNEL_EMOJIS.map(e => (
-                      <button
-                        key={e.id}
-                        type="button"
-                        className={`emoji-option ${channelEmojiId === e.id ? 'selected' : ''}`}
-                        onClick={() => handleSelectChannelEmoji(e.id)}
-                      >
-                        {e.label}
-                      </button>
-                    ))}
+          <div className="header-actions-row">
+            {selectedProductIds.size > 0 && (
+              <div className="send-channel-wrapper">
+                <div className="send-channel-group">
+                  <button 
+                    className="btn btn-secondary btn-send-channel" 
+                    onClick={handleSendToChannel}
+                    disabled={sendingToChannel}
+                    title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
+                  >
+                    {sendingToChannel 
+                      ? `📢 ${sendProgress.current}/${sendProgress.total}` 
+                      : `📢 Отправить в канал (${selectedProductIds.size})`}
+                  </button>
+                  <div className="emoji-settings-anchor">
+                    <button
+                      type="button"
+                      className={`btn btn-icon btn-emoji-settings ${showEmojiSettings ? 'active' : ''}`}
+                      onClick={() => setShowEmojiSettings(!showEmojiSettings)}
+                      title="Выбрать эмоджи для канала"
+                    >
+                      ⚙️
+                    </button>
+                    {showEmojiSettings && (
+                      <div className="emoji-settings-popup">
+                        <div className="emoji-settings-title">Эмоджи для постов в канале</div>
+                        <div className="emoji-settings-list">
+                          {CHANNEL_EMOJIS.map(e => (
+                            <button
+                              key={e.id}
+                              type="button"
+                              className={`emoji-option ${channelEmojiId === e.id ? 'selected' : ''}`}
+                              onClick={() => handleSelectChannelEmoji(e.id)}
+                            >
+                              {e.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-              {sendingToChannel && sendProgress.total > 0 && (
-                <div className="send-progress-bar">
-                  <div 
-                    className="send-progress-fill" 
-                    style={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          <button className="btn btn-primary" onClick={handleCreate}>
-            ➕ Добавить
-          </button>
+                {sendingToChannel && sendProgress.total > 0 && (
+                  <div className="send-progress-bar">
+                    <div 
+                      className="send-progress-fill" 
+                      style={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            <button className="btn btn-primary btn-add" onClick={handleCreate}>
+              ➕ Добавить
+            </button>
+          </div>
         </div>
       </div>
 
