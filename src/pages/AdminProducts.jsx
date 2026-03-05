@@ -36,13 +36,13 @@ function AdminProducts() {
   })
 
   const CHANNEL_EMOJIS = useMemo(() => [
-    { id: '5411324292317085002', label: 'Коричневая звёздочка', image: '/channel-emoji-1.png' },
-    { id: '5408952177584534542', label: 'Белая звёздочка', image: '/channel-emoji-2.png' },
-    { id: '5411236430171107971', label: 'Коричневое сердечко', image: '/channel-emoji-3.png' },
-    { id: '5411234342817002517', label: 'Бежевое сердечко', image: '/channel-emoji-4.png' },
-    { id: '5408859831492704655', label: 'Розовый бантик', image: '/channel-emoji-5.png' },
-    { id: '5411111760155408332', label: 'Голубой бантик', image: '/channel-emoji-6.png' },
-    { id: '5375191050283414804', label: 'Жемчужинка', image: '/channel-emoji-7.png' }
+    { id: '5411324292317085002', label: 'Коричневая звёздочка', image: '/channel-emoji-1.svg' },
+    { id: '5408952177584534542', label: 'Белая звёздочка', image: '/channel-emoji-2.svg' },
+    { id: '5411236430171107971', label: 'Коричневое сердечко', image: '/channel-emoji-3.svg' },
+    { id: '5411234342817002517', label: 'Бежевое сердечко', image: '/channel-emoji-4.svg' },
+    { id: '5408859831492704655', label: 'Розовый бантик', image: '/channel-emoji-5.svg' },
+    { id: '5411111760155408332', label: 'Голубой бантик', image: '/channel-emoji-6.svg' },
+    { id: '5375191050283414804', label: 'Жемчужинка', image: '/channel-emoji-7.svg' }
   ], [])
 
   useEffect(() => {
@@ -150,7 +150,7 @@ function AdminProducts() {
     
     // Send remaining products using new endpoint - backend handles everything
     try {
-      const result = await api.sendProductsToChannel(remainingProductIds)
+      const result = await api.sendProductsToChannel(remainingProductIds, channelEmojiId || undefined)
       console.log('[ContinueSendToChannel] API response:', result)
       
       // Update progress
@@ -554,7 +554,7 @@ function AdminProducts() {
       setSendProgress({ current: 0, total })
       
       // Start sending products in parallel (non-blocking)
-      const sendPromise = api.sendProductsToChannel(productIds)
+      const sendPromise = api.sendProductsToChannel(productIds, channelEmojiId || undefined)
       
       // Poll for status updates while sending
       pollInterval = setInterval(async () => {

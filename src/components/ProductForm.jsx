@@ -242,6 +242,86 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         <form onSubmit={handleSubmit} className="product-form">
           {error && <div className="form-error">{error}</div>}
 
+          <div className="form-group form-group-photos-first">
+            <label htmlFor="images">
+              {product ? 'Добавить новые фотографии' : 'Фотографии *'}
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              id="images"
+              name="images"
+              onChange={handleImageChange}
+              multiple
+              accept="image/*"
+              style={{ display: 'none' }}
+              disabled={loading}
+            />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+              >
+                {images.length === 0 ? 'Выбрать файлы' : 'Добавить ещё фото'}
+              </button>
+              {images.length > 0 && (
+                <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                  Выбрано: {images.length}
+                </span>
+              )}
+            </div>
+            {images.length > 0 && (
+              <div className="image-preview">
+                {Array.from(images).map((file, index) => (
+                  <div key={index} className="preview-item">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`Preview ${index}`}
+                      className="preview-image"
+                    />
+                    <button
+                      type="button"
+                      className="remove-image"
+                      onClick={() => handleRemoveNewImage(index)}
+                      title="Удалить фото"
+                      disabled={loading}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {product && existingImages.length > 0 && (
+              <div className="existing-images">
+                <p>Текущие фотографии:</p>
+                <div className="image-preview">
+                  {existingImages.map((img, index) => (
+                    <div key={index} className="preview-item">
+                      <img
+                        src={img.startsWith('http') 
+                          ? img 
+                          : `${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}${img}`}
+                        alt={`Existing ${index}`}
+                        className="preview-image"
+                      />
+                      <button
+                        type="button"
+                        className="remove-image"
+                        onClick={() => handleRemoveExistingImage(index)}
+                        disabled={loading}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="form-group">
             <label htmlFor="name">Название товара *</label>
             <div ref={nameDropdownRef} style={{ position: 'relative', width: '100%' }}>
@@ -509,86 +589,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                   Укажите дату и время публикации (МСК).
                 </small>
               </>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="images">
-              {product ? 'Добавить новые фотографии' : 'Фотографии *'}
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              id="images"
-              name="images"
-              onChange={handleImageChange}
-              multiple
-              accept="image/*"
-              style={{ display: 'none' }}
-              disabled={loading}
-            />
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={loading}
-              >
-                {images.length === 0 ? 'Выбрать файлы' : 'Добавить ещё фото'}
-              </button>
-              {images.length > 0 && (
-                <span style={{ fontSize: '0.875rem', color: '#666' }}>
-                  Выбрано: {images.length}
-                </span>
-              )}
-            </div>
-            {images.length > 0 && (
-              <div className="image-preview">
-                {Array.from(images).map((file, index) => (
-                  <div key={index} className="preview-item">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={`Preview ${index}`}
-                      className="preview-image"
-                    />
-                    <button
-                      type="button"
-                      className="remove-image"
-                      onClick={() => handleRemoveNewImage(index)}
-                      title="Удалить фото"
-                      disabled={loading}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {product && existingImages.length > 0 && (
-              <div className="existing-images">
-                <p>Текущие фотографии:</p>
-                <div className="image-preview">
-                  {existingImages.map((img, index) => (
-                    <div key={index} className="preview-item">
-                      <img
-                        src={img.startsWith('http') 
-                          ? img 
-                          : `${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}${img}`}
-                        alt={`Existing ${index}`}
-                        className="preview-image"
-                      />
-                      <button
-                        type="button"
-                        className="remove-image"
-                        onClick={() => handleRemoveExistingImage(index)}
-                        disabled={loading}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
             )}
           </div>
 

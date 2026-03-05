@@ -1039,11 +1039,13 @@ export const api = {
    * Sends products to Telegram channel by product IDs
    * All message formatting and image loading happens on the backend
    * @param {Array<number>} productIds - Array of product IDs to send
+   * @param {string|null} preferredEmojiId - Optional. Telegram custom_emoji_id for this send (overrides saved preference)
    * @returns {Promise<Object>} Response with success status and details
    */
-  async sendProductsToChannel(productIds) {
+  async sendProductsToChannel(productIds, preferredEmojiId = null) {
     try {
       const payload = { productIds }
+      if (preferredEmojiId) payload.preferredEmojiId = preferredEmojiId
       // Increase timeout for Telegram channel sending (can take up to 500 seconds per product on backend)
       const response = await apiClient.post('/telegram/channel/send-products', payload, {
         timeout: 600000 // 10 minutes timeout for sending large images to Telegram
