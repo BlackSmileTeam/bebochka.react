@@ -667,69 +667,67 @@ function AdminProducts() {
           >
             🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
-          <div className="header-actions-row">
-            {selectedProductIds.size > 0 && (
-              <div className="send-channel-wrapper">
-                <div className="send-channel-group">
-                  <button 
-                    className="btn btn-secondary btn-send-channel" 
-                    onClick={handleSendToChannel}
-                    disabled={sendingToChannel}
-                    title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
+          {selectedProductIds.size > 0 && (
+            <div className="send-channel-wrapper">
+              <div className="send-channel-group">
+                <button 
+                  className="btn btn-secondary btn-send-channel" 
+                  onClick={handleSendToChannel}
+                  disabled={sendingToChannel}
+                  title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
+                >
+                  {sendingToChannel 
+                    ? `📢 ${sendProgress.current}/${sendProgress.total}` 
+                    : `📢 Отправить в канал (${selectedProductIds.size})`}
+                </button>
+                <div className="emoji-settings-anchor">
+                  <button
+                    type="button"
+                    className={`btn btn-icon btn-emoji-settings ${showEmojiSettings ? 'active' : ''}`}
+                    onClick={() => setShowEmojiSettings(!showEmojiSettings)}
+                    title="Выбрать эмоджи для канала"
                   >
-                    {sendingToChannel 
-                      ? `📢 ${sendProgress.current}/${sendProgress.total}` 
-                      : `📢 Отправить в канал (${selectedProductIds.size})`}
+                    ⚙️
                   </button>
-                  <div className="emoji-settings-anchor">
-                    <button
-                      type="button"
-                      className={`btn btn-icon btn-emoji-settings ${showEmojiSettings ? 'active' : ''}`}
-                      onClick={() => setShowEmojiSettings(!showEmojiSettings)}
-                      title="Выбрать эмоджи для канала"
-                    >
-                      ⚙️
-                    </button>
-                    {showEmojiSettings && (
-                      <div className="emoji-settings-popup">
-                        <div className="emoji-settings-title">Эмоджи для постов в канале</div>
-                        <div className="emoji-settings-list">
-                          {CHANNEL_EMOJIS.map(e => (
-                            <button
-                              key={e.id}
-                              type="button"
-                              className={`emoji-option ${channelEmojiId === e.id ? 'selected' : ''}`}
-                              onClick={() => handleSelectChannelEmoji(e.id)}
-                            >
-                              {e.image && (
-                                <img
-                                  src={e.image}
-                                  alt={e.label}
-                                  className="emoji-option-image"
-                                />
-                              )}
-                              <span className="emoji-option-label">{e.label}</span>
-                            </button>
-                          ))}
-                        </div>
+                  {showEmojiSettings && (
+                    <div className="emoji-settings-popup">
+                      <div className="emoji-settings-title">Эмоджи для постов в канале</div>
+                      <div className="emoji-settings-list">
+                        {CHANNEL_EMOJIS.map(e => (
+                          <button
+                            key={e.id}
+                            type="button"
+                            className={`emoji-option ${channelEmojiId === e.id ? 'selected' : ''}`}
+                            onClick={() => handleSelectChannelEmoji(e.id)}
+                          >
+                            {e.image && (
+                              <img
+                                src={e.image}
+                                alt={e.label}
+                                className="emoji-option-image"
+                              />
+                            )}
+                            <span className="emoji-option-label">{e.label}</span>
+                          </button>
+                        ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-                {sendingToChannel && sendProgress.total > 0 && (
-                  <div className="send-progress-bar">
-                    <div 
-                      className="send-progress-fill" 
-                      style={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
-                    />
-                  </div>
-                )}
               </div>
-            )}
-            <button className="btn btn-primary btn-add" onClick={handleCreate}>
-              ➕ Добавить
-            </button>
-          </div>
+              {sendingToChannel && sendProgress.total > 0 && (
+                <div className="send-progress-bar">
+                  <div 
+                    className="send-progress-fill" 
+                    style={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          <button className="btn btn-primary btn-add" onClick={handleCreate}>
+            ➕ Добавить
+          </button>
         </div>
       </div>
 

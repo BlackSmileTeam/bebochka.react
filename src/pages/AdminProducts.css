@@ -17,6 +17,7 @@
   flex-direction: row;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .header-actions .btn.btn-filters {
@@ -27,14 +28,6 @@
   white-space: nowrap;
   padding: 0.625rem 1rem;
   font-size: 0.9rem;
-}
-
-.header-actions-row {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: nowrap;
 }
 
 .send-channel-wrapper {
@@ -999,22 +992,34 @@
     flex-wrap: wrap;
   }
 
-  .header-actions-row {
-    flex: 1 1 100%;
+  .header-actions {
+    flex-direction: row;
     flex-wrap: wrap;
-  }
-
-  .send-channel-wrapper {
-    flex: 1 1 100%;
-    min-width: 0;
+    align-items: stretch;
+    width: 100%;
   }
 
   .header-actions .btn.btn-filters {
-    flex: 0 0 auto;
+    order: 1;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .header-actions .btn.btn-add {
-    flex: 0 0 auto;
+    order: 1;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .send-channel-wrapper {
+    order: 2;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .send-channel-group {
+    width: 100%;
   }
 
   .table-info .btn-select-all {
