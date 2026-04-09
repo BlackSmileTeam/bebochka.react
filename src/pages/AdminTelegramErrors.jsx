@@ -88,14 +88,14 @@ function AdminTelegramErrors() {
   }
 
   if (loading) {
-    return <div className="container">Загрузка...</div>
+    return <div className="admin-errors-page">Загрузка...</div>
   }
 
   const errorDates = Object.keys(errors).sort((a, b) => b.localeCompare(a))
   const totalErrors = Object.values(errors).reduce((sum, errs) => sum + errs.length, 0)
 
   return (
-    <div className="container">
+    <div className="admin-errors-page">
       <div className="admin-errors-header">
         <h1>Ошибки отправки в Telegram канал</h1>
         <div className="header-actions">

@@ -1,109 +1,128 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useCart } from '../contexts/CartContext'
+import CookieNotice from './CookieNotice'
 import './Layout.css'
+
+function readUser() {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function useAuthNav() {
+  const [token, setToken] = useState(() => localStorage.getItem('authToken'))
+  useEffect(() => {
+    const sync = () => setToken(localStorage.getItem('authToken'))
+    window.addEventListener('bebochka-auth', sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener('bebochka-auth', sync)
+      window.removeEventListener('storage', sync)
+    }
+  }, [])
+  return !!token
+}
 
 function Layout() {
   const location = useLocation()
-  const isAdmin = location.pathname.startsWith('/admin')
-  
-  // Используем хук useCart для получения данных корзины
+  const isAdminRoute = location.pathname.startsWith('/admin')
+  const user = readUser()
+  const isAdminUser = !!user.isAdmin
+  const isLoggedIn = useAuthNav()
+
   const { cartItems } = useCart()
-  const totalItems = Array.isArray(cartItems) 
+  const totalItems = Array.isArray(cartItems)
     ? cartItems.reduce((total, item) => total + (item.quantity || 0), 0)
     : 0
-  
-  // Отладочный вывод
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[Layout] Cart items:', cartItems, 'Total:', totalItems)
-  }
+
+  const logoTo = isLoggedIn ? '/' : '/account'
+  const showShopLoginLink = !isLoggedIn && location.pathname !== '/account'
 
   return (
     <div className="layout">
       <header className="header">
-        <div className="container">
-          <div className="header-top">
-            <Link to="/" className="logo">
-              <img src="/logo.jpg" alt="bebochka" className="logo-img" />
-              <span className="logo-text">bebochka | детский секонд-хенд</span>
-            </Link>
-            {isAdmin && (
-              <button 
-                className="logout-btn logout-btn-mobile"
-                onClick={() => {
-                  localStorage.removeItem('authToken')
-                  localStorage.removeItem('user')
-                  window.location.href = '/'
-                }}
-                title="Выйти"
-              >
-                Выйти
-              </button>
-            )}
-          </div>
-          <nav className="nav">
-            {!isAdmin && (
+        <div className="container header-inner">
+          <Link to={logoTo} className="logo">
+            <img src="/logo.jpg" alt="bebochka" className="logo-img" />
+            <span className="logo-text">bebochka | детский секонд-хенд</span>
+          </Link>
+
+          <nav className="nav" aria-label="Основное меню">
+            {isAdminRoute ? (
               <>
-                <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
-                  Каталог
+                <Link
+                  to="/admin"
+                  className={location.pathname === '/admin' ? 'active' : ''}
+                >
+                  Обзор
                 </Link>
-                <Link to="/cart" className="cart-link">
-                  Корзина
-                  {totalItems > 0 && (
-                    <span className="cart-badge">{totalItems}</span>
-                  )}
-                </Link>
-                {localStorage.getItem('authToken') && (
-                  <Link to="/admin" className="admin-link">
-                    Админка
-                  </Link>
-                )}
-              </>
-            )}
-            {isAdmin && (
-              <>
-                <Link 
-                  to="/admin/products" 
+                <Link
+                  to="/admin/products"
                   className={location.pathname === '/admin/products' ? 'active' : ''}
                 >
                   Товары
                 </Link>
-                <Link 
-                  to="/admin/announcements" 
+                <Link
+                  to="/admin/announcements"
                   className={location.pathname === '/admin/announcements' ? 'active' : ''}
                 >
                   Анонсы
                 </Link>
-                <Link 
-                  to="/admin/users" 
+                <Link
+                  to="/admin/users"
                   className={location.pathname === '/admin/users' ? 'active' : ''}
                 >
                   Пользователи
                 </Link>
-                <Link 
-                  to="/admin/orders" 
+                <Link
+                  to="/admin/orders"
                   className={location.pathname === '/admin/orders' ? 'active' : ''}
                 >
                   Заказы
                 </Link>
-                <Link 
-                  to="/admin/telegram-errors" 
-                  className={location.pathname === '/admin/telegram-errors' ? 'active' : ''}
-                >
-                  Ошибки
-                </Link>
-                <Link to="/" className="back-link">
-                  На сайт
-                </Link>
-                <button 
-                  className="logout-btn logout-btn-desktop"
-                  onClick={() => {
-                    localStorage.removeItem('authToken')
-                    localStorage.removeItem('user')
-                    window.location.href = '/'
-                  }}
-                >
-                  Выйти
-                </button>
+              </>
+            ) : (
+              <>
+                {isLoggedIn && (
+                  <>
+                    <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+                      Каталог
+                    </Link>
+                    <Link to="/cart" className="cart-link">
+                      Корзина
+                      {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+                    </Link>
+                    <Link
+                      to="/profile"
+                      className={location.pathname === '/profile' ? 'active' : ''}
+                    >
+                      Профиль
+                    </Link>
+                    {isAdminUser && (
+                      <Link to="/admin" className="admin-link">
+                        Админка
+                      </Link>
+                    )}
+                    <Link
+                      to="/contacts"
+                      className={location.pathname === '/contacts' ? 'active' : ''}
+                    >
+                      Контакты
+                    </Link>
+                  </>
+                )}
+                {!isLoggedIn && (
+                  <Link
+                    to="/contacts"
+                    className={location.pathname === '/contacts' ? 'active' : ''}
+                  >
+                    Контакты
+                  </Link>
+                )}
+                {showShopLoginLink && <Link to="/account">Войти</Link>}
               </>
             )}
           </nav>
@@ -112,6 +131,7 @@ function Layout() {
       <main className="main">
         <Outlet />
       </main>
+      <CookieNotice />
       <footer className="footer">
         <div className="container">
           <p className="footer-text">
@@ -121,7 +141,10 @@ function Layout() {
             Отправка заказов через Авито доставку, яндекс, ozon, 5post 📦
           </p>
           <p className="footer-text">
-            По всем вопросам <a href="https://t.me/bebochkaa" target="_blank" rel="noopener noreferrer">@bebochkaa</a>
+            По всем вопросам{' '}
+            <a href="https://t.me/bebochkaa" target="_blank" rel="noopener noreferrer">
+              @bebochkaa
+            </a>
           </p>
           <p className="footer-text">
             <a href="https://t.me/bebochkasekond" target="_blank" rel="noopener noreferrer">
@@ -135,4 +158,3 @@ function Layout() {
 }
 
 export default Layout
-

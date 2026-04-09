@@ -109,14 +109,14 @@ function AdminUsers() {
 
   if (loading) {
     return (
-      <div className="container">
+      <div className="admin-users-page">
         <div className="loading">Загрузка...</div>
       </div>
     )
   }
 
   return (
-    <div className="container">
+    <div className="admin-users-page">
       <div className="admin-users-header">
         <h1>Управление пользователями</h1>
         <button className="btn btn-primary" onClick={() => setShowCreateForm(true)}>

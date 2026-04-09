@@ -9,15 +9,16 @@ export function CartProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [sessionId] = useState(() => getSessionId())
 
-  // Загружаем корзину с сервера при монтировании
+  // Загружаем корзину с сервера при монтировании и после входа
   useEffect(() => {
     loadCart()
   }, [])
 
   const loadCart = useCallback(async () => {
     try {
-      if (!sessionId) {
-        console.warn('[CartContext] SessionId is missing, cannot load cart')
+      const token = localStorage.getItem('authToken')
+      if (!token && !sessionId) {
+        console.warn('[CartContext] No session for guest cart')
         setCartItems([])
         return
       }
@@ -50,16 +51,17 @@ export function CartProvider({ children }) {
     }
   }, [sessionId])
 
+  useEffect(() => {
+    const h = () => loadCart()
+    window.addEventListener('bebochka-auth', h)
+    return () => window.removeEventListener('bebochka-auth', h)
+  }, [loadCart])
+
   const addToCart = useCallback(async (product) => {
     try {
       if (!product || !product.id) {
         console.error('Invalid product:', product)
         throw new Error('Invalid product')
-      }
-      
-      if (!sessionId) {
-        console.error('SessionId is missing')
-        throw new Error('SessionId is required')
       }
       
       console.log('[CartContext] Adding to cart:', { productId: product.id, sessionId })

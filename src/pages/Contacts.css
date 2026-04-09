@@ -1,0 +1,35 @@
+.contacts-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+}
+
+.contacts-inner h1 {
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+}
+
+.contacts-lead {
+  color: #4a5568;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.contacts-block {
+  margin-bottom: 1.25rem;
+}
+
+.contacts-block h2 {
+  font-size: 1.1rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.contacts-block a {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.contacts-block a:hover {
+  text-decoration: underline;
+}

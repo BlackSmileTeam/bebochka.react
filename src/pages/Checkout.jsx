@@ -45,9 +45,16 @@ function Checkout() {
     }
 
     try {
+      let userId = null
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}')
+        if (u.userId != null) userId = u.userId
+      } catch (_) {}
+
       // Отправляем заказ на сервер
       const orderData = {
         sessionId: sessionId,
+        userId: userId,
         customerName: formData.name,
         customerPhone: formData.phone,
         customerEmail: formData.email || null,
@@ -60,7 +67,7 @@ function Checkout() {
         }))
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}/api/orders`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -101,7 +108,7 @@ function Checkout() {
 
   if (success) {
     return (
-      <div className="container">
+      <div className="checkout-page">
         <div className="checkout-success">
           <div className="success-icon">✓</div>
           <h2>Заказ оформлен!</h2>
@@ -114,7 +121,7 @@ function Checkout() {
 
   if (cartItems.length === 0) {
     return (
-      <div className="container">
+      <div className="checkout-page">
         <div className="checkout-empty">
           <h2>Корзина пуста</h2>
           <p>Добавьте товары в корзину для оформления заказа</p>
@@ -127,7 +134,7 @@ function Checkout() {
   }
 
   return (
-    <div className="container">
+    <div className="checkout-page">
       <div className="checkout-header">
         <h1>Оформление заказа</h1>
       </div>
@@ -239,7 +246,6 @@ function Checkout() {
               <div key={item.id} className="order-item">
                 <div className="order-item-info">
                   <span className="order-item-name">{item.name}</span>
-                  <span className="order-item-quantity">× {item.quantity}</span>
                 </div>
                 <span className="order-item-price">
                   {((item.price || 0) * item.quantity).toLocaleString('ru-RU')} ₽

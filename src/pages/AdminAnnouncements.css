@@ -1,7 +1,8 @@
 .admin-announcements-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0 1.5rem;
+  width: 100%;
 }
 
 .admin-announcements-header {
@@ -84,7 +85,7 @@
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(4, minmax(310px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
   max-height: 500px;

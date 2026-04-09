@@ -91,9 +91,13 @@ function AdminOrders() {
   const [filtersExpanded, setFiltersExpanded] = useState(false)
   const [orderDetailsOrderId, setOrderDetailsOrderId] = useState(null)
   const [imageCarousel, setImageCarousel] = useState(null)
+  const [adminCartItems, setAdminCartItems] = useState([])
+  const [loadingAdminCart, setLoadingAdminCart] = useState(false)
+  const [removingAdminCartItemId, setRemovingAdminCartItemId] = useState(null)
 
   useEffect(() => {
     loadOrders()
+    loadAdminCartItems()
   }, [])
 
   const loadOrders = async () => {
@@ -106,6 +110,18 @@ function AdminOrders() {
       alert('Ошибка при загрузке заказов: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAdminCartItems = async () => {
+    try {
+      setLoadingAdminCart(true)
+      const data = await api.getAdminCartItems()
+      setAdminCartItems(data)
+    } catch (err) {
+      console.error('Ошибка загрузки корзин:', err)
+    } finally {
+      setLoadingAdminCart(false)
     }
   }
 
@@ -387,8 +403,32 @@ function AdminOrders() {
     if (path.startsWith('http')) return path
     const base = import.meta.env.VITE_API_URL
       ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
-      : 'http://89.104.67.36:55501'
+      : 'http://localhost:5000'
     return base + (path.startsWith('/') ? path : '/' + path)
+  }
+
+  const getCartImageUrl = (cartItem) => {
+    const first = cartItem.productImages?.[0] ?? cartItem.ProductImages?.[0]
+    if (!first) return null
+    if (first.startsWith('http')) return first
+    const base = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
+      : 'http://localhost:5000'
+    return base + (first.startsWith('/') ? first : '/' + first)
+  }
+
+  const handleRemoveAdminCartItem = async (cartItemId) => {
+    if (!window.confirm('Убрать этот товар из корзины пользователя?')) return
+    try {
+      setRemovingAdminCartItemId(cartItemId)
+      await api.removeAdminCartItem(cartItemId)
+      await loadAdminCartItems()
+    } catch (err) {
+      console.error('Ошибка удаления товара из корзины:', err)
+      alert('Ошибка удаления из корзины: ' + (err.message || 'Неизвестная ошибка'))
+    } finally {
+      setRemovingAdminCartItemId(null)
+    }
   }
 
   const openPhotoCarousel = async (productId, initialUrl) => {
@@ -396,7 +436,7 @@ function AdminOrders() {
     try {
       const product = await api.getProduct(productId)
       const images = product?.images || product?.Images || []
-      const base = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : 'http://89.104.67.36:55501'
+      const base = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000'
       const fullUrls = images.map(p => (p && (p.startsWith('http') ? p : base + (p.startsWith('/') ? p : '/' + p))))
       if (fullUrls.length > 0) {
         const idx = fullUrls.findIndex(u => u === initialUrl)
@@ -567,6 +607,12 @@ function AdminOrders() {
         >
           Все ({totalOrders})
         </button>
+        <button
+          className={`status-filter-btn ${selectedStatusFilter === 'cart' ? 'active' : ''}`}
+          onClick={() => setSelectedStatusFilter('cart')}
+        >
+          В корзинах ({adminCartItems.length})
+        </button>
         {groupBy === 'status' && ORDER_STATUSES.map(status => {
           const count = (groupedOrders[status] || []).length
           return (
@@ -591,7 +637,7 @@ function AdminOrders() {
       </div>
 
       {/* Массовые действия */}
-      {selectedCount > 0 && (
+      {selectedStatusFilter !== 'cart' && selectedCount > 0 && (
         <div className="bulk-actions">
           <div className="bulk-actions-info">
             Выбрано: <strong>{selectedCount}</strong> заказ(ов)
@@ -631,6 +677,63 @@ function AdminOrders() {
       )}
 
       {/* Группированный список заказов */}
+      {selectedStatusFilter === 'cart' ? (
+        <div className="orders-groups">
+          <div className="order-group">
+            <div className="order-group-header" style={{ borderLeftColor: '#667eea' }}>
+              <div className="group-header-left">
+                <h2 style={{ color: '#667eea', cursor: 'default' }}>
+                  Товары в корзинах ({adminCartItems.length})
+                </h2>
+              </div>
+              <button type="button" className="btn btn-secondary btn-small" onClick={loadAdminCartItems} disabled={loadingAdminCart}>
+                {loadingAdminCart ? 'Обновление...' : '🔄 Обновить'}
+              </button>
+            </div>
+            <div className="order-group-content">
+              <div className="admin-cart-list admin-cart-list--embedded">
+                {adminCartItems.length === 0 ? (
+                  <p className="admin-cart-empty">Активных товаров в корзинах нет</p>
+                ) : (
+                  adminCartItems.map((item) => {
+                    const id = item.id ?? item.Id
+                    const userId = item.userId ?? item.UserId
+                    const sessionId = item.sessionId ?? item.SessionId
+                    const imageUrl = getCartImageUrl(item)
+                    const productName = item.productName ?? item.ProductName ?? '—'
+                    const productBrand = item.productBrand ?? item.ProductBrand
+                    const updatedAt = item.updatedAt ?? item.UpdatedAt
+                    return (
+                      <div key={id} className="admin-cart-item-card">
+                        {imageUrl ? (
+                          <img className="admin-cart-item-image" src={imageUrl} alt="" />
+                        ) : (
+                          <div className="admin-cart-item-image admin-cart-item-image--empty">фото</div>
+                        )}
+                        <div className="admin-cart-item-info">
+                          <strong>{productName}</strong>
+                          {productBrand && <span>Бренд: {productBrand}</span>}
+                          <span>Владелец: {userId ? `user #${userId}` : `guest (${sessionId || '—'})`}</span>
+                          <span>Обновлено: {formatDate(updatedAt)}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-delete-item"
+                          onClick={() => handleRemoveAdminCartItem(id)}
+                          disabled={removingAdminCartItemId === id}
+                          title="Убрать из корзины"
+                        >
+                          {removingAdminCartItemId === id ? '…' : 'Убрать'}
+                        </button>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="orders-groups">
         {Object.entries(filteredGroups).map(([groupKey, statusOrders]) => {
           if (statusOrders.length === 0) return null
@@ -882,6 +985,7 @@ function AdminOrders() {
           )
         })}
       </div>
+      )}
 
       {totalOrders === 0 && (
         <div className="empty-state">

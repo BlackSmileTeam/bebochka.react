@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { api } from '../services/api'
 import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
+import Toast from '../components/Toast'
 import './Home.css'
 
 function Home() {
@@ -10,6 +11,16 @@ function Home() {
   const [error, setError] = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [addingToCart, setAddingToCart] = useState(new Set()) // Track which products are being added
+  const [joiningQueue, setJoiningQueue] = useState(new Set())
+  const [myQueueProductIds, setMyQueueProductIds] = useState(new Set())
+  const [toast, setToast] = useState(null)
+  const [filters, setFilters] = useState({
+    brand: '',
+    size: '',
+    color: '',
+    gender: '',
+    condition: ''
+  })
   const { addToCart, sessionId, cartItems } = useCart()
   
   // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
@@ -27,22 +38,41 @@ function Home() {
     loadProducts()
   }, [sessionId])
 
+  useEffect(() => {
+    loadMyQueue()
+  }, [])
+
   const loadProducts = async () => {
     try {
       setLoading(true)
       const data = await api.getProducts(sessionId)
-      // Фильтруем товары с нулевым количеством
-      const availableProducts = data.filter(product => {
-        const available = getAvailableQuantity(product)
-        return available > 0
+      // Показываем товары, которые еще есть на складе (даже если временно зарезервированы в чужой корзине)
+      const visibleProducts = data.filter(product => {
+        const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
+        return quantityInStock > 0
       })
-      setProducts(availableProducts)
+      setProducts(visibleProducts)
       setError(null)
     } catch (err) {
       setError('Не удалось загрузить товары')
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadMyQueue = async () => {
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      setMyQueueProductIds(new Set())
+      return
+    }
+    try {
+      const data = await api.getMyCartQueue()
+      const ids = new Set(data.map((x) => x.productId ?? x.ProductId))
+      setMyQueueProductIds(ids)
+    } catch {
+      setMyQueueProductIds(new Set())
     }
   }
 
@@ -76,9 +106,76 @@ function Home() {
     }
   }
 
+  const handleJoinQueue = async (productId) => {
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      setToast({ type: 'warning', message: 'Войдите в аккаунт, чтобы встать в очередь' })
+      return
+    }
+
+    setJoiningQueue(prev => new Set(prev).add(productId))
+    try {
+      await api.joinCartQueue(productId)
+      setMyQueueProductIds(prev => {
+        const next = new Set(prev)
+        next.add(productId)
+        return next
+      })
+      setToast({
+        type: 'success',
+        message: 'Вы в очереди. Как только товар освободится, он автоматически попадет в вашу корзину.'
+      })
+    } catch (error) {
+      setToast({ type: 'error', message: error.message || 'Не удалось встать в очередь' })
+    } finally {
+      setJoiningQueue(prev => {
+        const next = new Set(prev)
+        next.delete(productId)
+        return next
+      })
+    }
+  }
+
+  const filterOptions = useMemo(() => {
+    const collect = (key) =>
+      [...new Set(products.map((p) => p[key]).filter(Boolean))].sort((a, b) =>
+        String(a).localeCompare(String(b), 'ru')
+      )
+
+    return {
+      brands: collect('brand'),
+      sizes: collect('size'),
+      colors: collect('color'),
+      genders: collect('gender'),
+      conditions: collect('condition')
+    }
+  }, [products])
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      if (filters.brand && product.brand !== filters.brand) return false
+      if (filters.size && product.size !== filters.size) return false
+      if (filters.color && product.color !== filters.color) return false
+      if (filters.gender && product.gender !== filters.gender) return false
+      if (filters.condition && product.condition !== filters.condition) return false
+      return true
+    })
+  }, [products, filters])
+
+  const formatCondition = (condition) => {
+    if (!condition) return ''
+    if (condition === 'новая') return 'Новая вещь'
+    return condition.charAt(0).toUpperCase() + condition.slice(1)
+  }
+
+  const formatGender = (gender) => {
+    if (!gender) return ''
+    return gender.charAt(0).toUpperCase() + gender.slice(1)
+  }
+
   if (loading) {
     return (
-      <div className="container">
+      <div className="home-page">
         <div className="loading">Загрузка...</div>
       </div>
     )
@@ -86,14 +183,14 @@ function Home() {
 
   if (error) {
     return (
-      <div className="container">
+      <div className="home-page">
         <div className="error">{error}</div>
       </div>
     )
   }
 
   return (
-    <div className="container">
+    <div className="home-page">
       <div className="home-header">
         <h1>Каталог товаров</h1>
         <p className="subtitle">
@@ -101,13 +198,48 @@ function Home() {
         </p>
       </div>
 
-      {products.length === 0 ? (
+      <div className="catalog-filters">
+        <select value={filters.brand} onChange={(e) => setFilters((prev) => ({ ...prev, brand: e.target.value }))}>
+          <option value="">Все бренды</option>
+          {filterOptions.brands.map((brand) => (
+            <option key={brand} value={brand}>{brand}</option>
+          ))}
+        </select>
+        <select value={filters.size} onChange={(e) => setFilters((prev) => ({ ...prev, size: e.target.value }))}>
+          <option value="">Все размеры</option>
+          {filterOptions.sizes.map((size) => (
+            <option key={size} value={size}>{size}</option>
+          ))}
+        </select>
+        <select value={filters.color} onChange={(e) => setFilters((prev) => ({ ...prev, color: e.target.value }))}>
+          <option value="">Все цвета</option>
+          {filterOptions.colors.map((color) => (
+            <option key={color} value={color}>{color}</option>
+          ))}
+        </select>
+        <select value={filters.gender} onChange={(e) => setFilters((prev) => ({ ...prev, gender: e.target.value }))}>
+          <option value="">Любой пол</option>
+          {filterOptions.genders.map((gender) => (
+            <option key={gender} value={gender}>{formatGender(gender)}</option>
+          ))}
+        </select>
+        <select value={filters.condition} onChange={(e) => setFilters((prev) => ({ ...prev, condition: e.target.value }))}>
+          <option value="">Любое состояние</option>
+          {filterOptions.conditions.map((condition) => (
+            <option key={condition} value={condition}>
+              {formatCondition(condition)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {filteredProducts.length === 0 ? (
         <div className="empty-state">
-          <p>Товары пока не добавлены</p>
+          <p>{products.length === 0 ? 'Товары пока не добавлены' : 'По фильтрам ничего не найдено'}</p>
         </div>
       ) : (
         <div className="products-grid">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <div 
               key={product.id} 
               className="product-card"
@@ -121,7 +253,7 @@ function Home() {
                     <img
                       src={product.images[0].startsWith('http') 
                         ? product.images[0] 
-                            : `${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}${product.images[0]}`}
+                            : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${product.images[0]}`}
                       alt={product.name}
                       className="product-image"
                       onError={(e) => {
@@ -130,7 +262,7 @@ function Home() {
                     />
                     {product.images.length > 1 && (
                       <div className="product-images-badge">
-                        +{product.images.length - 1}
+                        +{product.images.length - 1} фото
                       </div>
                     )}
                   </>
@@ -156,14 +288,16 @@ function Home() {
                 )}
                 {(() => {
                   const available = getAvailableQuantity(product)
+                  const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
+                  const isReserved = available <= 0 && quantityInStock > 0
                   return (
                     <div className="product-stock" style={{
                       fontSize: '0.85rem',
-                      color: available > 0 ? '#48bb78' : '#e53e3e',
+                      color: isReserved ? '#dd6b20' : (available > 0 ? '#48bb78' : '#e53e3e'),
                       fontWeight: '600',
                       marginBottom: '0.5rem'
                     }}>
-                      {available > 0 ? `✓ ${available} шт.` : '❌ Нет в наличии'}
+                      {isReserved ? '⏳ Забронирован' : (available > 0 ? '✓ В наличии' : '❌ Нет в наличии')}
                     </div>
                   )
                 })()}
@@ -175,7 +309,7 @@ function Home() {
                     <span className="product-color">🎨 {product.color}</span>
                   )}
                   {product.gender && (
-                    <span className="product-gender">👤 {product.gender}</span>
+                    <span className="product-gender">👤 {formatGender(product.gender)}</span>
                   )}
                   {product.condition && (
                     <span className="product-condition">✨ {product.condition === 'новая' ? 'Новая вещь' : product.condition}</span>
@@ -188,32 +322,66 @@ function Home() {
                 {(() => {
                   const available = getAvailableQuantity(product)
                   const inCart = getCartQuantity(product.id)
-                  const canAdd = available > 0 && inCart < available
+                  const cartUnlocked = product.cartUnlocked !== false && product.CartUnlocked !== false
+                  const cartAvailableRaw = product.cartAvailableAt ?? product.CartAvailableAt
+                  const cartAvailableAt = cartAvailableRaw ? new Date(cartAvailableRaw) : null
+                  const cartAvailableLabel =
+                    cartAvailableAt && !Number.isNaN(cartAvailableAt.getTime())
+                      ? cartAvailableAt.toLocaleString('ru-RU')
+                      : null
+                  const canAdd = available > 0 && inCart < available && cartUnlocked
                   const isAdding = addingToCart.has(product.id)
+                  const isJoiningQueue = joiningQueue.has(product.id)
+                  const isInQueue = myQueueProductIds.has(product.id)
+                  const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
+                  const isReserved = available <= 0 && quantityInStock > 0
                   
                   return (
-                    <button
-                      className="btn-buy"
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        if (canAdd && !isAdding) {
-                          await handleAddToCart(product)
+                    isReserved ? (
+                      <button
+                        className="btn-buy"
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          if (!isJoiningQueue && !isInQueue) {
+                            await handleJoinQueue(product.id)
+                          }
+                        }}
+                        disabled={isJoiningQueue || isInQueue}
+                        title={isInQueue ? 'Вы уже стоите в очереди за этим товаром' : 'Встать в очередь за этим товаром'}
+                        style={isInQueue ? { background: '#a0aec0' } : undefined}
+                      >
+                        {isInQueue ? 'В очереди' : (isJoiningQueue ? '...' : 'В очередь')}
+                      </button>
+                    ) : (
+                      <button
+                        className="btn-buy"
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          if (canAdd && !isAdding) {
+                            await handleAddToCart(product)
+                          }
+                        }}
+                        disabled={!canAdd || isAdding}
+                        title={
+                          !cartUnlocked
+                            ? (cartAvailableLabel
+                              ? `В корзину с ${cartAvailableLabel}`
+                              : 'Корзина откроется позже')
+                            : !canAdd 
+                            ? (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество')
+                            : (isAdding ? 'Добавление...' : 'Добавить в корзину')
                         }
-                      }}
-                      disabled={!canAdd || isAdding}
-                      title={
-                        !canAdd 
-                          ? (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество')
-                          : (isAdding ? 'Добавление...' : 'Добавить в корзину')
-                      }
-                    >
-                      {isAdding 
-                        ? 'Добавление...' 
-                        : (!canAdd 
-                          ? (available <= 0 ? 'Нет в наличии' : 'В корзине')
-                          : 'В корзину')
-                      }
-                    </button>
+                      >
+                        {isAdding 
+                          ? 'Добавление...' 
+                          : (!cartUnlocked
+                            ? 'Скоро'
+                            : (!canAdd 
+                            ? (available <= 0 ? 'Нет в наличии' : 'В корзине')
+                            : 'В корзину'))
+                        }
+                      </button>
+                    )
                   )
                 })()}
                 </div>
@@ -228,6 +396,13 @@ function Home() {
           product={selectedProduct} 
           onClose={() => setSelectedProduct(null)}
           getAvailableQuantity={getAvailableQuantity}
+        />
+      )}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </div>

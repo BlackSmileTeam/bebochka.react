@@ -255,7 +255,7 @@ function AdminAnnouncements() {
                     >
                       {product.images && product.images.length > 0 && (
                         <img 
-                          src={`http://89.104.67.36:55501${product.images[0]}`}
+                          src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${product.images[0]}`}
                           alt={product.name}
                         />
                       )}

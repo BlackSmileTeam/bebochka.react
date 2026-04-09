@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api` 
-  : 'http://89.104.67.36:55501/api'
+  : 'http://localhost:5000/api'
 
 console.log('API Base URL:', API_BASE_URL)
 
@@ -66,12 +66,14 @@ apiClient.interceptors.response.use(
       } : null
     })
     
-    // Handle 401 Unauthorized - clear token and redirect to login
+    // 401: единая страница входа /account с возвратом на текущий путь
     if (error.response?.status === 401) {
+      const path = window.location.pathname || ''
       localStorage.removeItem('authToken')
       localStorage.removeItem('user')
-      if (window.location.pathname.startsWith('/admin')) {
-        window.location.href = '/login'
+      if (!path.startsWith('/account')) {
+        const ret = encodeURIComponent(path + (window.location.search || ''))
+        window.location.href = `/account?returnUrl=${ret}`
       }
     }
     
@@ -145,6 +147,8 @@ export const api = {
         gender: product.gender || product.Gender || null,
         condition: product.condition || product.Condition || null,
         publishedAt: product.publishedAt || product.PublishedAt || null,
+        cartAvailableAt: product.cartAvailableAt ?? product.CartAvailableAt ?? null,
+        cartUnlocked: product.cartUnlocked !== undefined ? product.cartUnlocked : (product.CartUnlocked !== undefined ? product.CartUnlocked : true),
         createdAt: product.createdAt || product.CreatedAt,
         updatedAt: product.updatedAt || product.UpdatedAt
       }))
@@ -194,7 +198,10 @@ export const api = {
         gender: product.gender || product.Gender || null,
         condition: product.condition || product.Condition || null,
         createdAt: product.createdAt || product.CreatedAt,
-        updatedAt: product.updatedAt || product.UpdatedAt
+        updatedAt: product.updatedAt || product.UpdatedAt,
+        publishedAt: product.publishedAt || product.PublishedAt || null,
+        cartAvailableAt: product.cartAvailableAt ?? product.CartAvailableAt ?? null,
+        cartUnlocked: product.cartUnlocked !== undefined ? product.cartUnlocked : (product.CartUnlocked !== undefined ? product.CartUnlocked : true)
       }))
       
       console.log(`[API] Successfully loaded ${normalizedProducts.length} products`)
@@ -213,37 +220,42 @@ export const api = {
   /**
    * Gets a product by ID
    * @param {number} id - Product ID
+   * @param {string|null} sessionId - для корректного availableQuantity с учётом корзины
    * @returns {Promise<Object>} Product data
    */
-  async getProduct(id) {
+  async getProduct(id, sessionId = null) {
     try {
-      console.log(`[API] Fetching product ${id}...`)
-      const response = await apiClient.get(`/products/${id}`)
-      
+      console.log(`[API] Fetching product ${id}...`, sessionId ? `sessionId: ${sessionId}` : '')
+      const params = sessionId ? { sessionId } : {}
+      const response = await apiClient.get(`/products/${id}`, { params })
+
       if (!validateProduct(response.data)) {
         console.error('[API] Invalid product data:', response.data)
         throw new Error('Invalid product data received')
       }
-      
-      // Нормализуем данные - конвертируем Id в id для совместимости
+
+      const d = response.data
       const normalizedProduct = {
-        ...response.data,
-        id: response.data.id || response.data.Id,
-        name: response.data.name || response.data.Name,
-        brand: response.data.brand || response.data.Brand,
-        description: response.data.description || response.data.Description,
-        price: response.data.price || response.data.Price,
-        size: response.data.size || response.data.Size,
-        color: response.data.color || response.data.Color,
-        images: response.data.images || response.data.Images || [],
-        quantityInStock: response.data.quantityInStock !== undefined ? response.data.quantityInStock : (response.data.QuantityInStock !== undefined ? response.data.QuantityInStock : 1),
-        availableQuantity: response.data.availableQuantity !== undefined ? response.data.availableQuantity : (response.data.AvailableQuantity !== undefined ? response.data.AvailableQuantity : response.data.quantityInStock || response.data.QuantityInStock || 1),
-        gender: response.data.gender || response.data.Gender || null,
-        condition: response.data.condition || response.data.Condition || null,
-        createdAt: response.data.createdAt || response.data.CreatedAt,
-        updatedAt: response.data.updatedAt || response.data.UpdatedAt
+        ...d,
+        id: d.id || d.Id,
+        name: d.name || d.Name,
+        brand: d.brand || d.Brand,
+        description: d.description || d.Description,
+        price: d.price ?? d.Price,
+        size: d.size || d.Size,
+        color: d.color || d.Color,
+        images: d.images || d.Images || [],
+        quantityInStock: d.quantityInStock !== undefined ? d.quantityInStock : (d.QuantityInStock !== undefined ? d.QuantityInStock : 1),
+        availableQuantity: d.availableQuantity !== undefined ? d.availableQuantity : (d.AvailableQuantity !== undefined ? d.AvailableQuantity : d.quantityInStock ?? d.QuantityInStock ?? 1),
+        gender: d.gender || d.Gender || null,
+        condition: d.condition || d.Condition || null,
+        createdAt: d.createdAt || d.CreatedAt,
+        updatedAt: d.updatedAt || d.UpdatedAt,
+        publishedAt: d.publishedAt || d.PublishedAt || null,
+        cartAvailableAt: d.cartAvailableAt ?? d.CartAvailableAt ?? null,
+        cartUnlocked: d.cartUnlocked !== undefined ? d.cartUnlocked : (d.CartUnlocked !== undefined ? d.CartUnlocked : true)
       }
-      
+
       console.log('[API] Successfully loaded product:', normalizedProduct)
       return normalizedProduct
     } catch (error) {
@@ -310,6 +322,7 @@ export const api = {
         gender: formData.get('gender') || null,
         condition: formData.get('condition') || null,
         publishedAt: formData.get('publishedAt') || null,
+        cartAvailableAt: formData.get('cartAvailableAt') || null,
         images: []
       }
       
@@ -421,6 +434,7 @@ export const api = {
         gender: formData.get('gender') || null,
         condition: formData.get('condition') || null,
         publishedAt: formData.get('publishedAt') || null,
+        cartAvailableAt: formData.get('cartAvailableAt') || null,
         images: []
       }
       
@@ -610,13 +624,38 @@ export const api = {
     }
   },
 
+  _applyAuthPayload(data) {
+    const d = data || {}
+    const normalized = {
+      token: d.token || d.Token || '',
+      expiresAt: d.expiresAt || d.ExpiresAt || '',
+      username: d.username || d.Username || '',
+      fullName: d.fullName || d.FullName || '',
+      userId: d.userId ?? d.UserId,
+      isAdmin: !!(d.isAdmin ?? d.IsAdmin),
+      email: d.email ?? d.Email ?? null
+    }
+    if (!normalized.token) return normalized
+    localStorage.setItem('authToken', normalized.token)
+    localStorage.setItem('user', JSON.stringify({
+      username: normalized.username,
+      fullName: normalized.fullName,
+      userId: normalized.userId,
+      isAdmin: normalized.isAdmin,
+      email: normalized.email
+    }))
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('bebochka-auth'))
+    return normalized
+  },
+
   /**
    * Logs in a user and returns authentication token
    * @param {string} username - Username
    * @param {string} password - Password
+   * @param {string} [sessionIdForMerge] - гостевая сессия для слияния корзины
    * @returns {Promise<Object>} Authentication response with token
    */
-  async login(username, password) {
+  async login(username, password, sessionIdForMerge = null) {
     try {
       console.log('[API] Attempting login for user:', username)
       const response = await apiClient.post('/auth/login', {
@@ -626,14 +665,8 @@ export const api = {
       
       console.log('[API] Login response received:', response.data)
       
-      // Нормализуем ответ - сервер может возвращать ключи с заглавными буквами
       const data = response.data || {}
-      const normalizedResponse = {
-        token: data.token || data.Token || '',
-        expiresAt: data.expiresAt || data.ExpiresAt || '',
-        username: data.username || data.Username || '',
-        fullName: data.fullName || data.FullName || ''
-      }
+      const normalizedResponse = this._applyAuthPayload(data)
       
       console.log('[API] Normalized login response:', normalizedResponse)
       
@@ -641,13 +674,14 @@ export const api = {
         console.error('[API] No token in login response:', data)
         throw new Error('Неверное имя пользователя или пароль')
       }
-      
-      // Сохраняем токен и данные пользователя
-      localStorage.setItem('authToken', normalizedResponse.token)
-      localStorage.setItem('user', JSON.stringify({
-        username: normalizedResponse.username,
-        fullName: normalizedResponse.fullName
-      }))
+
+      if (sessionIdForMerge) {
+        try {
+          await apiClient.post('/auth/merge-cart', { sessionId: sessionIdForMerge })
+        } catch (e) {
+          console.warn('[API] merge-cart:', e)
+        }
+      }
       
       console.log('[API] Login successful. Token stored.')
       return normalizedResponse
@@ -683,6 +717,94 @@ export const api = {
       console.error('[API] Error getting current user:', error)
       throw error
     }
+  },
+
+  async register(payload, sessionIdForMerge = null) {
+    try {
+      const response = await apiClient.post('/auth/register', {
+        phone: payload.phone,
+        password: payload.password,
+        email: payload.email || null,
+        fullName: payload.fullName || null,
+        acceptPersonalDataProcessing: !!payload.acceptPersonalDataProcessing
+      })
+      const normalized = this._applyAuthPayload(response.data)
+      if (sessionIdForMerge && normalized.token) {
+        try {
+          await apiClient.post('/auth/merge-cart', { sessionId: sessionIdForMerge })
+        } catch (e) { console.warn(e) }
+      }
+      return normalized
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Ошибка регистрации'
+      throw new Error(msg)
+    }
+  },
+
+  async sendPhoneCode(phone) {
+    await apiClient.post('/auth/phone/send-code', { phone })
+  },
+
+  async verifyPhoneLogin(phone, code, sessionIdForMerge = null, acceptPersonalDataProcessing = false) {
+    try {
+      const response = await apiClient.post('/auth/phone/verify', {
+        phone,
+        code,
+        acceptPersonalDataProcessing: !!acceptPersonalDataProcessing
+      })
+      const normalized = this._applyAuthPayload(response.data)
+      if (sessionIdForMerge && normalized.token) {
+        try {
+          await apiClient.post('/auth/merge-cart', { sessionId: sessionIdForMerge })
+        } catch (e) { console.warn(e) }
+      }
+      return normalized
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Ошибка входа по телефону'
+      throw new Error(msg)
+    }
+  },
+
+  async getMyOrders() {
+    try {
+      const response = await apiClient.get('/orders/mine')
+      return Array.isArray(response.data) ? response.data : []
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Не удалось загрузить заказы'
+      throw new Error(msg)
+    }
+  },
+
+  async joinCartQueue(productId) {
+    await apiClient.post('/cart/queue', { productId })
+  },
+
+  async getMyCartQueue() {
+    const response = await apiClient.get('/cart/queue/mine')
+    const items = Array.isArray(response.data) ? response.data : []
+    return items.map((item) => {
+      const priceRaw = item.ProductPrice ?? item.productPrice
+      const priceNum =
+        priceRaw === null || priceRaw === undefined || priceRaw === ''
+          ? 0
+          : Number(priceRaw)
+      return {
+        id: item.Id ?? item.id,
+        productId: item.ProductId ?? item.productId,
+        productName: item.ProductName ?? item.productName ?? '',
+        productBrand: item.ProductBrand ?? item.productBrand ?? null,
+        productImages: item.ProductImages ?? item.productImages ?? [],
+        productPrice: Number.isFinite(priceNum) ? priceNum : 0,
+        productSize: String(item.ProductSize ?? item.productSize ?? '').trim() || null,
+        productColor: String(item.ProductColor ?? item.productColor ?? '').trim() || null,
+        productCondition: String(item.ProductCondition ?? item.productCondition ?? '').trim() || null,
+        createdAt: item.CreatedAt ?? item.createdAt
+      }
+    })
+  },
+
+  async cancelMyCartQueueItem(queueItemId) {
+    await apiClient.delete(`/cart/queue/${queueItemId}`)
   },
 
   /**
@@ -789,12 +911,15 @@ export const api = {
    */
   async getCartItems(sessionId) {
     try {
-      if (!sessionId) {
-        console.warn('[API] SessionId is missing for getCartItems')
+      const token = localStorage.getItem('authToken')
+      if (!token && !sessionId) {
+        console.warn('[API] SessionId is missing for getCartItems (guest)')
         return []
       }
-      console.log('[API] Fetching cart items for session:', sessionId)
-      const response = await apiClient.get('/cart', { params: { sessionId } })
+      const params = {}
+      if (sessionId) params.sessionId = sessionId
+      console.log('[API] Fetching cart items', sessionId ? `sessionId: ${sessionId}` : '(authorized)')
+      const response = await apiClient.get('/cart', { params })
       console.log('[API] Cart items response:', response.data)
       
       // Нормализуем данные, если они приходят в разных форматах
@@ -807,8 +932,8 @@ export const api = {
         productSize: item.ProductSize || item.productSize,
         productColor: item.ProductColor || item.productColor,
         productImages: item.ProductImages || item.productImages || [],
-        productPrice: item.ProductPrice || item.productPrice,
-        quantity: item.Quantity || item.quantity || 0,
+        productPrice: item.ProductPrice ?? item.productPrice ?? 0,
+        quantity: item.Quantity ?? item.quantity ?? 0,
         createdAt: item.CreatedAt || item.createdAt
       }))
     } catch (error) {
@@ -908,12 +1033,32 @@ export const api = {
    */
   async clearCart(sessionId) {
     try {
-      console.log('[API] Clearing cart for session:', sessionId)
-      await apiClient.delete('/cart', { params: { sessionId } })
+      const params = {}
+      if (sessionId) params.sessionId = sessionId
+      console.log('[API] Clearing cart', sessionId || '(authorized)')
+      await apiClient.delete('/cart', { params })
     } catch (error) {
       console.error('[API] Error clearing cart:', error)
       throw error
     }
+  },
+
+  /**
+   * Gets all active cart items (admin only)
+   * @returns {Promise<Array>}
+   */
+  async getAdminCartItems() {
+    const response = await apiClient.get('/cart/admin/items')
+    return Array.isArray(response.data) ? response.data : []
+  },
+
+  /**
+   * Removes cart item by id (admin only)
+   * @param {number} id
+   * @returns {Promise<void>}
+   */
+  async removeAdminCartItem(id) {
+    await apiClient.delete(`/cart/admin/items/${id}`)
   },
 
   /**

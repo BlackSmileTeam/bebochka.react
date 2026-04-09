@@ -22,9 +22,12 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     quantityInStock: 1,
     gender: 'мальчик',
     condition: '',
-    publishedAt: ''
+    publishedAt: '',
+    cartAvailableAt: ''
   })
   const [scheduleSend, setScheduleSend] = useState(false)
+  const [scheduleCartUnlock, setScheduleCartUnlock] = useState(false)
+  const [previewLoading, setPreviewLoading] = useState(false)
   const [images, setImages] = useState([])
   const [existingImages, setExistingImages] = useState([])
   const [loading, setLoading] = useState(false)
@@ -111,6 +114,17 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         const minutes = String(date.getMinutes()).padStart(2, '0')
         publishedAtValue = `${year}-${month}-${day}T${hours}:${minutes}`
       }
+      let cartAtValue = ''
+      if (product.cartAvailableAt || product.CartAvailableAt) {
+        const ca = product.cartAvailableAt || product.CartAvailableAt
+        const date = new Date(ca)
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
+        cartAtValue = `${year}-${month}-${day}T${hours}:${minutes}`
+      }
       
       setFormData({
         name: product.name || '',
@@ -122,13 +136,31 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         quantityInStock: product.quantityInStock || 1,
         gender: product.gender || 'мальчик',
         condition: product.condition || '',
-        publishedAt: publishedAtValue
+        publishedAt: publishedAtValue,
+        cartAvailableAt: cartAtValue
       })
       setScheduleSend(!!(product.publishedAt || product.PublishedAt))
+      setScheduleCartUnlock(!!(product.cartAvailableAt || product.CartAvailableAt))
       setBrandSearch(product.brand || '')
       setExistingImages(product.images || [])
     } else {
       setScheduleSend(false)
+      setScheduleCartUnlock(false)
+      setFormData({
+        name: '',
+        brand: '',
+        description: '',
+        price: '',
+        size: '',
+        color: '',
+        quantityInStock: 1,
+        gender: 'мальчик',
+        condition: '',
+        publishedAt: '',
+        cartAvailableAt: ''
+      })
+      setBrandSearch('')
+      setExistingImages([])
     }
   }, [product])
 
@@ -187,6 +219,14 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         // Create Date object as UTC with the components (representing Moscow time)
         const publishedAtDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
         formDataToSend.append('publishedAt', publishedAtDate.toISOString())
+      }
+
+      if (scheduleCartUnlock && formData.cartAvailableAt) {
+        const [datePart, timePart] = formData.cartAvailableAt.split('T')
+        const [year, month, day] = datePart.split('-').map(Number)
+        const [hours, minutes] = timePart.split(':').map(Number)
+        const cartAtDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
+        formDataToSend.append('cartAvailableAt', cartAtDate.toISOString())
       }
 
       if (product) {
@@ -303,7 +343,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       <img
                         src={img.startsWith('http') 
                           ? img 
-                          : `${import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'}${img}`}
+                          : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${img}`}
                         alt={`Existing ${index}`}
                         className="preview-image"
                       />
@@ -591,6 +631,58 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               </>
             )}
           </div>
+
+          <div className="form-group">
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <input
+                type="checkbox"
+                checked={scheduleCartUnlock}
+                onChange={(e) => setScheduleCartUnlock(e.target.checked)}
+              />
+              Открыть «В корзину» позже (МСК)
+            </label>
+            {scheduleCartUnlock && (
+              <>
+                <input
+                  type="datetime-local"
+                  id="cartAvailableAt"
+                  name="cartAvailableAt"
+                  value={formData.cartAvailableAt}
+                  onChange={handleChange}
+                  style={{ marginTop: '8px' }}
+                />
+                <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                  Карточка может быть уже на сайте (после превью), а кнопка корзины активируется в это время.
+                </small>
+              </>
+            )}
+          </div>
+
+          {product && (
+            <div className="form-group">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={previewLoading || loading}
+                onClick={async () => {
+                  setPreviewLoading(true)
+                  try {
+                    await api.publishProduct(product.id)
+                    alert('Товар опубликован в каталоге на сайте (время МСК). В Telegram пост не отправляется, пока включено в настройках API.')
+                  } catch (e) {
+                    alert(e.message || 'Не удалось обновить публикацию')
+                  } finally {
+                    setPreviewLoading(false)
+                  }
+                }}
+              >
+                {previewLoading ? '…' : 'Превью: показать в каталоге сейчас'}
+              </button>
+              <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                Ставит время появления карточки на текущий момент (МСК). Рассылка в Telegram отключена флагом PostNewProductsToChannel.
+              </small>
+            </div>
+          )}
 
           <div className="form-actions">
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>

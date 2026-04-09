@@ -1,11 +1,23 @@
 import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
+import { api } from '../services/api'
 import './ProductDetail.css'
 
 function ProductDetail({ product, onClose, getAvailableQuantity }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isAdding, setIsAdding] = useState(false)
+  const [queueLoading, setQueueLoading] = useState(false)
   const { addToCart, cartItems } = useCart()
+  const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') : null
+  let user = {}
+  if (typeof localStorage !== 'undefined') {
+    try {
+      user = JSON.parse(localStorage.getItem('user') || '{}')
+    } catch {
+      user = {}
+    }
+  }
+  const isAdminUser = !!user?.isAdmin
   
   // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailable = () => {
@@ -24,7 +36,27 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   }
   
   const inCart = getCartQuantity()
-  const canAdd = available > 0 && inCart < available
+  const cartUnlocked = product.cartUnlocked !== false && product.CartUnlocked !== false
+  const canAdd = available > 0 && inCart < available && cartUnlocked
+
+  const cartAvailableRaw = product.cartAvailableAt ?? product.CartAvailableAt
+  const cartAvailableAt = cartAvailableRaw ? new Date(cartAvailableRaw) : null
+
+  const handleJoinQueue = async () => {
+    if (!authToken) {
+      alert('Войдите в аккаунт, чтобы встать в очередь')
+      return
+    }
+    setQueueLoading(true)
+    try {
+      await api.joinCartQueue(product.id)
+      alert('Вы в очереди: когда товар освободится, он попадёт в вашу корзину.')
+    } catch (e) {
+      alert(e.message || 'Не удалось добавить в очередь')
+    } finally {
+      setQueueLoading(false)
+    }
+  }
   
   const handleAddToCart = async () => {
     if (!canAdd || isAdding) return
@@ -44,7 +76,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   if (!product) return null
 
   const images = product.images || []
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://89.104.67.36:55501'
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   const publishedAtRaw = product.publishedAt ?? product.PublishedAt
   const createdAtRaw = product.createdAt ?? product.CreatedAt
@@ -59,6 +91,11 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
       ? d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
       : '—'
 
+  const formatGender = (gender) => {
+    if (!gender) return ''
+    return gender.charAt(0).toUpperCase() + gender.slice(1)
+  }
+
   const isScheduled = publishedAt ? publishedAt.getTime() > Date.now() : false
 
   const getImageUrl = (imagePath) => {
@@ -66,6 +103,12 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
       return imagePath
     }
     return `${apiUrl}${imagePath}`
+  }
+
+  const openOriginalImage = () => {
+    if (!images.length) return
+    const imageUrl = getImageUrl(images[currentImageIndex])
+    window.open(imageUrl, '_blank', 'noopener,noreferrer')
   }
 
   const nextImage = () => {
@@ -99,6 +142,8 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                   src={getImageUrl(images[currentImageIndex])}
                   alt={`${product.name} - фото ${currentImageIndex + 1}`}
                   className="product-detail-image"
+                  title="Открыть оригинал"
+                  onClick={openOriginalImage}
                   onError={(e) => {
                     e.target.src = '/logo.jpg'
                   }}
@@ -145,20 +190,22 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
 
           {/* Информация о товаре */}
           <div className="product-detail-info">
-            <div className="product-detail-top">
-              <div className={`publish-badge ${isScheduled ? 'scheduled' : 'published'}`}>
-                {isScheduled ? 'Запланировано' : 'Опубликовано'}
-                {publishedAt ? ` · ${formatDateTime(publishedAt)}` : ''}
+            {isAdminUser && (
+              <div className="product-detail-top">
+                <div className={`publish-badge ${isScheduled ? 'scheduled' : 'published'}`}>
+                  {isScheduled ? 'Запланировано' : 'Опубликовано'}
+                  {publishedAt ? ` · ${formatDateTime(publishedAt)}` : ''}
+                </div>
+                <div className="product-detail-dates">
+                  <div className="product-detail-date-line">Создан: {formatDateTime(createdAt)}</div>
+                  <div className="product-detail-date-line">Обновлён: {formatDateTime(updatedAt)}</div>
+                </div>
               </div>
-              <div className="product-detail-dates">
-                <div className="product-detail-date-line">Создан: {formatDateTime(createdAt)}</div>
-                <div className="product-detail-date-line">Обновлён: {formatDateTime(updatedAt)}</div>
-              </div>
-            </div>
+            )}
 
             <h2 className="product-detail-name">{product.name}</h2>
             <div className={`product-detail-stock ${available > 0 ? 'in-stock' : 'out-of-stock'}`}>
-              {available > 0 ? `В наличии: ${available} шт.` : 'Нет в наличии'}
+              {available > 0 ? 'В наличии' : 'Нет в наличии'}
             </div>
             
             {product.brand && (
@@ -184,7 +231,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               )}
               {product.gender && (
                 <div className="product-detail-spec">
-                  <strong>Пол:</strong> {product.gender}
+                  <strong>Пол:</strong> {formatGender(product.gender)}
                 </div>
               )}
               {product.condition && (
@@ -198,23 +245,43 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               <div className="product-detail-price">
                 {(product.price ?? 0).toLocaleString('ru-RU')} ₽
               </div>
+              {!cartUnlocked && cartAvailableAt && !Number.isNaN(cartAvailableAt.getTime()) && (
+                <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: 8 }}>
+                  «В корзину» с {cartAvailableAt.toLocaleString('ru-RU')}
+                </p>
+              )}
               <button
                 className="btn-buy-detail"
                 onClick={handleAddToCart}
                 disabled={!canAdd || isAdding}
                 title={
-                  !canAdd 
+                  !cartUnlocked
+                    ? 'Корзина откроется позже'
+                    : !canAdd 
                     ? (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество')
                     : (isAdding ? 'Добавление...' : 'Добавить в корзину')
                 }
               >
                 {isAdding 
                   ? 'Добавление...' 
-                  : (!canAdd 
+                  : (!cartUnlocked
+                    ? 'Скоро в продаже'
+                    : (!canAdd 
                     ? (available <= 0 ? 'Нет в наличии' : 'В корзине')
-                    : 'В корзину')
+                    : 'В корзину'))
                 }
               </button>
+              {cartUnlocked && available <= 0 && inCart === 0 && (
+                <button
+                  type="button"
+                  className="btn-buy-detail"
+                  style={{ marginTop: 8, background: '#4a5568' }}
+                  onClick={handleJoinQueue}
+                  disabled={queueLoading}
+                >
+                  {queueLoading ? '…' : 'В очередь'}
+                </button>
+              )}
             </div>
           </div>
         </div>
