@@ -120,6 +120,7 @@ jobs:
           -f ${{ env.DOCKERFILE_PATH }} \
           -t ${{ env.IMAGE_NAME }}:${{ steps.determine_tag.outputs.TAG }} \
           -t ${{ env.IMAGE_NAME }}:latest \
+          --build-arg VITE_API_URL=http://157.22.199.24:55501 \
           --platform linux/amd64 \
           --load \
           .
