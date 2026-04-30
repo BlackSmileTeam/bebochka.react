@@ -78,6 +78,8 @@ jobs:
     - name: Build project
       run: |
         npm run build
+      env:
+        VITE_API_URL: http://157.22.199.24:55501
         
     - name: Run tests (if available)
       run: |
