@@ -1,0 +1,95 @@
+/* Совпадает с .container в Layout: одна ширина контента на всём сайте */
+.page-shell {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+}
+
+.page-shell__inner {
+  width: 100%;
+}
+
+.page-shell__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-shell__headline {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.page-shell__title {
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.4rem;
+  line-height: 1.25;
+}
+
+.page-shell__subtitle {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #718096;
+  max-width: 52rem;
+}
+
+.page-shell__subtitle p {
+  margin: 0 0 0.5rem;
+}
+
+.page-shell__subtitle p:last-child {
+  margin-bottom: 0;
+}
+
+.page-shell__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.page-shell__body {
+  width: 100%;
+}
+
+.page-shell--auth .page-shell__body {
+  display: flex;
+  justify-content: center;
+}
+
+.page-shell--catalog .catalog-filters {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .page-shell {
+    padding: 0 1rem;
+  }
+
+  .page-shell__header {
+    margin-bottom: 1.25rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-shell__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-shell {
+    padding: 0 0.75rem;
+  }
+}
