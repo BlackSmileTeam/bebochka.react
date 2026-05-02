@@ -1,6 +1,27 @@
 .admin-products-page {
-  width: 100%;
+  width: calc(100% + 3rem);
+  max-width: none;
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+  padding-left: 1.3em;
+  padding-right: 1.3em;
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .admin-products-page {
+    width: calc(100% + 2rem);
+    margin-left: -1rem;
+    margin-right: -1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-products-page {
+    width: calc(100% + 1.5rem);
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+  }
 }
 
 .header-actions {
@@ -339,7 +360,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  padding: 0.5rem;
+  padding: 0;
   background-color: #f7fafc;
   border-radius: 8px;
   align-items: center;
@@ -1053,10 +1074,6 @@
   
   .filters-grid {
     grid-template-columns: 1fr;
-  }
-
-  .active-filters {
-    padding: 0.5rem;
   }
 
   .filter-chip {

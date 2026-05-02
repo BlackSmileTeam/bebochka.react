@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { api } from '../services/api.js'
 import ProductForm from '../components/ProductForm.jsx'
 import Toast from '../components/Toast.jsx'
@@ -6,6 +7,27 @@ import PageShell from '../components/PageShell.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
 import './AdminProducts.css'
+
+function getDeleteProductErrorMessage(err) {
+  if (err && typeof err === 'object' && 'response' in err && err.response?.data != null) {
+    const d = err.response.data
+    if (typeof d === 'string') {
+      try {
+        const parsed = JSON.parse(d)
+        return parsed.message || parsed.Message || d
+      } catch {
+        return d
+      }
+    }
+    if (typeof d === 'object') {
+      return d.message || d.Message || d.title || d.Title || null
+    }
+  }
+  if (err instanceof Error && err.message && !/^Request failed with status code \d+$/.test(err.message)) {
+    return err.message
+  }
+  return null
+}
 
 function AdminProducts() {
   const [products, setProducts] = useState([])
@@ -474,13 +496,18 @@ function AdminProducts() {
       setToast({ message: 'Товар успешно удален', type: 'success' })
       setDeleteTarget(null)
     } catch (err) {
-      const msg =
-        err instanceof Error && err.message && String(err.message).trim() !== ''
-          ? err.message
-          : 'Ошибка при удалении товара'
-      setToast({ message: msg, type: 'error' })
-      setDeleteTarget(null)
       console.error(err)
+      const fromApi = getDeleteProductErrorMessage(err)
+      const fromErr = err instanceof Error ? err.message : ''
+      const msg = [fromApi, fromErr]
+        .map((s) => (s != null ? String(s).trim() : ''))
+        .find((s) => s !== '' && !/^Request failed with status code \d+$/.test(s))
+        || 'Ошибка при удалении товара'
+      flushSync(() => {
+        setDeleteBusy(false)
+        setDeleteTarget(null)
+      })
+      setToast({ message: msg, type: 'error' })
     } finally {
       setDeleteBusy(false)
     }
