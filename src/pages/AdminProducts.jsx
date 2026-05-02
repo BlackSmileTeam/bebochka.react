@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { api } from '../services/api'
-import ProductForm from '../components/ProductForm'
-import Toast from '../components/Toast'
-import PageShell from '../components/PageShell'
-import { formatCondition } from '../utils/formatCondition'
+import { api } from '../services/api.js'
+import ProductForm from '../components/ProductForm.jsx'
+import Toast from '../components/Toast.jsx'
+import PageShell from '../components/PageShell.jsx'
+import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
+import { formatCondition } from '../utils/formatCondition.js'
 import './AdminProducts.css'
 
 function AdminProducts() {
@@ -22,6 +23,8 @@ function AdminProducts() {
   const [showEmojiSettings, setShowEmojiSettings] = useState(false)
   const [channelEmojiId, setChannelEmojiId] = useState(null)
   const [toast, setToast] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
   const hasCheckedOngoingOperation = useRef(false)
   
   // Фильтры
@@ -447,18 +450,34 @@ function AdminProducts() {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Вы уверены, что хотите удалить этот товар?')) {
+  const openDeleteConfirm = (product) => {
+    setDeleteTarget({
+      id: product.id,
+      name: (product.name && String(product.name).trim()) || `Товар #${product.id}`,
+    })
+  }
+
+  const closeDeleteConfirm = () => {
+    if (!deleteBusy) {
+      setDeleteTarget(null)
+    }
+  }
+
+  const confirmDeleteProduct = async () => {
+    if (deleteTarget == null) {
       return
     }
-
+    setDeleteBusy(true)
     try {
-      await api.deleteProduct(id)
+      await api.deleteProduct(deleteTarget.id)
       await loadProducts()
       setToast({ message: 'Товар успешно удален', type: 'success' })
+      setDeleteTarget(null)
     } catch (err) {
       setToast({ message: 'Ошибка при удалении товара', type: 'error' })
       console.error(err)
+    } finally {
+      setDeleteBusy(false)
     }
   }
 
@@ -1227,7 +1246,7 @@ function AdminProducts() {
                           className="action-menu-item delete"
                           onClick={() => {
                             document.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'))
-                            handleDelete(product.id)
+                            openDeleteConfirm(product)
                           }}
                         >
                           Удалить
@@ -1241,6 +1260,21 @@ function AdminProducts() {
           </table>
         </div>
       )}
+      <ConfirmDialog
+        open={deleteTarget != null}
+        title="Удалить товар?"
+        message={
+          deleteTarget
+            ? `Вы уверены, что хотите удалить «${deleteTarget.name}»? Это действие нельзя отменить.`
+            : ''
+        }
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        variant="danger"
+        busy={deleteBusy}
+        onConfirm={confirmDeleteProduct}
+        onCancel={closeDeleteConfirm}
+      />
       {toast && (
         <Toast
           message={toast.message}
