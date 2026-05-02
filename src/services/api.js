@@ -149,6 +149,9 @@ export const api = {
         publishedAt: product.publishedAt || product.PublishedAt || null,
         cartAvailableAt: product.cartAvailableAt ?? product.CartAvailableAt ?? null,
         cartUnlocked: product.cartUnlocked !== undefined ? product.cartUnlocked : (product.CartUnlocked !== undefined ? product.CartUnlocked : true),
+        boxNumber: product.boxNumber ?? product.BoxNumber ?? null,
+        incomingShipmentId: product.incomingShipmentId ?? product.IncomingShipmentId ?? null,
+        incomingShipmentName: product.incomingShipmentName ?? product.IncomingShipmentName ?? null,
         createdAt: product.createdAt || product.CreatedAt,
         updatedAt: product.updatedAt || product.UpdatedAt
       }))
@@ -197,6 +200,9 @@ export const api = {
         availableQuantity: product.availableQuantity !== undefined ? product.availableQuantity : (product.AvailableQuantity !== undefined ? product.AvailableQuantity : product.quantityInStock || product.QuantityInStock || 1),
         gender: product.gender || product.Gender || null,
         condition: product.condition || product.Condition || null,
+        boxNumber: product.boxNumber ?? product.BoxNumber ?? null,
+        incomingShipmentId: product.incomingShipmentId ?? product.IncomingShipmentId ?? null,
+        incomingShipmentName: product.incomingShipmentName ?? product.IncomingShipmentName ?? null,
         createdAt: product.createdAt || product.CreatedAt,
         updatedAt: product.updatedAt || product.UpdatedAt,
         publishedAt: product.publishedAt || product.PublishedAt || null,
@@ -254,6 +260,9 @@ export const api = {
         publishedAt: d.publishedAt || d.PublishedAt || null,
         cartAvailableAt: d.cartAvailableAt ?? d.CartAvailableAt ?? null,
         cartUnlocked: d.cartUnlocked !== undefined ? d.cartUnlocked : (d.CartUnlocked !== undefined ? d.CartUnlocked : true)
+        ,boxNumber: d.boxNumber ?? d.BoxNumber ?? null
+        ,incomingShipmentId: d.incomingShipmentId ?? d.IncomingShipmentId ?? null
+        ,incomingShipmentName: d.incomingShipmentName ?? d.IncomingShipmentName ?? null
       }
 
       console.log('[API] Successfully loaded product:', normalizedProduct)
@@ -323,6 +332,8 @@ export const api = {
         condition: formData.get('condition') || null,
         publishedAt: formData.get('publishedAt') || null,
         cartAvailableAt: formData.get('cartAvailableAt') || null,
+        boxNumber: formData.get('boxNumber') || null,
+        incomingShipmentId: formData.get('incomingShipmentId') === '' ? null : parseInt(formData.get('incomingShipmentId') || 0),
         images: []
       }
       
@@ -374,6 +385,9 @@ export const api = {
         gender: response.data.gender || response.data.Gender || null,
         condition: response.data.condition || response.data.Condition || null,
         publishedAt: response.data.publishedAt || response.data.PublishedAt || null,
+        boxNumber: response.data.boxNumber ?? response.data.BoxNumber ?? null,
+        incomingShipmentId: response.data.incomingShipmentId ?? response.data.IncomingShipmentId ?? null,
+        incomingShipmentName: response.data.incomingShipmentName ?? response.data.IncomingShipmentName ?? null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
         updatedAt: response.data.updatedAt || response.data.UpdatedAt
       }
@@ -435,6 +449,8 @@ export const api = {
         condition: formData.get('condition') || null,
         publishedAt: formData.get('publishedAt') || null,
         cartAvailableAt: formData.get('cartAvailableAt') || null,
+        boxNumber: formData.get('boxNumber') || null,
+        incomingShipmentId: formData.get('incomingShipmentId') === '' ? null : parseInt(formData.get('incomingShipmentId') || 0),
         images: []
       }
       
@@ -480,6 +496,9 @@ export const api = {
         gender: response.data.gender || response.data.Gender || null,
         condition: response.data.condition || response.data.Condition || null,
         publishedAt: response.data.publishedAt || response.data.PublishedAt || null,
+        boxNumber: response.data.boxNumber ?? response.data.BoxNumber ?? null,
+        incomingShipmentId: response.data.incomingShipmentId ?? response.data.IncomingShipmentId ?? null,
+        incomingShipmentName: response.data.incomingShipmentName ?? response.data.IncomingShipmentName ?? null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
         updatedAt: response.data.updatedAt || response.data.UpdatedAt
       }
@@ -517,7 +536,13 @@ export const api = {
       console.error(`[API] Error deleting product ${id}:`, error)
       if (error.response) {
         console.error('[API] Server error:', error.response.status, error.response.data)
-        throw new Error(error.response.data?.message || `Failed to delete product: ${error.response.status}`)
+        const msg =
+          error.response.data?.message ||
+          error.response.data?.Message ||
+          (error.response.status === 409
+            ? 'Товар нельзя удалить: есть связанные данные.'
+            : null)
+        throw new Error(msg || `Failed to delete product: ${error.response.status}`)
       }
       throw error
     }
@@ -771,6 +796,38 @@ export const api = {
       return Array.isArray(response.data) ? response.data : []
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Не удалось загрузить заказы'
+      throw new Error(msg)
+    }
+  },
+
+  /**
+   * Клиент: подтвердить получение заказа («Отправлен» → «Получен»). Оценка и комментарий необязательны.
+   * @param {number} orderId
+   * @param {{ rating?: number | null, comment?: string | null }} [payload]
+   */
+  async markMyOrderReceived(orderId, payload = {}) {
+    try {
+      const body = {}
+      const r = payload.rating
+      if (r != null && r !== '' && Number.isFinite(Number(r))) {
+        const n = Number(r)
+        if (n >= 1 && n <= 5) body.rating = n
+      }
+      const c = payload.comment != null ? String(payload.comment).trim() : ''
+      if (c) body.comment = c
+      try {
+        const response = await apiClient.post(`/orders/mine/${orderId}/mark-received`, body)
+        return response.data
+      } catch (error) {
+        // Совместимость со старыми/альтернативными маршрутами на бэкенде.
+        if (error?.response?.status === 404) {
+          const fallback = await apiClient.post(`/orders/${orderId}/mark-received`, body)
+          return fallback.data
+        }
+        throw error
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Не удалось подтвердить получение'
       throw new Error(msg)
     }
   },
@@ -1325,6 +1382,31 @@ export const api = {
   },
 
   /**
+   * Gets customer reviews for admin panel
+   * @returns {Promise<Array>}
+   */
+  async getOrderReviews() {
+    try {
+      const response = await apiClient.get('/orders/reviews')
+      const rows = Array.isArray(response.data) ? response.data : []
+      return rows.map((row) => ({
+        id: row.id ?? row.Id,
+        orderId: row.orderId ?? row.OrderId,
+        orderNumber: row.orderNumber ?? row.OrderNumber ?? '',
+        userId: row.userId ?? row.UserId,
+        customerName: row.customerName ?? row.CustomerName ?? '',
+        customerPhone: row.customerPhone ?? row.CustomerPhone ?? '',
+        rating: row.rating ?? row.Rating ?? null,
+        comment: row.comment ?? row.Comment ?? '',
+        createdAtUtc: row.createdAtUtc ?? row.CreatedAtUtc ?? null
+      }))
+    } catch (error) {
+      console.error('[API] Error fetching order reviews:', error)
+      throw error
+    }
+  },
+
+  /**
    * Gets an order by ID
    * @param {number} id - Order ID
    * @returns {Promise<Object>} Order data
@@ -1441,5 +1523,46 @@ export const api = {
 
   async setOrderDiscount(orderId, percent) {
     await apiClient.put(`/orders/${orderId}/discount`, { percent })
+  },
+
+  async getIncomingShipments() {
+    const response = await apiClient.get('/incoming-shipments')
+    const rows = Array.isArray(response.data) ? response.data : []
+    return rows.map((r) => ({
+      id: r.id ?? r.Id,
+      name: r.name ?? r.Name ?? '',
+      weightKg: r.weightKg ?? r.WeightKg ?? 0,
+      itemCount: r.itemCount ?? r.ItemCount ?? 0,
+      orderedAmount: r.orderedAmount ?? r.OrderedAmount ?? 0,
+      revenue: r.revenue ?? r.Revenue ?? null,
+      miscExpensesTotal: r.miscExpensesTotal ?? r.MiscExpensesTotal ?? 0,
+      totalExpenses: r.totalExpenses ?? r.TotalExpenses ?? 0,
+      actualMargin: r.actualMargin ?? r.ActualMargin ?? null,
+      expenses: Array.isArray(r.expenses ?? r.Expenses)
+        ? (r.expenses ?? r.Expenses).map((e) => ({
+            id: e.id ?? e.Id,
+            name: e.name ?? e.Name ?? '',
+            amount: e.amount ?? e.Amount ?? 0,
+            createdAt: e.createdAt ?? e.CreatedAt ?? null
+          }))
+        : [],
+      notes: r.notes ?? r.Notes ?? null,
+      createdAt: r.createdAt ?? r.CreatedAt ?? null,
+      updatedAt: r.updatedAt ?? r.UpdatedAt ?? null
+    }))
+  },
+
+  async createIncomingShipment(payload) {
+    const response = await apiClient.post('/incoming-shipments', payload)
+    return response.data
+  },
+
+  async updateIncomingShipment(id, payload) {
+    const response = await apiClient.put(`/incoming-shipments/${id}`, payload)
+    return response.data
+  },
+
+  async deleteIncomingShipment(id) {
+    await apiClient.delete(`/incoming-shipments/${id}`)
   }
 }

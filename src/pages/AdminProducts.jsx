@@ -999,7 +999,7 @@ function AdminProducts() {
             </div>
             
             <div className="filter-group">
-              <label>Статус публикации</label>
+              <label>Статус публикации в ТГ</label>
               <select
                 value={filters.publishedStatus}
                 onChange={(e) => handleFilterChange('publishedStatus', e.target.value)}
@@ -1113,7 +1113,7 @@ function AdminProducts() {
                 <th>Состояние</th>
                 <th>Цена</th>
                 <th>Номер коробки</th>
-                <th title="Статус публикации"><span style={{cursor: 'help'}}>📢</span></th>
+                <th title="Статус публикации в ТГ"><span style={{cursor: 'help'}}>📢</span></th>
                 <th>Действия</th>
               </tr>
             </thead>
@@ -1300,28 +1300,38 @@ function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderI
         </div>
         
         <div className="product-details-content">
-          <div className="product-details-images">
-            {product.images && product.images.length > 0 ? (
-              <div className="product-images-grid">
-                {product.images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={image.startsWith('http') ? image : `${apiUrl}${image}`}
-                    alt={`${product.name} - фото ${index + 1}`}
-                    className="product-detail-image"
-                    onError={(e) => {
-                      e.target.src = '/logo.jpg'
-                    }}
-                  />
-                ))}
+          <div className="product-details-top">
+            <div className="product-details-images">
+              {product.images && product.images.length > 0 ? (
+                <div className="product-images-grid">
+                  {product.images.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image.startsWith('http') ? image : `${apiUrl}${image}`}
+                      alt={`${product.name} - фото ${index + 1}`}
+                      className="product-detail-image"
+                      onError={(e) => {
+                        e.target.src = '/logo.jpg'
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="product-image-placeholder-large">
+                  Нет фотографий
+                </div>
+              )}
+            </div>
+            <div className="product-details-dates" aria-label="Даты создания и обновления">
+              <div className="product-details-dates__line">
+                Создан: {product.createdAt ? new Date(product.createdAt).toLocaleString('ru-RU') : '—'}
               </div>
-            ) : (
-              <div className="product-image-placeholder-large">
-                Нет фотографий
+              <div className="product-details-dates__line">
+                Обновлён: {product.updatedAt ? new Date(product.updatedAt).toLocaleString('ru-RU') : '—'}
               </div>
-            )}
+            </div>
           </div>
-          
+
           <div className="product-details-info">
             <div className="detail-section">
               <h3>{product.name}</h3>
@@ -1336,21 +1346,42 @@ function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderI
 
             <div className="detail-grid">
               <div className="detail-row"><span className="detail-label">Бренд:</span><span className="detail-value">{product.brand || '-'}</span></div>
-              <div className="detail-row"><span className="detail-label">Цена:</span><span className="detail-value detail-value--nowrap">{product.price?.toLocaleString('ru-RU')}&nbsp;₽</span></div>
-              <div className="detail-row"><span className="detail-label">Размер:</span><span className="detail-value">{product.size || '-'}</span></div>
-              <div className="detail-row"><span className="detail-label">Цвет:</span><span className="detail-value">{product.color || '-'}</span></div>
-              <div className="detail-row">
-                <span className="detail-label">Пол:</span>
-                <span className="detail-value">
-                  <span className="gender-icon-large" title={product.gender || '-'}>{getGenderIcon(product.gender)}</span>
-                  {product.gender && ` ${product.gender}`}
-                </span>
+              <div className="detail-pair-row">
+                <div className="detail-pair-item">
+                  <span className="detail-label">Цена:</span>
+                  <span className="detail-value detail-value--nowrap">{product.price != null ? `${product.price.toLocaleString('ru-RU')}\u00A0₽` : '—'}</span>
+                </div>
+                <div className="detail-pair-item">
+                  <span className="detail-label">Размер:</span>
+                  <span className="detail-value">{product.size || '-'}</span>
+                </div>
+              </div>
+              <div className="detail-pair-row">
+                <div className="detail-pair-item">
+                  <span className="detail-label">Цвет:</span>
+                  <span className="detail-value">{product.color || '-'}</span>
+                </div>
+                <div className="detail-pair-item">
+                  <span className="detail-label">Пол:</span>
+                  <span className="detail-value">
+                    <span className="gender-icon-large" title={product.gender || '-'}>{getGenderIcon(product.gender)}</span>
+                    {product.gender ? ` ${product.gender}` : ''}
+                  </span>
+                </div>
               </div>
               <div className="detail-row"><span className="detail-label">Состояние:</span><span className="detail-value">{formatCondition(product.condition)}</span></div>
-              <div className="detail-row"><span className="detail-label">Номер коробки:</span><span className="detail-value">{product.boxNumber || '-'}</span></div>
-              <div className="detail-row"><span className="detail-label">Из посылки:</span><span className="detail-value">{product.incomingShipmentName || '-'}</span></div>
+              <div className="detail-pair-row">
+                <div className="detail-pair-item">
+                  <span className="detail-label">Номер коробки:</span>
+                  <span className="detail-value">{product.boxNumber || '-'}</span>
+                </div>
+                <div className="detail-pair-item">
+                  <span className="detail-label">Из посылки:</span>
+                  <span className="detail-value">{product.incomingShipmentName || '-'}</span>
+                </div>
+              </div>
               <div className="detail-row">
-                <span className="detail-label">Статус публикации:</span>
+                <span className="detail-label">Статус публикации в ТГ:</span>
                 <span className="detail-value">
                   {product.publishedAt ? (
                     isPublished ? <span style={{ color: '#48bb78', fontWeight: 'bold' }}>Опубликован</span>
@@ -1358,8 +1389,6 @@ function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderI
                   ) : <span style={{ color: '#e53e3e', fontWeight: 'bold' }}>Не опубликован</span>}
                 </span>
               </div>
-              <div className="detail-row"><span className="detail-label">Дата создания:</span><span className="detail-value">{product.createdAt ? new Date(product.createdAt).toLocaleString('ru-RU') : '-'}</span></div>
-              <div className="detail-row"><span className="detail-label">Дата обновления:</span><span className="detail-value">{product.updatedAt ? new Date(product.updatedAt).toLocaleString('ru-RU') : '-'}</span></div>
             </div>
           </div>
         </div>
