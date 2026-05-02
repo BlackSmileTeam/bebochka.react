@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
+import { formatCondition } from '../utils/formatCondition'
 import './ProductDetail.css'
 
 function ProductDetail({ product, onClose, getAvailableQuantity }) {
@@ -29,15 +30,24 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   
   const available = getAvailable()
   
+  const productId = product.id ?? product.Id ?? product.productId ?? product.ProductId
+
   // Получаем количество товара в корзине
   const getCartQuantity = () => {
-    const cartItem = cartItems.find(item => item.productId === product.id)
+    const cartItem = cartItems.find((item) => {
+      const itemProductId = item.productId ?? item.ProductId ?? item.id ?? item.Id
+      return String(itemProductId) === String(productId)
+    })
     return cartItem ? cartItem.quantity : 0
   }
   
   const inCart = getCartQuantity()
+  const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
+  const isInMyCart = inCart > 0
+  const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
+  const isReserved = isReservedByAnotherUser || isInMyCart
   const cartUnlocked = product.cartUnlocked !== false && product.CartUnlocked !== false
-  const canAdd = available > 0 && inCart < available && cartUnlocked
+  const canAdd = available > 0 && !isInMyCart && cartUnlocked
 
   const cartAvailableRaw = product.cartAvailableAt ?? product.CartAvailableAt
   const cartAvailableAt = cartAvailableRaw ? new Date(cartAvailableRaw) : null
@@ -49,7 +59,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
     }
     setQueueLoading(true)
     try {
-      await api.joinCartQueue(product.id)
+      await api.joinCartQueue(productId)
       alert('Вы в очереди: когда товар освободится, он попадёт в вашу корзину.')
     } catch (e) {
       alert(e.message || 'Не удалось добавить в очередь')
@@ -191,21 +201,19 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
           {/* Информация о товаре */}
           <div className="product-detail-info">
             {isAdminUser && (
-              <div className="product-detail-top">
-                <div className={`publish-badge ${isScheduled ? 'scheduled' : 'published'}`}>
-                  {isScheduled ? 'Запланировано' : 'Опубликовано'}
-                  {publishedAt ? ` · ${formatDateTime(publishedAt)}` : ''}
+              <>
+                <div className="product-detail-top">
+                  <div className={`publish-badge ${isScheduled ? 'scheduled' : 'published'}`}>
+                    {isScheduled ? 'Запланировано' : 'Опубликовано'}
+                    {publishedAt ? ` · ${formatDateTime(publishedAt)}` : ''}
+                  </div>
                 </div>
-                <div className="product-detail-dates">
-                  <div className="product-detail-date-line">Создан: {formatDateTime(createdAt)}</div>
-                  <div className="product-detail-date-line">Обновлён: {formatDateTime(updatedAt)}</div>
-                </div>
-              </div>
+              </>
             )}
 
             <h2 className="product-detail-name">{product.name}</h2>
-            <div className={`product-detail-stock ${available > 0 ? 'in-stock' : 'out-of-stock'}`}>
-              {available > 0 ? 'В наличии' : 'Нет в наличии'}
+            <div className={`product-detail-stock ${isReserved ? 'reserved' : (available > 0 ? 'in-stock' : 'out-of-stock')}`}>
+              {isInMyCart ? 'В корзине' : (isReservedByAnotherUser ? 'Забронирован' : (available > 0 ? 'В наличии' : 'Нет в наличии'))}
             </div>
             
             {product.brand && (
@@ -236,14 +244,29 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               )}
               {product.condition && (
                 <div className="product-detail-spec">
-                  <strong>Состояние:</strong> {product.condition === 'новая' ? 'Новая вещь' : product.condition}
+                  <strong>Состояние:</strong> {formatCondition(product.condition)}
                 </div>
               )}
             </div>
+
+            {isAdminUser && (
+              <div className="product-detail-dates product-detail-dates--below">
+                <div className="product-detail-date-line product-detail-date-line--left">
+                  Номер коробки: {product.boxNumber || '—'} · Посылка: {product.incomingShipmentName || '—'}
+                </div>
+                <div className="product-detail-date-line product-detail-date-line--left">
+                  Создан: {formatDateTime(createdAt)}
+                </div>
+                <div className="product-detail-date-line product-detail-date-line--left">
+                  Обновлён: {formatDateTime(updatedAt)}
+                </div>
+              </div>
+            )}
             
             <div className="product-detail-footer">
               <div className="product-detail-price">
-                {(product.price ?? 0).toLocaleString('ru-RU')} ₽
+                <span className="product-detail-price-value">{(product.price ?? 0).toLocaleString('ru-RU')}</span>
+                <span className="product-detail-price-currency">&nbsp;₽</span>
               </div>
               {!cartUnlocked && cartAvailableAt && !Number.isNaN(cartAvailableAt.getTime()) && (
                 <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: 8 }}>
@@ -258,7 +281,9 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                   !cartUnlocked
                     ? 'Корзина откроется позже'
                     : !canAdd 
-                    ? (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество')
+                    ? (isInMyCart
+                      ? 'Товар уже в вашей корзине'
+                      : (isReservedByAnotherUser ? 'Товар зарезервирован другим пользователем' : 'Товар закончился'))
                     : (isAdding ? 'Добавление...' : 'Добавить в корзину')
                 }
               >
@@ -267,11 +292,11 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                   : (!cartUnlocked
                     ? 'Скоро в продаже'
                     : (!canAdd 
-                    ? (available <= 0 ? 'Нет в наличии' : 'В корзине')
+                    ? (isInMyCart ? 'В корзине' : (isReservedByAnotherUser ? 'Забронирован' : 'Нет в наличии'))
                     : 'В корзину'))
                 }
               </button>
-              {cartUnlocked && available <= 0 && inCart === 0 && (
+              {cartUnlocked && isReservedByAnotherUser && !isInMyCart && (
                 <button
                   type="button"
                   className="btn-buy-detail"

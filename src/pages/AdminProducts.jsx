@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { api } from '../services/api'
 import ProductForm from '../components/ProductForm'
 import Toast from '../components/Toast'
+import PageShell from '../components/PageShell'
+import { formatCondition } from '../utils/formatCondition'
 import './AdminProducts.css'
 
 function AdminProducts() {
@@ -32,7 +34,9 @@ function AdminProducts() {
     condition: '',
     priceMin: '',
     priceMax: '',
-    publishedStatus: 'scheduled' // all, published, scheduled - default to scheduled (unpublished)
+    publishedStatus: 'all', // all, published, scheduled
+    stockState: 'availableRegular', // availableRegular, all, purchased
+    sortByBox: 'none' // none, asc, desc
   })
 
   const CHANNEL_EMOJIS = useMemo(() => [
@@ -315,6 +319,31 @@ function AdminProducts() {
         return true
       })
     }
+
+    if (filters.stockState !== 'all') {
+      filtered = filtered.filter((p) => {
+        const quantityInStock = Number(p.quantityInStock ?? p.QuantityInStock ?? 0)
+        const availableQuantity = Number(
+          p.availableQuantity ?? p.AvailableQuantity ?? quantityInStock
+        )
+
+        if (filters.stockState === 'purchased') {
+          return quantityInStock <= 0
+        }
+
+        // Обычный статус: есть остаток и он не зарезервирован.
+        return quantityInStock > 0 && availableQuantity === quantityInStock
+      })
+    }
+
+    if (filters.sortByBox !== 'none') {
+      filtered.sort((a, b) => {
+        const av = String(a.boxNumber || '').trim()
+        const bv = String(b.boxNumber || '').trim()
+        const cmp = av.localeCompare(bv, 'ru', { numeric: true, sensitivity: 'base' })
+        return filters.sortByBox === 'asc' ? cmp : -cmp
+      })
+    }
     
     setFilteredProducts(filtered)
   }
@@ -461,21 +490,23 @@ function AdminProducts() {
       condition: '',
       priceMin: '',
       priceMax: '',
-      publishedStatus: 'scheduled' // Default to scheduled (unpublished)
+      publishedStatus: 'all',
+      stockState: 'all',
+      sortByBox: 'none'
     })
   }
 
   const clearFilter = (field) => {
     setFilters(prev => ({
       ...prev,
-      [field]: field === 'publishedStatus' ? 'all' : ''
+      [field]: field === 'publishedStatus'
+        ? 'all'
+        : field === 'stockState'
+          ? 'all'
+          : field === 'sortByBox'
+            ? 'none'
+          : ''
     }))
-  }
-
-  const formatCondition = (c) => {
-    if (!c) return '-'
-    if (c === 'новая') return 'Новая вещь'
-    return capitalize(c)
   }
 
   const getFilterLabel = (field, value) => {
@@ -488,7 +519,17 @@ function AdminProducts() {
       condition: 'Состояние',
       priceMin: 'Цена от',
       priceMax: 'Цена до',
-      publishedStatus: value === 'published' ? 'Опубликованные' : value === 'scheduled' ? 'Запланированные' : ''
+      publishedStatus: value === 'published' ? 'Опубликованные' : value === 'scheduled' ? 'Запланированные' : '',
+      stockState: value === 'availableRegular'
+        ? 'Не купленные / не забронированные'
+        : value === 'purchased'
+          ? 'Купленные'
+          : '',
+      sortByBox: value === 'asc'
+        ? 'Номер коробки: A→Я'
+        : value === 'desc'
+          ? 'Номер коробки: Я→A'
+          : ''
     }
     return labels[field] || field
   }
@@ -497,13 +538,31 @@ function AdminProducts() {
     if (field === 'publishedStatus') {
       return value === 'published' ? 'Опубликованные' : value === 'scheduled' ? 'Запланированные' : ''
     }
+    if (field === 'stockState') {
+      return value === 'availableRegular'
+        ? 'Не купленные / не забронированные'
+        : value === 'purchased'
+          ? 'Купленные'
+          : ''
+    }
+    if (field === 'sortByBox') {
+      return value === 'asc'
+        ? 'Номер коробки: A→Я'
+        : value === 'desc'
+          ? 'Номер коробки: Я→A'
+          : ''
+    }
     if (field.includes('price')) {
       return value ? `${value} ₽` : ''
     }
     return value
   }
   
-  const activeFiltersCount = Object.values(filters).filter(v => v !== '' && v !== 'all').length
+  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === 'stockState') return value !== 'all'
+    if (key === 'sortByBox') return value !== 'none'
+    return value !== '' && value !== 'all'
+  }).length
 
   const toggleProductSelection = (productId, event) => {
     event.stopPropagation()
@@ -649,17 +708,19 @@ function AdminProducts() {
 
   if (loading) {
     return (
-      <div className="admin-products-page">
-        <div className="loading">Загрузка...</div>
-      </div>
+      <PageShell title="Управление товарами">
+        <div className="admin-products-page">
+          <div className="loading">Загрузка...</div>
+        </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="admin-products-page">
-      <div className="admin-products-header">
-        <h1>Управление товарами</h1>
-        <div className="header-actions">
+    <PageShell
+      title="Управление товарами"
+      actions={(
+        <div className={`header-actions${selectedProductIds.size > 0 ? ' header-actions--with-send' : ''}`}>
           <button 
             className={`btn btn-secondary btn-filters ${showFiltersPopup ? 'active' : ''}`}
             onClick={() => setShowFiltersPopup(!showFiltersPopup)}
@@ -729,7 +790,9 @@ function AdminProducts() {
             ➕ Добавить
           </button>
         </div>
-      </div>
+      )}
+    >
+      <div className="admin-products-page">
 
       {/* Active filters chips - показываем только если есть активные фильтры */}
       {activeFiltersCount > 0 && (
@@ -787,6 +850,18 @@ function AdminProducts() {
               <span className="filter-chip">
                 {getFilterLabel('publishedStatus', filters.publishedStatus)}
                 <button onClick={() => clearFilter('publishedStatus')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.stockState !== 'all' && (
+              <span className="filter-chip">
+                {getFilterLabel('stockState', filters.stockState)}
+                <button onClick={() => clearFilter('stockState')} title="Удалить фильтр">×</button>
+              </span>
+            )}
+            {filters.sortByBox !== 'none' && (
+              <span className="filter-chip">
+                {getFilterLabel('sortByBox', filters.sortByBox)}
+                <button onClick={() => clearFilter('sortByBox')} title="Удалить фильтр">×</button>
               </span>
             )}
             {activeFiltersCount > 0 && (
@@ -915,6 +990,30 @@ function AdminProducts() {
                 <option value="scheduled">Запланированные</option>
               </select>
             </div>
+
+            <div className="filter-group">
+              <label>Состояние товара</label>
+              <select
+                value={filters.stockState}
+                onChange={(e) => handleFilterChange('stockState', e.target.value)}
+              >
+                <option value="availableRegular">Не купленные / не забронированные</option>
+                <option value="all">Все</option>
+                <option value="purchased">Купленные</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Сортировка по номеру коробки</label>
+              <select
+                value={filters.sortByBox}
+                onChange={(e) => handleFilterChange('sortByBox', e.target.value)}
+              >
+                <option value="none">Без сортировки</option>
+                <option value="asc">A → Я</option>
+                <option value="desc">Я → A</option>
+              </select>
+            </div>
           </div>
           
             <div className="filters-popup-actions">
@@ -994,6 +1093,7 @@ function AdminProducts() {
                 <th>Пол</th>
                 <th>Состояние</th>
                 <th>Цена</th>
+                <th>Номер коробки</th>
                 <th title="Статус публикации"><span style={{cursor: 'help'}}>📢</span></th>
                 <th>Действия</th>
               </tr>
@@ -1065,6 +1165,7 @@ function AdminProducts() {
                   </td>
                   <td data-label="Состояние" className="condition-cell desktop-only">{product.condition ? capitalize(product.condition) : '-'}</td>
                   <td data-label="Цена" className="price-cell desktop-only">{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
+                  <td data-label="Коробка" className="desktop-only">{product.boxNumber || '-'}</td>
                   <td data-label="Статус" className="publication-cell">
                     <div className="publication-icon-wrapper">
                       {product.publishedAt ? (
@@ -1148,13 +1249,14 @@ function AdminProducts() {
         />
       )}
     </div>
+    </PageShell>
   )
 }
 
 // Компонент модального окна деталей товара
 function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderIcon, capitalize, formatMoscowTime }) {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-  
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content product-details-modal" onClick={(e) => e.stopPropagation()}>
@@ -1190,81 +1292,41 @@ function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderI
             <div className="detail-section">
               <h3>{product.name}</h3>
             </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Бренд:</span>
-              <span className="detail-value">{product.brand || '-'}</span>
-            </div>
-            
+
             {product.description && (
               <div className="detail-row">
                 <span className="detail-label">Описание:</span>
                 <span className="detail-value">{product.description}</span>
               </div>
             )}
-            
-            <div className="detail-row">
-              <span className="detail-label">Цена:</span>
-              <span className="detail-value">{product.price?.toLocaleString('ru-RU')} ₽</span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Размер:</span>
-              <span className="detail-value">{product.size || '-'}</span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Цвет:</span>
-              <span className="detail-value">{product.color || '-'}</span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Пол:</span>
-              <span className="detail-value">
-                <span className="gender-icon-large" title={product.gender || '-'}>
-                  {getGenderIcon(product.gender)}
-                </span>
-                {product.gender && ` ${product.gender}`}
-              </span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Состояние:</span>
-              <span className="detail-value">{formatCondition(product.condition)}</span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Статус публикации:</span>
-              <span className="detail-value">
-                {product.publishedAt ? (
-                  isPublished ? (
-                    <span style={{ color: '#48bb78', fontWeight: 'bold' }}>Опубликован</span>
-                  ) : (
-                    <span style={{ color: '#ed8936', fontWeight: 'bold' }}>
-                      Запланировано на {formatMoscowTime(product.publishedAt)}
-                    </span>
-                  )
-                ) : (
-                  <span style={{ color: '#e53e3e', fontWeight: 'bold' }}>Не опубликован</span>
-                )}
-              </span>
-            </div>
-            
-            <div className="detail-row">
-              <span className="detail-label">Дата создания:</span>
-              <span className="detail-value">
-                {product.createdAt ? new Date(product.createdAt).toLocaleString('ru-RU') : '-'}
-              </span>
-            </div>
-            
-            {product.updatedAt && (
+
+            <div className="detail-grid">
+              <div className="detail-row"><span className="detail-label">Бренд:</span><span className="detail-value">{product.brand || '-'}</span></div>
+              <div className="detail-row"><span className="detail-label">Цена:</span><span className="detail-value detail-value--nowrap">{product.price?.toLocaleString('ru-RU')}&nbsp;₽</span></div>
+              <div className="detail-row"><span className="detail-label">Размер:</span><span className="detail-value">{product.size || '-'}</span></div>
+              <div className="detail-row"><span className="detail-label">Цвет:</span><span className="detail-value">{product.color || '-'}</span></div>
               <div className="detail-row">
-                <span className="detail-label">Дата обновления:</span>
+                <span className="detail-label">Пол:</span>
                 <span className="detail-value">
-                  {new Date(product.updatedAt).toLocaleString('ru-RU')}
+                  <span className="gender-icon-large" title={product.gender || '-'}>{getGenderIcon(product.gender)}</span>
+                  {product.gender && ` ${product.gender}`}
                 </span>
               </div>
-            )}
+              <div className="detail-row"><span className="detail-label">Состояние:</span><span className="detail-value">{formatCondition(product.condition)}</span></div>
+              <div className="detail-row"><span className="detail-label">Номер коробки:</span><span className="detail-value">{product.boxNumber || '-'}</span></div>
+              <div className="detail-row"><span className="detail-label">Из посылки:</span><span className="detail-value">{product.incomingShipmentName || '-'}</span></div>
+              <div className="detail-row">
+                <span className="detail-label">Статус публикации:</span>
+                <span className="detail-value">
+                  {product.publishedAt ? (
+                    isPublished ? <span style={{ color: '#48bb78', fontWeight: 'bold' }}>Опубликован</span>
+                    : <span style={{ color: '#ed8936', fontWeight: 'bold' }}>Запланировано на {formatMoscowTime(product.publishedAt)}</span>
+                  ) : <span style={{ color: '#e53e3e', fontWeight: 'bold' }}>Не опубликован</span>}
+                </span>
+              </div>
+              <div className="detail-row"><span className="detail-label">Дата создания:</span><span className="detail-value">{product.createdAt ? new Date(product.createdAt).toLocaleString('ru-RU') : '-'}</span></div>
+              <div className="detail-row"><span className="detail-label">Дата обновления:</span><span className="detail-value">{product.updatedAt ? new Date(product.updatedAt).toLocaleString('ru-RU') : '-'}</span></div>
+            </div>
           </div>
         </div>
         

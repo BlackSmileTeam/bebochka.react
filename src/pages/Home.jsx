@@ -3,7 +3,11 @@ import { api } from '../services/api'
 import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
 import Toast from '../components/Toast'
+import PageShell from '../components/PageShell'
+import { formatCondition } from '../utils/formatCondition'
 import './Home.css'
+
+const CATALOG_SUBTITLE = 'Недорогая и качественная одежда для мальчиков и девочек от 62 до 152 размера \u{1F9F8}'
 
 function Home() {
   const [products, setProducts] = useState([])
@@ -162,12 +166,6 @@ function Home() {
     })
   }, [products, filters])
 
-  const formatCondition = (condition) => {
-    if (!condition) return ''
-    if (condition === 'новая') return 'Новая вещь'
-    return condition.charAt(0).toUpperCase() + condition.slice(1)
-  }
-
   const formatGender = (gender) => {
     if (!gender) return ''
     return gender.charAt(0).toUpperCase() + gender.slice(1)
@@ -175,29 +173,22 @@ function Home() {
 
   if (loading) {
     return (
-      <div className="home-page">
+      <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={CATALOG_SUBTITLE}>
         <div className="loading">Загрузка...</div>
-      </div>
+      </PageShell>
     )
   }
 
   if (error) {
     return (
-      <div className="home-page">
+      <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={CATALOG_SUBTITLE}>
         <div className="error">{error}</div>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="home-page">
-      <div className="home-header">
-        <h1>Каталог товаров</h1>
-        <p className="subtitle">
-          Недорогая и качественная одежда для мальчиков и девочек от 62 до 152 размера 🧸
-        </p>
-      </div>
-
+    <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={CATALOG_SUBTITLE}>
       <div className="catalog-filters">
         <select value={filters.brand} onChange={(e) => setFilters((prev) => ({ ...prev, brand: e.target.value }))}>
           <option value="">Все бренды</option>
@@ -289,15 +280,17 @@ function Home() {
                 {(() => {
                   const available = getAvailableQuantity(product)
                   const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
-                  const isReserved = available <= 0 && quantityInStock > 0
+                  const inCart = getCartQuantity(product.id)
+                  const isInMyCart = inCart > 0
+                  const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
                   return (
                     <div className="product-stock" style={{
                       fontSize: '0.85rem',
-                      color: isReserved ? '#dd6b20' : (available > 0 ? '#48bb78' : '#e53e3e'),
+                      color: (isReservedByAnotherUser || isInMyCart) ? '#dd6b20' : (available > 0 ? '#48bb78' : '#e53e3e'),
                       fontWeight: '600',
                       marginBottom: '0.5rem'
                     }}>
-                      {isReserved ? '⏳ Забронирован' : (available > 0 ? '✓ В наличии' : '❌ Нет в наличии')}
+                      {isInMyCart ? '🛒 В корзине' : (isReservedByAnotherUser ? '⏳ Забронирован' : (available > 0 ? '✓ В наличии' : '❌ Нет в наличии'))}
                     </div>
                   )
                 })()}
@@ -312,7 +305,7 @@ function Home() {
                     <span className="product-gender">👤 {formatGender(product.gender)}</span>
                   )}
                   {product.condition && (
-                    <span className="product-condition">✨ {product.condition === 'новая' ? 'Новая вещь' : product.condition}</span>
+                    <span className="product-condition">✨ {formatCondition(product.condition)}</span>
                   )}
                 </div>
                 <div className="product-footer">
@@ -322,6 +315,7 @@ function Home() {
                 {(() => {
                   const available = getAvailableQuantity(product)
                   const inCart = getCartQuantity(product.id)
+                  const isInMyCart = inCart > 0
                   const cartUnlocked = product.cartUnlocked !== false && product.CartUnlocked !== false
                   const cartAvailableRaw = product.cartAvailableAt ?? product.CartAvailableAt
                   const cartAvailableAt = cartAvailableRaw ? new Date(cartAvailableRaw) : null
@@ -329,15 +323,15 @@ function Home() {
                     cartAvailableAt && !Number.isNaN(cartAvailableAt.getTime())
                       ? cartAvailableAt.toLocaleString('ru-RU')
                       : null
-                  const canAdd = available > 0 && inCart < available && cartUnlocked
+                  const canAdd = available > 0 && !isInMyCart && cartUnlocked
                   const isAdding = addingToCart.has(product.id)
                   const isJoiningQueue = joiningQueue.has(product.id)
                   const isInQueue = myQueueProductIds.has(product.id)
                   const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
-                  const isReserved = available <= 0 && quantityInStock > 0
+                  const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
                   
                   return (
-                    isReserved ? (
+                    isReservedByAnotherUser ? (
                       <button
                         className="btn-buy"
                         onClick={async (e) => {
@@ -368,7 +362,9 @@ function Home() {
                               ? `В корзину с ${cartAvailableLabel}`
                               : 'Корзина откроется позже')
                             : !canAdd 
-                            ? (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество')
+                            ? (isInMyCart
+                              ? 'Товар уже в вашей корзине'
+                              : (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество'))
                             : (isAdding ? 'Добавление...' : 'Добавить в корзину')
                         }
                       >
@@ -377,7 +373,7 @@ function Home() {
                           : (!cartUnlocked
                             ? 'Скоро'
                             : (!canAdd 
-                            ? (available <= 0 ? 'Нет в наличии' : 'В корзине')
+                            ? (isInMyCart ? 'В корзине' : (available <= 0 ? 'Нет в наличии' : 'В корзине'))
                             : 'В корзину'))
                         }
                       </button>
@@ -405,7 +401,7 @@ function Home() {
           onClose={() => setToast(null)}
         />
       )}
-    </div>
+    </PageShell>
   )
 }
 
