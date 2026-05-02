@@ -1,27 +1,6 @@
 .admin-products-page {
-  width: calc(100% + 3rem);
-  max-width: none;
-  margin-left: -1.5rem;
-  margin-right: -1.5rem;
-  padding-left: 0;
-  padding-right: 0;
+  width: 100%;
   box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-  .admin-products-page {
-    width: calc(100% + 2rem);
-    margin-left: -1rem;
-    margin-right: -1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .admin-products-page {
-    width: calc(100% + 1.5rem);
-    margin-left: -0.75rem;
-    margin-right: -0.75rem;
-  }
 }
 
 .header-actions {

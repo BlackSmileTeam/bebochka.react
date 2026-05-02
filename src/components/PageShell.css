@@ -7,6 +7,12 @@
   box-sizing: border-box;
 }
 
+/* Шапка и тело одной ширины (без внутренних боковых отступов оболочки) */
+.page-shell.page-shell--no-x-pad {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .page-shell__inner {
   width: 100%;
 }
@@ -76,6 +82,11 @@
     padding: 0 1rem;
   }
 
+  .page-shell.page-shell--no-x-pad {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .page-shell__header {
     margin-bottom: 1.25rem;
     flex-direction: column;
@@ -91,5 +102,10 @@
 @media (max-width: 480px) {
   .page-shell {
     padding: 0 0.75rem;
+  }
+
+  .page-shell.page-shell--no-x-pad {
+    padding-left: 0;
+    padding-right: 0;
   }
 }

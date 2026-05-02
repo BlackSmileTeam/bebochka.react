@@ -474,7 +474,12 @@ function AdminProducts() {
       setToast({ message: 'Товар успешно удален', type: 'success' })
       setDeleteTarget(null)
     } catch (err) {
-      setToast({ message: 'Ошибка при удалении товара', type: 'error' })
+      const msg =
+        err instanceof Error && err.message && String(err.message).trim() !== ''
+          ? err.message
+          : 'Ошибка при удалении товара'
+      setToast({ message: msg, type: 'error' })
+      setDeleteTarget(null)
       console.error(err)
     } finally {
       setDeleteBusy(false)
@@ -727,7 +732,7 @@ function AdminProducts() {
 
   if (loading) {
     return (
-      <PageShell title="Управление товарами">
+      <PageShell className="page-shell--no-x-pad" title="Управление товарами">
         <div className="admin-products-page">
           <div className="loading">Загрузка...</div>
         </div>
@@ -737,6 +742,7 @@ function AdminProducts() {
 
   return (
     <PageShell
+      className="page-shell--no-x-pad"
       title="Управление товарами"
       actions={(
         <div className={`header-actions${selectedProductIds.size > 0 ? ' header-actions--with-send' : ''}`}>
