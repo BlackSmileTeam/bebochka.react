@@ -28,6 +28,8 @@ function Profile() {
   const [markSubmittingId, setMarkSubmittingId] = useState(null)
   const [thankYouByOrderId, setThankYouByOrderId] = useState({})
   const [expandedItemsOrderIds, setExpandedItemsOrderIds] = useState(new Set())
+  const [expandedHistoryOrderIds, setExpandedHistoryOrderIds] = useState(new Set())
+  const [paymentHintOrderId, setPaymentHintOrderId] = useState(null)
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -93,6 +95,18 @@ function Profile() {
     })
   }
 
+  const toggleStatusHistory = (orderId) => {
+    setExpandedHistoryOrderIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(orderId)) {
+        next.delete(orderId)
+      } else {
+        next.add(orderId)
+      }
+      return next
+    })
+  }
+
   const submitMarkReceived = async (orderId) => {
     const hadFeedback =
       (formRating !== '' && formRating != null) ||
@@ -146,6 +160,15 @@ function Profile() {
 
   const profileSubtitle = `${visibleName}${user.email ? ` · ${user.email}` : ''}`
 
+  const paymentHintOrder =
+    paymentHintOrderId == null
+      ? null
+      : orders.find((row) => (row.id ?? row.Id) === paymentHintOrderId)
+  const paymentHintOrderNumber =
+    paymentHintOrder != null
+      ? (paymentHintOrder.orderNumber ?? paymentHintOrder.OrderNumber ?? String(paymentHintOrderId))
+      : ''
+
   return (
     <>
       <PageShell className="page-shell--catalog" title="Профиль" subtitle={profileSubtitle}>
@@ -169,7 +192,9 @@ function Profile() {
               const hasReviewFlag = !!(o.hasCustomerReview ?? o.HasCustomerReview)
               const showReceiveBtn = statusText === 'Отправлен' && receiveFormOrderId !== oid
               const isItemsExpanded = expandedItemsOrderIds.has(oid)
+              const isHistoryExpanded = expandedHistoryOrderIds.has(oid)
               const statusColor = getOrderStatusColor(statusText)
+              const showPaymentHintBtn = statusText === 'Ожидает оплату'
               return (
                 <li key={oid} className="profile-order-card">
                   <div className="profile-order-head">
@@ -217,24 +242,31 @@ function Profile() {
 
                   {history.length > 0 && (
                     <div className="profile-status-history">
-                      <div className="profile-status-history-title">История статусов</div>
-                      <ul className="profile-status-history-list">
-                        {history.map((row, idx) => {
-                          const st = row.status || row.Status || '—'
-                          const at = row.changedAtUtc || row.ChangedAtUtc
-                          const actor = row.actorKind || row.ActorKind || ''
-                          const label = at ? new Date(at).toLocaleString('ru-RU') : '—'
-                          return (
-                            <li key={`${oid}-h-${idx}`}>
-                              <span className="profile-sh-status">{st}</span>
-                              <span className="profile-sh-meta">
-                                {label}
-                                {actor ? ` · ${actor}` : ''}
-                              </span>
-                            </li>
-                          )
-                        })}
-                      </ul>
+                      <button
+                        type="button"
+                        className="profile-status-history-toggle"
+                        onClick={() => toggleStatusHistory(oid)}
+                        aria-expanded={isHistoryExpanded}
+                      >
+                        {isHistoryExpanded
+                          ? '▼ Скрыть историю статусов'
+                          : `▶ История статусов (${history.length})`}
+                      </button>
+                      {isHistoryExpanded && (
+                        <ul className="profile-status-history-list">
+                          {history.map((row, idx) => {
+                            const st = row.status || row.Status || '—'
+                            const at = row.changedAtUtc || row.ChangedAtUtc
+                            const label = at ? new Date(at).toLocaleString('ru-RU') : '—'
+                            return (
+                              <li key={`${oid}-h-${idx}`}>
+                                <span className="profile-sh-status">{st}</span>
+                                <span className="profile-sh-meta">{label}</span>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      )}
                     </div>
                   )}
 
@@ -292,6 +324,21 @@ function Profile() {
                     </div>
                   )}
 
+                  {showPaymentHintBtn && (
+                    <div className="profile-pay-hint">
+                      <button
+                        type="button"
+                        className="profile-btn-pay"
+                        onClick={() => setPaymentHintOrderId(oid)}
+                      >
+                        К оплате{' '}
+                        {finalAmount.toLocaleString('ru-RU')}
+                        {'\u00a0'}
+                        {'\u20bd'}
+                      </button>
+                    </div>
+                  )}
+
                   {showReceiveBtn && (
                     <div className="profile-receive-actions">
                       <button
@@ -322,6 +369,36 @@ function Profile() {
 
       {detailProduct && (
         <ProductDetail product={detailProduct} onClose={() => setDetailProduct(null)} />
+      )}
+
+      {paymentHintOrderId != null && (
+        <div
+          className="profile-receive-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="profile-pay-hint-title"
+          onClick={() => setPaymentHintOrderId(null)}
+        >
+          <div className="profile-receive-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 id="profile-pay-hint-title" className="profile-receive-modal-title">
+              Оплата заказа
+            </h3>
+            <p className="profile-pay-hint-text">
+              Чтобы получить реквизиты и пошаговую инструкцию по оплате, свяжитесь с администратором
+              магазина (например, через Telegram или по контактам на сайте).
+              {paymentHintOrderNumber
+                ? ` Укажите номер заказа ${paymentHintOrderNumber} — вам подскажут, как оплатить удобным способом.`
+                : ' Сообщите номер заказа — вам подскажут, как оплатить удобным способом.'}
+            </p>
+            <button
+              type="button"
+              className="profile-btn-pay-modal-ok"
+              onClick={() => setPaymentHintOrderId(null)}
+            >
+              Понятно
+            </button>
+          </div>
+        </div>
       )}
 
       {receiveFormOrderId != null && (

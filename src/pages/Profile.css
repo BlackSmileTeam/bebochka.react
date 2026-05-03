@@ -197,6 +197,26 @@ main.main > .profile-page .profile-actions {
   margin-bottom: 0.35rem;
 }
 
+.profile-status-history-toggle {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #2d3748;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-status-history-toggle:hover {
+  background: #edf2f7;
+}
+
 .profile-status-history-list {
   list-style: none;
   margin: 0;
@@ -218,6 +238,50 @@ main.main > .profile-page .profile-actions {
 
 .profile-sh-meta {
   color: #718096;
+}
+
+.profile-pay-hint {
+  margin-top: 0.85rem;
+}
+
+.profile-btn-pay {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #c53030;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-btn-pay:hover {
+  background: #9b2c2c;
+}
+
+.profile-pay-hint-text {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #4a5568;
+}
+
+.profile-btn-pay-modal-ok {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #2b6cb0;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-btn-pay-modal-ok:hover {
+  background: #2c5282;
 }
 
 .profile-order-items {
