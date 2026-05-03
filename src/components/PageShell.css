@@ -66,6 +66,8 @@
 
 .page-shell__body {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .page-shell--auth .page-shell__body {

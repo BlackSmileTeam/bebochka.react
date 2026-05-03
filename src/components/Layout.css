@@ -104,6 +104,14 @@
   flex-direction: column;
   min-height: 0;
   padding: 2rem 0;
+  align-items: stretch;
+}
+
+/* Дочерние страницы (PageShell и др.) на всю ширину main, без сжатия по контенту */
+.main > * {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .footer {
