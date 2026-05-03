@@ -1,11 +1,61 @@
-/* Ширина и заголовок — PageShell (та же колонка, что у каталога и др. страниц) */
+/* Те же классы оболочки, что у каталога: page-shell page-shell--catalog */
 
-.page-shell--profile .profile-section-title,
-.page-shell--profile .profile-orders,
-.page-shell--profile .profile-actions {
+.page-shell--catalog .profile-section-title,
+.page-shell--catalog .profile-orders,
+.page-shell--catalog .profile-actions {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* Старая разметка без PageShell (если ещё встречается в билде): как у .page-shell */
+main.main > .profile-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+}
+
+main.main > .profile-page > .profile-inner {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+main.main > .profile-page > .profile-inner > h1 {
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.4rem;
+  line-height: 1.25;
+}
+
+main.main > .profile-page .profile-user-line {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #718096;
+  max-width: 52rem;
+}
+
+main.main > .profile-page .profile-orders,
+main.main > .profile-page .profile-actions {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  main.main > .profile-page {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  main.main > .profile-page {
+    padding: 0 0.75rem;
+  }
 }
 
 .profile-section-title {

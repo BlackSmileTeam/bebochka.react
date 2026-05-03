@@ -148,7 +148,7 @@ function Profile() {
 
   return (
     <>
-      <PageShell className="page-shell--profile" title="Профиль" subtitle={profileSubtitle}>
+      <PageShell className="page-shell--catalog" title="Профиль" subtitle={profileSubtitle}>
         <h2 className="profile-section-title">История заказов</h2>
         {loading && <p>Загрузка…</p>}
         {error && <p className="profile-error">{error}</p>}
