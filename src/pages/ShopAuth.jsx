@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { getSessionId } from '../utils/sessionId'
-import PageShell from '../components/PageShell'
 import './Login.css'
 
 function safeReturnPath(raw) {
@@ -53,11 +52,6 @@ function clearBebochkaAuthHash() {
   u.hash = ''
   window.history.replaceState(null, document.title, u.pathname + u.search + u.hash)
 }
-
-const CONSENT_DETAILS = `Регистрируясь, вы даёте согласие на обработку персональных данных в соответствии с
-Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных». Обрабатываются данные, необходимые для
-работы магазина, оформления и исполнения заказа, доставки и связи с вами (в т.ч. телефон, ФИО, адрес, история заказов).
-Хранение и защита данных осуществляются с учётом требований 152-ФЗ. Отозвать согласие можно через контакты на сайте.`
 
 function ShopAuth() {
   const navigate = useNavigate()
@@ -159,11 +153,7 @@ function ShopAuth() {
   }
 
   return (
-    <PageShell
-      title={view === 'login' ? 'Вход' : 'Регистрация'}
-      subtitle={view === 'login' ? 'Телефон или логин и пароль' : 'Укажите телефон — логин для входа создаётся автоматически'}
-      className="page-shell--auth"
-    >
+    <div className="auth-page-root">
       <div className="login-container login-container--embedded">
         <div className="login-card" style={{ maxWidth: 440 }}>
           <div className="login-header login-header--compact">
@@ -209,17 +199,9 @@ function ShopAuth() {
             </div>
 
             <div className="auth-vk-block">
-              <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading}>
+              <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading} aria-label="Войти через ВКонтакте">
                 <span className="vk-icon" aria-hidden="true">VK</span>
-                <span>Войти через ВКонтакте</span>
               </button>
-              <div className="auth-consent-hint">
-                Нажимая «Войти через ВКонтакте», вы принимаете пользовательское соглашение и даёте согласие на обработку персональных данных.
-                <details className="consent-details">
-                  <summary>Текст соглашения</summary>
-                  <p>{CONSENT_DETAILS}</p>
-                </details>
-              </div>
             </div>
 
             <p className="auth-switch-row">
@@ -300,17 +282,9 @@ function ShopAuth() {
             </div>
 
             <div className="auth-vk-block">
-              <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading}>
+              <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading} aria-label="Войти через ВКонтакте">
                 <span className="vk-icon" aria-hidden="true">VK</span>
-                <span>Войти через ВКонтакте</span>
               </button>
-              <div className="auth-consent-hint">
-                Нажимая «Войти через ВКонтакте», вы принимаете пользовательское соглашение и даёте согласие на обработку персональных данных.
-                <details className="consent-details">
-                  <summary>Текст соглашения</summary>
-                  <p>{CONSENT_DETAILS}</p>
-                </details>
-              </div>
             </div>
 
             <p className="auth-switch-row">
@@ -322,7 +296,7 @@ function ShopAuth() {
         )}
         </div>
       </div>
-    </PageShell>
+    </div>
   )
 }
 
