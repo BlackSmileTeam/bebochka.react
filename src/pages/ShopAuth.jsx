@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { getSessionId } from '../utils/sessionId'
+import PageShell from '../components/PageShell'
 import './Login.css'
 
 function safeReturnPath(raw) {
@@ -13,6 +14,44 @@ function safeReturnPath(raw) {
   } catch {
     return '/'
   }
+}
+
+const VK_ERROR_MESSAGES = {
+  denied: 'Вход через ВКонтакте отменён.',
+  incomplete: 'Ответ от ВКонтакте неполный — попробуйте войти ещё раз.',
+  state: 'Сессия входа устарела — начните вход через ВКонтакте заново.',
+  consent: 'Для первого входа через ВКонтакте нужно согласие на обработку персональных данных.',
+  email_conflict: 'Этот email в ВК уже занят другим аккаунтом на сайте. Войдите другим способом или напишите в поддержку.',
+  config: 'Вход через ВКонтакте на сайте пока не настроен. Используйте телефон и пароль.',
+  failed: 'Не удалось завершить вход через ВКонтакте. Попробуйте позже.',
+}
+
+function decodeBase64UrlJson(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4)
+  const b64std = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/')
+  const bin = atob(b64std)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return JSON.parse(new TextDecoder().decode(bytes))
+}
+
+function readBebochkaAuthHashPayload() {
+  if (typeof window === 'undefined') return null
+  const hash = window.location.hash || ''
+  if (!hash.startsWith('#bebochkaAuth=')) return null
+  const b64 = hash.slice('#bebochkaAuth='.length)
+  try {
+    return decodeBase64UrlJson(b64)
+  } catch {
+    return null
+  }
+}
+
+function clearBebochkaAuthHash() {
+  const u = new URL(window.location.href)
+  if (!(u.hash || '').startsWith('#bebochkaAuth=')) return
+  u.hash = ''
+  window.history.replaceState(null, document.title, u.pathname + u.search + u.hash)
 }
 
 const CONSENT_DETAILS = `Регистрируясь, вы даёте согласие на обработку персональных данных в соответствии с
@@ -41,6 +80,42 @@ function ShopAuth() {
   const finishAuth = () => {
     navigate(returnAfterAuth)
     window.location.reload()
+  }
+
+  useEffect(() => {
+    const vkErr = searchParams.get('vkError')
+    if (vkErr) {
+      setError(VK_ERROR_MESSAGES[vkErr] || VK_ERROR_MESSAGES.failed)
+      const u = new URL(window.location.href)
+      u.searchParams.delete('vkError')
+      window.history.replaceState(null, document.title, u.pathname + u.search + u.hash)
+    }
+
+    const payload = readBebochkaAuthHashPayload()
+    if (!payload) return
+
+    api._applyAuthPayload(payload)
+    clearBebochkaAuthHash()
+    if (payload.isAdmin) {
+      window.location.href = '/admin/products'
+      return
+    }
+    const ret = safeReturnPath(searchParams.get('returnUrl'))
+    navigate(ret)
+    window.location.reload()
+  }, [searchParams, navigate])
+
+  const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '')
+
+  const startVkOAuth = () => {
+    setError('')
+    const u = new URL(`${apiOrigin}/api/auth/vk/start`)
+    u.searchParams.set('returnUrl', returnAfterAuth)
+    if (sessionId) u.searchParams.set('sessionId', sessionId)
+    // Нажатие кнопки "Войти через ВК" считается действием пользователя,
+    // поэтому для первичной регистрации передаём согласие автоматически.
+    u.searchParams.set('acceptPersonalDataProcessing', 'true')
+    window.location.href = u.toString()
   }
 
   const handleLogin = async (e) => {
@@ -84,13 +159,16 @@ function ShopAuth() {
   }
 
   return (
-    <div className="login-container login-container--embedded">
-      <div className="login-card" style={{ maxWidth: 440 }}>
-        <div className="login-header">
-          <img src="/logo.jpg" alt="bebochka" className="login-logo" />
-          <h1>{view === 'login' ? 'Вход' : 'Регистрация'}</h1>
-          <p>{view === 'login' ? 'Телефон или логин и пароль' : 'Укажите телефон — логин для входа создаётся автоматически'}</p>
-        </div>
+    <PageShell
+      title={view === 'login' ? 'Вход' : 'Регистрация'}
+      subtitle={view === 'login' ? 'Телефон или логин и пароль' : 'Укажите телефон — логин для входа создаётся автоматически'}
+      className="page-shell--auth"
+    >
+      <div className="login-container login-container--embedded">
+        <div className="login-card" style={{ maxWidth: 440 }}>
+          <div className="login-header login-header--compact">
+            <img src="/logo.jpg" alt="bebochka" className="login-logo" />
+          </div>
 
         {error && <div className="login-error">{error}</div>}
 
@@ -125,6 +203,24 @@ function ShopAuth() {
                 {loading ? '…' : 'Войти'}
               </button>
             </form>
+
+            <div className="auth-alt-divider" aria-hidden="true">
+              <span>или</span>
+            </div>
+
+            <div className="auth-vk-block">
+              <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading}>
+                <span className="vk-icon" aria-hidden="true">VK</span>
+                <span>Войти через ВКонтакте</span>
+              </button>
+              <div className="auth-consent-hint">
+                Нажимая «Войти через ВКонтакте», вы принимаете пользовательское соглашение и даёте согласие на обработку персональных данных.
+                <details className="consent-details">
+                  <summary>Текст соглашения</summary>
+                  <p>{CONSENT_DETAILS}</p>
+                </details>
+              </div>
+            </div>
 
             <p className="auth-switch-row">
               <button type="button" className="auth-switch-link" onClick={() => { setView('register'); setError('') }}>
@@ -198,6 +294,25 @@ function ShopAuth() {
               </div>
               <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? '…' : 'Зарегистрироваться'}</button>
             </form>
+
+            <div className="auth-alt-divider" aria-hidden="true">
+              <span>или</span>
+            </div>
+
+            <div className="auth-vk-block">
+              <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading}>
+                <span className="vk-icon" aria-hidden="true">VK</span>
+                <span>Войти через ВКонтакте</span>
+              </button>
+              <div className="auth-consent-hint">
+                Нажимая «Войти через ВКонтакте», вы принимаете пользовательское соглашение и даёте согласие на обработку персональных данных.
+                <details className="consent-details">
+                  <summary>Текст соглашения</summary>
+                  <p>{CONSENT_DETAILS}</p>
+                </details>
+              </div>
+            </div>
+
             <p className="auth-switch-row">
               <button type="button" className="auth-switch-link" onClick={() => { setView('login'); setError('') }}>
                 Уже есть аккаунт? Войти
@@ -205,8 +320,9 @@ function ShopAuth() {
             </p>
           </>
         )}
+        </div>
       </div>
-    </div>
+    </PageShell>
   )
 }
 
