@@ -1,7 +1,36 @@
 import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { useNavigate, Link } from 'react-router-dom'
+import PageShell from '../components/PageShell'
 import './Checkout.css'
+
+function formatPhoneRu(value) {
+  const digitsOnly = String(value || '').replace(/\D/g, '')
+  if (!digitsOnly) return ''
+
+  let normalized = digitsOnly
+  if (normalized.startsWith('8')) {
+    normalized = `7${normalized.slice(1)}`
+  } else if (!normalized.startsWith('7')) {
+    normalized = `7${normalized}`
+  }
+
+  normalized = normalized.slice(0, 11)
+  const body = normalized.slice(1)
+
+  const p1 = body.slice(0, 3)
+  const p2 = body.slice(3, 6)
+  const p3 = body.slice(6, 8)
+  const p4 = body.slice(8, 10)
+
+  const parts = [p1, p2, p3, p4].filter(Boolean)
+  return `+7${parts.length ? ` ${parts.join(' ')}` : ''}`
+}
+
+function isValidPhoneRu(value) {
+  const digits = String(value || '').replace(/\D/g, '')
+  return digits.length === 11 && digits.startsWith('7')
+}
 
 function Checkout() {
   const { cartItems, getTotalPrice, clearCart, sessionId } = useCart()
@@ -10,8 +39,6 @@ function Checkout() {
     name: '',
     phone: '',
     email: '',
-    address: '',
-    deliveryMethod: 'avito',
     comment: ''
   })
   const [loading, setLoading] = useState(false)
@@ -22,7 +49,7 @@ function Checkout() {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'phone' ? formatPhoneRu(value) : value
     }))
     setError('')
   }
@@ -43,6 +70,11 @@ function Checkout() {
       setLoading(false)
       return
     }
+    if (!isValidPhoneRu(formData.phone)) {
+      setError('Укажите телефон в формате +7 111 222 33 44')
+      setLoading(false)
+      return
+    }
 
     try {
       let userId = null
@@ -58,8 +90,8 @@ function Checkout() {
         customerName: formData.name,
         customerPhone: formData.phone,
         customerEmail: formData.email || null,
-        customerAddress: formData.address || null,
-        deliveryMethod: formData.deliveryMethod || null,
+        customerAddress: null,
+        deliveryMethod: null,
         comment: formData.comment || null,
         items: cartItems.map(item => ({
           productId: item.productId || item.id,
@@ -99,29 +131,20 @@ function Checkout() {
     }
   }
 
-  const deliveryMethods = [
-    { value: 'avito', label: 'Авито доставка' },
-    { value: 'yandex', label: 'Яндекс Доставка' },
-    { value: 'ozon', label: 'Ozon' },
-    { value: '5post', label: '5Post' }
-  ]
-
   if (success) {
     return (
-      <div className="checkout-page">
+      <PageShell className="page-shell--checkout" title="Заказ оформлен!">
         <div className="checkout-success">
           <div className="success-icon">✓</div>
-          <h2>Заказ оформлен!</h2>
           <p>Спасибо за ваш заказ. Мы свяжемся с вами в ближайшее время.</p>
           <p>Вы будете перенаправлены на главную страницу...</p>
         </div>
-      </div>
+      </PageShell>
     )
   }
-
   if (cartItems.length === 0) {
     return (
-      <div className="checkout-page">
+      <PageShell className="page-shell--checkout" title="Оформление заказа">
         <div className="checkout-empty">
           <h2>Корзина пуста</h2>
           <p>Добавьте товары в корзину для оформления заказа</p>
@@ -129,16 +152,12 @@ function Checkout() {
             Перейти в каталог
           </button>
         </div>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="checkout-page">
-      <div className="checkout-header">
-        <h1>Оформление заказа</h1>
-      </div>
-
+    <PageShell className="page-shell--checkout" title="Оформление заказа">
       <div className="checkout-content">
         <div className="checkout-form-container">
           <form onSubmit={handleSubmit} className="checkout-form">
@@ -167,8 +186,14 @@ function Checkout() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+                onFocus={(e) => {
+                  if (!e.target.value) {
+                    setFormData((prev) => ({ ...prev, phone: '+7 ' }))
+                  }
+                }}
                 required
-                placeholder="+7 (999) 123-45-67"
+                inputMode="numeric"
+                placeholder="+7 111 222 33 44"
               />
             </div>
 
@@ -182,34 +207,6 @@ function Checkout() {
                 onChange={handleChange}
                 placeholder="your@email.com"
               />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="address">Адрес доставки</label>
-              <textarea
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                rows="3"
-                placeholder="Город, улица, дом, квартира"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="deliveryMethod">Способ доставки</label>
-              <select
-                id="deliveryMethod"
-                name="deliveryMethod"
-                value={formData.deliveryMethod}
-                onChange={handleChange}
-              >
-                {deliveryMethods.map(method => (
-                  <option key={method.value} value={method.value}>
-                    {method.label}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div className="form-group">
@@ -259,7 +256,7 @@ function Checkout() {
           </div>
         </div>
       </div>
-    </div>
+    </PageShell>
   )
 }
 

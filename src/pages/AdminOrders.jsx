@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
 import PageShell from '../components/PageShell'
 import Toast from '../components/Toast'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import './AdminOrders.css'
 
 function OrderDiscountSingleModal({ orderId, order, getOrderNumber, getCustomerName, getTotalAmount, getFinalAmount, formatPrice, hasDiscount, onClose, onApply, onRemove }) {
@@ -42,6 +43,7 @@ function OrderDiscountSingleModal({ orderId, order, getOrderNumber, getCustomerN
 const ORDER_STATUSES_ALL = [
   'Формирование заказа',
   'Ожидает оплату',
+  'Оплачен',
   'В сборке',
   'На доставку',
   'Отправлен',
@@ -60,6 +62,7 @@ function getAdminStatusSelectOptions(currentStatus) {
 const STATUS_TOOLTIPS = {
   'Формирование заказа': 'Начальный статус: покупатель собирает корзину, можно добавлять товары в заказ',
   'Ожидает оплату': 'Покупатель оформил заказ. Отправлено сообщение об успешном оформлении и необходимости оплаты. Добавлять товары в заказ нельзя',
+  'Оплачен': 'Оплата подтверждена. Заказ можно переводить в сборку',
   'В сборке': 'Заказ собирается и подготавливается к отправке',
   'На доставку': 'Заказ собран, упакован; ожидаются данные от покупателя (адрес, способ отправки)',
   'Отправлен': 'Заказ передан в доставку. Клиент может подтвердить получение',
@@ -106,6 +109,7 @@ function AdminOrders() {
   const [filtersExpanded, setFiltersExpanded] = useState(false)
   const [orderDetailsOrderId, setOrderDetailsOrderId] = useState(null)
   const [imageCarousel, setImageCarousel] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState(null)
   const [adminCartItems, setAdminCartItems] = useState([])
   const [loadingAdminCart, setLoadingAdminCart] = useState(false)
   const [removingAdminCartItemId, setRemovingAdminCartItemId] = useState(null)
@@ -319,10 +323,7 @@ function AdminOrders() {
     await performStatusChange(orderId, newStatus)
   }
 
-  const performBulkStatusChange = async (orderIds, newStatus, askConfirmation = true) => {
-    if (askConfirmation && !confirm(`Изменить статус ${orderIds.length} заказ(ов) на "${newStatus}"?`)) {
-      return
-    }
+  const performBulkStatusChange = async (orderIds, newStatus) => {
     try {
       setBulkUpdating(true)
       const results = await api.updateOrdersStatus(orderIds, newStatus)
@@ -368,7 +369,14 @@ function AdminOrders() {
       return
     }
 
-    await performBulkStatusChange(orderIds, newStatus, true)
+    setConfirmDialog({
+      title: 'Подтвердите действие',
+      message: `Изменить статус ${orderIds.length} заказ(ов) на "${newStatus}"?`,
+      confirmLabel: 'Изменить статус',
+      variant: 'primary',
+      action: 'bulkStatus',
+      payload: { orderIds, newStatus },
+    })
   }
 
   const formatDate = (dateString) => {
@@ -394,7 +402,17 @@ function AdminOrders() {
   const handleDeleteOrder = async (orderId) => {
     const order = orders.find(o => (o.id || o.Id) === orderId)
     const orderNumber = order ? (order.orderNumber || order.OrderNumber) : orderId
-    if (!window.confirm(`Удалить заказ ${orderNumber} из списка и из базы данных? Это действие нельзя отменить.`)) return
+    setConfirmDialog({
+      title: 'Подтвердите действие',
+      message: `Удалить заказ ${orderNumber} из списка и из базы данных? Это действие нельзя отменить.`,
+      confirmLabel: 'Удалить',
+      variant: 'danger',
+      action: 'deleteOrder',
+      payload: { orderId },
+    })
+  }
+
+  const executeDeleteOrder = async (orderId) => {
     try {
       setDeletingOrderId(orderId)
       await api.deleteOrder(orderId)
@@ -512,7 +530,17 @@ function AdminOrders() {
   }
 
   const handleRemoveAdminCartItem = async (cartItemId) => {
-    if (!window.confirm('Убрать этот товар из корзины пользователя?')) return
+    setConfirmDialog({
+      title: 'Подтвердите действие',
+      message: 'Убрать этот товар из корзины пользователя?',
+      confirmLabel: 'Убрать',
+      variant: 'danger',
+      action: 'removeAdminCartItem',
+      payload: { cartItemId },
+    })
+  }
+
+  const executeRemoveAdminCartItem = async (cartItemId) => {
     try {
       setRemovingAdminCartItemId(cartItemId)
       await api.removeAdminCartItem(cartItemId)
@@ -550,7 +578,7 @@ function AdminOrders() {
       return
     }
     if (warning.type === 'bulk') {
-      await performBulkStatusChange(warning.orderIds, warning.newStatus, false)
+      await performBulkStatusChange(warning.orderIds, warning.newStatus)
     }
   }
 
@@ -564,7 +592,17 @@ function AdminOrders() {
   }
 
   const handleDeleteOrderItem = async (orderId, itemId) => {
-    if (!window.confirm('Удалить товар из заказа? Комментарий пользователя в Telegram будет удалён, товар перейдёт следующему в очереди.')) return
+    setConfirmDialog({
+      title: 'Подтвердите действие',
+      message: 'Удалить товар из заказа? Комментарий пользователя в Telegram будет удалён, товар перейдёт следующему в очереди.',
+      confirmLabel: 'Удалить',
+      variant: 'danger',
+      action: 'deleteOrderItem',
+      payload: { orderId, itemId },
+    })
+  }
+
+  const executeDeleteOrderItem = async (orderId, itemId) => {
     const key = `${orderId}-${itemId}`
     try {
       setDeletingItemKey(key)
@@ -576,6 +614,27 @@ function AdminOrders() {
       showToast('Ошибка при удалении позиции: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setDeletingItemKey(null)
+    }
+  }
+
+  const handleConfirmDialog = async () => {
+    if (!confirmDialog) return
+    const { action, payload } = confirmDialog
+    setConfirmDialog(null)
+    if (action === 'bulkStatus') {
+      await performBulkStatusChange(payload.orderIds, payload.newStatus)
+      return
+    }
+    if (action === 'deleteOrder') {
+      await executeDeleteOrder(payload.orderId)
+      return
+    }
+    if (action === 'removeAdminCartItem') {
+      await executeRemoveAdminCartItem(payload.cartItemId)
+      return
+    }
+    if (action === 'deleteOrderItem') {
+      await executeDeleteOrderItem(payload.orderId, payload.itemId)
     }
   }
 
@@ -673,7 +732,7 @@ function AdminOrders() {
           )}
           <button
             type="button"
-            className="btn-refresh-unified"
+            className="btn btn-secondary"
             onClick={loadOrders}
             disabled={loading}
           >
@@ -797,7 +856,7 @@ function AdminOrders() {
                   Товары в корзинах ({adminCartItems.length})
                 </h2>
               </div>
-              <button type="button" className="btn-refresh-unified" onClick={loadAdminCartItems} disabled={loadingAdminCart}>
+              <button type="button" className="btn btn-secondary btn-small" onClick={loadAdminCartItems} disabled={loadingAdminCart}>
                 {loadingAdminCart ? 'Обновление...' : '🔄 Обновить'}
               </button>
             </div>
@@ -1375,6 +1434,15 @@ function AdminOrders() {
           onClose={() => setToast(null)}
         />
       )}
+      <ConfirmDialog
+        open={!!confirmDialog}
+        title={confirmDialog?.title || 'Подтвердите действие'}
+        message={confirmDialog?.message || ''}
+        confirmLabel={confirmDialog?.confirmLabel || 'Подтвердить'}
+        variant={confirmDialog?.variant || 'danger'}
+        onCancel={() => setConfirmDialog(null)}
+        onConfirm={handleConfirmDialog}
+      />
     </div>
     </PageShell>
   )

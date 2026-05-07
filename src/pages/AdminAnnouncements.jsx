@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import Toast from '../components/Toast'
+import PageShell from '../components/PageShell'
 import './AdminAnnouncements.css'
 
 const DEFAULT_MESSAGE = `Анонс!
@@ -172,20 +173,26 @@ function AdminAnnouncements() {
   }
 
   if (loading) {
-    return <div className="admin-announcements-container">Загрузка...</div>
+    return (
+      <PageShell title="Анонсы">
+        <div className="admin-announcements-container">Загрузка...</div>
+      </PageShell>
+    )
   }
 
   // Ensure announcements is always an array
   const safeAnnouncements = Array.isArray(announcements) ? announcements : []
 
   return (
-    <div className="admin-announcements-container">
-      <div className="admin-announcements-header">
-        <h1>Анонсы</h1>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+    <PageShell
+      title="Анонсы"
+      actions={(
+        <button type="button" className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Отменить' : '+ Создать анонс'}
         </button>
-      </div>
+      )}
+    >
+      <div className="admin-announcements-container">
 
       <div className="channel-message-section">
         <h2>Отправка сообщения в канал</h2>
@@ -362,6 +369,7 @@ function AdminAnnouncements() {
         />
       )}
     </div>
+    </PageShell>
   )
 }
 

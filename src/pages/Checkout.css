@@ -1,19 +1,4 @@
-.checkout-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-  width: 100%;
-}
-
-.checkout-header {
-  margin-bottom: 2rem;
-}
-
-.checkout-header h1 {
-  font-size: 2.5rem;
-  color: #2d3748;
-  margin: 0;
-}
+/* Ширина страницы — PageShell */
 
 .checkout-content {
   display: grid;
@@ -35,10 +20,6 @@
 }
 
 @media (max-width: 768px) {
-  .checkout-header h1 {
-    font-size: 2rem;
-  }
-
   .checkout-form-container {
     padding: 1.5rem;
   }
@@ -87,10 +68,6 @@
 }
 
 @media (max-width: 480px) {
-  .checkout-header h1 {
-    font-size: 1.75rem;
-  }
-
   .checkout-form-container {
     padding: 1rem;
   }

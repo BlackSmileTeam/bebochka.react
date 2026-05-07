@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import Toast from '../components/Toast'
+import PageShell from '../components/PageShell'
 import './AdminTelegramErrors.css'
 
 function AdminTelegramErrors() {
@@ -88,22 +89,28 @@ function AdminTelegramErrors() {
   }
 
   if (loading) {
-    return <div className="admin-errors-page">Загрузка...</div>
+    return (
+      <PageShell title="Ошибки отправки в Telegram канал">
+        <div className="admin-errors-page">Загрузка...</div>
+      </PageShell>
+    )
   }
 
   const errorDates = Object.keys(errors).sort((a, b) => b.localeCompare(a))
   const totalErrors = Object.values(errors).reduce((sum, errs) => sum + errs.length, 0)
 
   return (
-    <div className="admin-errors-page">
-      <div className="admin-errors-header">
-        <h1>Ошибки отправки в Telegram канал</h1>
+    <PageShell
+      title="Ошибки отправки в Telegram канал"
+      actions={(
         <div className="header-actions">
-          <button className="btn btn-secondary" onClick={loadErrors}>
+          <button type="button" className="btn-refresh-unified" onClick={loadErrors}>
             🔄 Обновить
           </button>
         </div>
-      </div>
+      )}
+    >
+      <div className="admin-errors-page">
 
       {totalErrors === 0 ? (
         <div className="empty-state">
@@ -184,6 +191,7 @@ function AdminTelegramErrors() {
         />
       )}
     </div>
+    </PageShell>
   )
 }
 

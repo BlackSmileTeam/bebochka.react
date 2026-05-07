@@ -1,21 +1,5 @@
 .admin-errors-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
   width: 100%;
-}
-
-.admin-errors-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.admin-errors-header h1 {
-  font-size: 2rem;
-  color: #2d3748;
-  margin: 0;
 }
 
 .header-actions {
@@ -191,18 +175,13 @@
 }
 
 @media (max-width: 768px) {
-  .admin-errors-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
   .header-actions {
     width: 100%;
     flex-direction: column;
   }
 
-  .header-actions .btn {
+  .header-actions .btn,
+  .header-actions .btn-refresh-unified {
     width: 100%;
   }
 

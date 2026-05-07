@@ -3,6 +3,7 @@ import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
 import { Link } from 'react-router-dom'
 import ProductDetail from '../components/ProductDetail'
+import PageShell from '../components/PageShell'
 import './Cart.css'
 
 function Cart() {
@@ -73,7 +74,7 @@ function Cart() {
 
   if (cartItems.length === 0 && queueItems.length === 0) {
     return (
-      <div className="container">
+      <PageShell title="Корзина">
         <div className="cart-empty">
           <h2>Корзина пуста</h2>
           <p>Добавьте товары из каталога</p>
@@ -81,19 +82,19 @@ function Cart() {
             Перейти в каталог
           </Link>
         </div>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="container">
-      <div className="cart-header">
-        <h1>Корзина</h1>
-        <button className="btn-clear-cart" onClick={clearCart} title="Очистить корзину">
+    <PageShell
+      title="Корзина"
+      actions={(
+        <button type="button" className="btn-clear-cart" onClick={clearCart} title="Очистить корзину">
           Очистить
         </button>
-      </div>
-
+      )}
+    >
       <div
         className={
           cartItems.length > 0
@@ -284,7 +285,7 @@ function Cart() {
           getAvailableQuantity={getAvailableQuantity}
         />
       )}
-    </div>
+    </PageShell>
   )
 }
 

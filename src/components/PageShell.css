@@ -75,6 +75,12 @@
   justify-content: center;
 }
 
+.page-shell.page-shell--auth {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .page-shell--catalog .catalog-filters {
   margin-top: 0;
 }
