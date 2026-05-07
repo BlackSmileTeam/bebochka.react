@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
 import PageShell from '../components/PageShell'
@@ -81,6 +82,7 @@ const ORDER_STATUS_INDEX = ORDER_STATUSES_ALL.reduce((acc, status, idx) => {
 }, {})
 
 function AdminOrders() {
+  const [searchParams] = useSearchParams()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedOrders, setSelectedOrders] = useState(new Set())
@@ -105,6 +107,7 @@ function AdminOrders() {
   const [saleCond5, setSaleCond5] = useState(30)
   const [applyingDiscount, setApplyingDiscount] = useState(false)
   const [groupBy, setGroupBy] = useState('status')
+  const [clientFilterKey, setClientFilterKey] = useState(null)
   const [orderRowMenuOpen, setOrderRowMenuOpen] = useState(null)
   const [filtersExpanded, setFiltersExpanded] = useState(false)
   const [orderDetailsOrderId, setOrderDetailsOrderId] = useState(null)
@@ -168,6 +171,8 @@ function AdminOrders() {
     return `${name}|${phone}`
   }
 
+  const normalize = (value) => String(value || '').trim().toLowerCase()
+
   // Группировка заказов по статусам
   const groupedOrders = useMemo(() => {
     const grouped = {}
@@ -215,13 +220,31 @@ function AdminOrders() {
   // Фильтрация по выбранному статусу (только для groupBy === 'status')
   const filteredGroups = useMemo(() => {
     if (groupBy === 'client') {
+      if (clientFilterKey) {
+        const match = Object.entries(groupedByClient).find(([key]) => normalize(key) === normalize(clientFilterKey))
+        if (match) return { [match[0]]: match[1] }
+        return {}
+      }
       return groupedByClient
     }
     if (selectedStatusFilter === 'all') {
       return groupedOrders
     }
     return { [selectedStatusFilter]: groupedOrders[selectedStatusFilter] || [] }
-  }, [groupBy, groupedOrders, groupedByClient, selectedStatusFilter])
+  }, [groupBy, groupedOrders, groupedByClient, selectedStatusFilter, clientFilterKey])
+
+  useEffect(() => {
+    const groupByParam = searchParams.get('groupBy')
+    const clientName = searchParams.get('clientName') || ''
+    const clientPhone = searchParams.get('clientPhone') || ''
+    if (groupByParam === 'client' && clientName) {
+      setGroupBy('client')
+      setSelectedStatusFilter('all')
+      setClientFilterKey(`${clientName}|${clientPhone}`)
+    } else {
+      setClientFilterKey(null)
+    }
+  }, [searchParams])
 
   const toggleOrderSelection = (orderId) => {
     const order = orders.find(o => getOrderId(o) === orderId)

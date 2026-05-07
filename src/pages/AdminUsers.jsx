@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import './AdminUsers.css'
 
 function AdminUsers() {
+  const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -121,6 +123,18 @@ function AdminUsers() {
     } catch (err) {
       setError(err.message || 'Ошибка при удалении пользователя')
     }
+  }
+
+  const handleGoToOrders = (user) => {
+    const rawName = (user.fullName || user.FullName || user.username || user.Username || '').trim()
+    const clientName = rawName || '-'
+    const clientPhone = (user.phone || user.Phone || '').trim()
+    const params = new URLSearchParams({
+      groupBy: 'client',
+      clientName,
+      clientPhone
+    })
+    navigate(`/admin/orders?${params.toString()}`)
   }
 
   if (loading) {
@@ -284,6 +298,16 @@ function AdminUsers() {
                                 type="button"
                                 className="actions-dropdown-item"
                                 onClick={() => {
+                                  handleGoToOrders(user)
+                                  setOpenActionsFor(null)
+                                }}
+                              >
+                                К заказам
+                              </button>
+                              <button
+                                type="button"
+                                className="actions-dropdown-item"
+                                onClick={() => {
                                   setShowPasswordForm(user.id || user.Id)
                                   setOpenActionsFor(null)
                                 }}
@@ -306,6 +330,12 @@ function AdminUsers() {
                           )}
                         </div>
                         <div className="actions-mobile-inline">
+                          <button
+                            className="btn btn-small btn-secondary"
+                            onClick={() => handleGoToOrders(user)}
+                          >
+                            К заказам
+                          </button>
                           <button
                             className="btn btn-small btn-edit"
                             onClick={() => setShowPasswordForm(user.id || user.Id)}
