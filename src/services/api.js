@@ -905,6 +905,7 @@ export const api = {
       formData.append('password', userData.password)
       if (userData.email) formData.append('email', userData.email)
       if (userData.fullName) formData.append('fullName', userData.fullName)
+      formData.append('isAdmin', userData.isAdmin ? 'true' : 'false')
       
       const response = await apiClient.post('/users', formData, {
         headers: {

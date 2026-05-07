@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
+import PageShell from '../components/PageShell'
 import './AdminUsers.css'
 
 function AdminUsers() {
@@ -11,7 +12,8 @@ function AdminUsers() {
     username: '',
     password: '',
     email: '',
-    fullName: ''
+    fullName: '',
+    isAdmin: false
   })
   const [passwordData, setPasswordData] = useState({
     newPassword: '',
@@ -55,7 +57,7 @@ function AdminUsers() {
     try {
       await api.createUser(formData)
       setSuccess('Пользователь успешно создан')
-      setFormData({ username: '', password: '', email: '', fullName: '' })
+      setFormData({ username: '', password: '', email: '', fullName: '', isAdmin: false })
       setShowCreateForm(false)
       await loadUsers()
     } catch (err) {
@@ -109,20 +111,24 @@ function AdminUsers() {
 
   if (loading) {
     return (
-      <div className="admin-users-page">
-        <div className="loading">Загрузка...</div>
-      </div>
+      <PageShell title="Управление пользователями">
+        <div className="admin-users-page">
+          <div className="loading">Загрузка...</div>
+        </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="admin-users-page">
-      <div className="admin-users-header">
-        <h1>Управление пользователями</h1>
-        <button className="btn btn-primary" onClick={() => setShowCreateForm(true)}>
+    <PageShell
+      title="Управление пользователями"
+      actions={(
+        <button type="button" className="btn btn-primary" onClick={() => setShowCreateForm(true)}>
           + Создать пользователя
         </button>
-      </div>
+      )}
+    >
+      <div className="admin-users-page">
 
       {(error || success) && (
         <div className={`message ${error ? 'message-error' : 'message-success'}`}>
@@ -181,6 +187,18 @@ function AdminUsers() {
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 />
               </div>
+              <div className="form-group form-group-checkbox">
+                <label htmlFor="isAdmin" className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="isAdmin"
+                    name="isAdmin"
+                    checked={!!formData.isAdmin}
+                    onChange={(e) => setFormData({ ...formData, isAdmin: e.target.checked })}
+                  />
+                  <span>Администратор</span>
+                </label>
+              </div>
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowCreateForm(false)}>
                   Отмена
@@ -207,6 +225,7 @@ function AdminUsers() {
                 <th>Имя пользователя</th>
                 <th>Email</th>
                 <th>Полное имя</th>
+                <th>Админ</th>
                 <th>Создан</th>
                 <th>Действия</th>
               </tr>
@@ -220,6 +239,7 @@ function AdminUsers() {
                     <td data-label="Имя пользователя" className="username-cell">{user.username || user.Username || '-'}</td>
                     <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
                     <td data-label="Полное имя" className="fullname-cell">{user.fullName || user.FullName || '-'}</td>
+                    <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
                     <td data-label="Создан" className="created-cell">
                       {(() => {
                         const createdAt = user.createdAt || user.CreatedAt
@@ -303,7 +323,8 @@ function AdminUsers() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PageShell>
   )
 }
 
