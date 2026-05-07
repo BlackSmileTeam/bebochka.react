@@ -107,11 +107,6 @@ function AdminReviews() {
     <PageShell
       title="Отзывы клиентов"
       subtitle={isAdmin ? 'Полный список отзывов и ручное добавление' : 'Оценки, комментарии и фото покупателей'}
-      actions={(
-        <button type="button" className="btn btn-secondary" onClick={loadReviews} disabled={loading}>
-          {loading ? 'Обновление…' : '🔄 Обновить'}
-        </button>
-      )}
     >
       <div className="admin-reviews-page">
         {loading && <div className="admin-reviews-loading">Загрузка отзывов…</div>}

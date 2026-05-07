@@ -108,7 +108,7 @@ function Layout() {
                       to="/profile"
                       className={location.pathname === '/profile' ? 'active' : ''}
                     >
-                      {isAdminUser ? 'Профиль' : 'Заказы'}
+                      Профиль
                     </Link>
                     <Link
                       to="/reviews"

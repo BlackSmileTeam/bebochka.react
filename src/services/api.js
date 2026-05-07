@@ -1406,7 +1406,14 @@ export const api = {
    */
   async getOrderReviews() {
     try {
-      const response = await apiClient.get('/orders/reviews')
+      let isAdmin = false
+      try {
+        const userRaw = localStorage.getItem('user')
+        isAdmin = userRaw ? !!JSON.parse(userRaw).isAdmin : false
+      } catch {
+        isAdmin = false
+      }
+      const response = await apiClient.get(isAdmin ? '/orders/reviews' : '/orders/reviews/public')
       const rows = Array.isArray(response.data) ? response.data : []
       return rows.map((row) => ({
         id: row.id ?? row.Id,
