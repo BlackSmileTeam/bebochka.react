@@ -43,6 +43,35 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [showNameDropdown, setShowNameDropdown] = useState(false)
   const nameDropdownRef = useRef(null)
   const fileInputRef = useRef(null)
+  const [draggingImage, setDraggingImage] = useState(null)
+  const [previewImage, setPreviewImage] = useState(null)
+
+  const moveImage = (kind, fromIndex, toIndex) => {
+    if (fromIndex === toIndex || fromIndex == null || toIndex == null) return
+    if (kind === 'new') {
+      setImages((prev) => {
+        const next = [...prev]
+        const [moved] = next.splice(fromIndex, 1)
+        next.splice(toIndex, 0, moved)
+        return next
+      })
+      return
+    }
+    setExistingImages((prev) => {
+      const next = [...prev]
+      const [moved] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, moved)
+      return next
+    })
+  }
+
+  const handleDragStart = (kind, index) => setDraggingImage({ kind, index })
+  const handleDragEnd = () => setDraggingImage(null)
+  const handleDrop = (kind, index) => {
+    if (!draggingImage || draggingImage.kind !== kind) return
+    moveImage(kind, draggingImage.index, index)
+    setDraggingImage(null)
+  }
 
   // Log colors when component mounts or colors change
   useEffect(() => {
@@ -328,12 +357,22 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             {images.length > 0 && (
               <div className="image-preview">
                 {Array.from(images).map((file, index) => (
-                  <div key={index} className="preview-item">
+                  <div
+                    key={index}
+                    className={`preview-item preview-item--draggable ${draggingImage?.kind === 'new' && draggingImage?.index === index ? 'is-dragging' : ''}`}
+                    draggable
+                    onDragStart={() => handleDragStart('new', index)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDrop('new', index)}
+                  >
                     <img
                       src={URL.createObjectURL(file)}
                       alt={`Preview ${index}`}
                       className="preview-image"
+                      onClick={() => setPreviewImage({ src: URL.createObjectURL(file), label: `Фото #${index + 1}` })}
                     />
+                    <span className="preview-order-badge">{index + 1}</span>
                     <button
                       type="button"
                       className="remove-image"
@@ -352,14 +391,31 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 <p>Текущие фотографии:</p>
                 <div className="image-preview">
                   {existingImages.map((img, index) => (
-                    <div key={index} className="preview-item">
+                    <div
+                      key={index}
+                      className={`preview-item preview-item--draggable ${draggingImage?.kind === 'existing' && draggingImage?.index === index ? 'is-dragging' : ''}`}
+                      draggable
+                      onDragStart={() => handleDragStart('existing', index)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleDrop('existing', index)}
+                    >
                       <img
                         src={img.startsWith('http') 
                           ? img 
                           : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${img}`}
                         alt={`Existing ${index}`}
                         className="preview-image"
+                        onClick={() =>
+                          setPreviewImage({
+                            src: img.startsWith('http')
+                              ? img
+                              : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${img}`,
+                            label: `Фото #${index + 1}`
+                          })
+                        }
                       />
+                      <span className="preview-order-badge">{index + 1}</span>
                       <button
                         type="button"
                         className="remove-image"
@@ -372,6 +428,11 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                   ))}
                 </div>
               </div>
+            )}
+            {(images.length > 1 || existingImages.length > 1) && (
+              <small style={{ color: '#666', display: 'block', marginTop: '8px' }}>
+                Перетаскивайте фото, чтобы изменить порядок. Первое фото будет главным в карточке.
+              </small>
             )}
           </div>
 
@@ -736,6 +797,14 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </button>
           </div>
         </form>
+        {previewImage && (
+          <div className="image-lightbox-overlay" onClick={() => setPreviewImage(null)}>
+            <div className="image-lightbox-content" onClick={(e) => e.stopPropagation()}>
+              <button type="button" className="image-lightbox-close" onClick={() => setPreviewImage(null)}>×</button>
+              <img src={previewImage.src} alt={previewImage.label || 'Фото'} className="image-lightbox-image" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

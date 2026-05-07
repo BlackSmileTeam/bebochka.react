@@ -191,6 +191,14 @@
   overflow: hidden;
 }
 
+.preview-item--draggable {
+  cursor: grab;
+}
+
+.preview-item--draggable.is-dragging {
+  opacity: 0.55;
+}
+
 .preview-image {
   position: absolute;
   top: 0;
@@ -198,6 +206,24 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  cursor: zoom-in;
+}
+
+.preview-order-badge {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(45, 55, 72, 0.78);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .remove-image {
@@ -254,6 +280,47 @@
 
 .btn-secondary:hover {
   background-color: #cbd5e0;
+}
+
+.image-lightbox-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.image-lightbox-content {
+  position: relative;
+  width: min(92%, 900px);
+  max-height: 88vh;
+}
+
+.image-lightbox-image {
+  width: 100%;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #111827;
+}
+
+.image-lightbox-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {
