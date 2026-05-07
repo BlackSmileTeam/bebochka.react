@@ -702,6 +702,8 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 <option value="">Выберите пол</option>
                 <option value="мальчик">Мальчик</option>
                 <option value="девочка">Девочка</option>
+                <option value="мужчина">Мужчина</option>
+                <option value="девушка">Девушка</option>
                 <option value="унисекс">Унисекс</option>
               </select>
             </div>

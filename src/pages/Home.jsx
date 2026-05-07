@@ -7,7 +7,7 @@ import PageShell from '../components/PageShell'
 import { formatCondition } from '../utils/formatCondition'
 import './Home.css'
 
-const CATALOG_SUBTITLE = 'Недорогая и качественная одежда для мальчиков и девочек от 62 до 152 размера \u{1F9F8}'
+const CATALOG_SUBTITLE = 'Недорогая и качественная одежда для детей и взрослых от 62 до 152 размера \u{1F9F8}'
 const CONDITION_PRIORITY = {
   'состояние новой вещи': 0,
   'новая вещь': 0,

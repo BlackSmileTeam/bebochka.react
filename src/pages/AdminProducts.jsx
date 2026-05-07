@@ -397,6 +397,8 @@ function AdminProducts() {
     const genderLower = gender.toLowerCase()
     if (genderLower.includes('мальчик') || genderLower.includes('boy')) return '👦'
     if (genderLower.includes('девочка') || genderLower.includes('girl')) return '👧'
+    if (genderLower.includes('мужчина') || genderLower.includes('man')) return '👨'
+    if (genderLower.includes('девушка') || genderLower.includes('woman')) return '👩'
     if (genderLower.includes('унисекс') || genderLower.includes('unisex')) return '👶'
     return gender
   }
