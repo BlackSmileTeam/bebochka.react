@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import './AdminUsers.css'
@@ -247,10 +247,20 @@ function AdminUsers() {
               {users.map((user) => {
                 console.log('Rendering user:', user) // Debug log
                 return (
-                  <Fragment key={user.id || user.Id}>
-                    <tr>
+                    <tr key={user.id || user.Id}>
                       <td data-label="ID" className="id-cell">{user.id || user.Id}</td>
-                      <td data-label="Имя пользователя" className="username-cell">{user.username || user.Username || '-'}</td>
+                      <td data-label="Имя пользователя" className="username-cell">
+                        <div className="user-mobile-head">
+                          <div className="user-mobile-head__left">
+                            <span className="user-mobile-username">{user.username || user.Username || '-'}</span>
+                          </div>
+                          <div className="user-mobile-head__right">
+                            <span className="user-mobile-meta">Создан: {formatDate(user.createdAt || user.CreatedAt)}</span>
+                            <span className="user-mobile-meta">Вход: {formatDate(user.lastLoginAt || user.LastLoginAt)}</span>
+                            <span className="user-mobile-meta">Админ: {(user.isAdmin ?? user.IsAdmin) ? 'Да' : 'Нет'}</span>
+                          </div>
+                        </div>
+                      </td>
                       <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
                       <td data-label="Полное имя" className="fullname-cell">{user.fullName || user.FullName || '-'}</td>
                       <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
@@ -272,15 +282,6 @@ function AdminUsers() {
                         )}
                       </td>
                     </tr>
-                    <tr className="mobile-user-meta-row">
-                      <td colSpan={7} className="mobile-user-meta-cell">
-                        <div className="mobile-user-meta">
-                          <span className="mobile-user-meta__item">Создан: {formatDate(user.createdAt || user.CreatedAt)}</span>
-                          <span className="mobile-user-meta__item">Последний вход: {formatDate(user.lastLoginAt || user.LastLoginAt)}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  </Fragment>
                 )
               })}
             </tbody>

@@ -539,3 +539,9 @@ main.main > .profile-page .profile-actions {
 .profile-receive-star:hover {
   color: #ed8936;
 }
+
+@media (max-width: 768px) {
+  .profile-actions--bottom {
+    justify-content: center;
+  }
+}
