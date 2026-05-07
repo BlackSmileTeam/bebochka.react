@@ -1,5 +1,7 @@
 .auth-page-root {
   width: 100%;
+  min-height: 100%;
+  display: flex;
 }
 
 /* Страница входа без общей шапки (/login) */
@@ -17,10 +19,9 @@
 /* Вход внутри Layout (/account) — не суммируем высоту с шапкой/подвалом */
 .login-container--embedded {
   flex: 1;
-  min-height: calc(100vh - 72px);
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
+  min-height: 100%;
+  width: 100%;
+  margin: 0;
   box-sizing: border-box;
   display: flex;
   align-items: flex-start;
@@ -110,11 +111,11 @@
   background: #0077ff;
   color: #fff;
   border: none;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   padding: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -140,9 +141,9 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  border-radius: 12px;
+  border-radius: 10px;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   letter-spacing: 0.02em;
 }
 
