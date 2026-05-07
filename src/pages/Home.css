@@ -1,33 +1,17 @@
-.home-page {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-  width: 100%;
-}
-
-.home-header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.home-header h1 {
-  font-size: 2.5rem;
-  color: #2d3748;
-  margin-bottom: 1rem;
-}
-
-.subtitle {
-  font-size: 1.1rem;
-  color: #718096;
-  max-width: 840px;
-  margin: 0 auto;
-}
+/* Ширина и заголовок страницы — компонент PageShell */
 
 .catalog-filters {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.5rem;
   margin: 0.35rem 0 0.8rem;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.catalog-filters > * {
+  min-width: 0;
 }
 
 .catalog-filters select {
@@ -43,9 +27,16 @@
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(310px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 1.25rem;
   margin-top: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.page-shell--catalog {
+  overflow-x: clip;
 }
 
 .product-card {
@@ -58,6 +49,7 @@
   flex-direction: column;
   cursor: pointer;
   height: auto;
+  min-width: 0;
 }
 
 .product-card:hover {
@@ -110,6 +102,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 
 .product-name {
@@ -155,6 +148,7 @@
   margin-bottom: 0.45rem;
   font-size: 0.85rem;
   color: #4a5568;
+  min-width: 0;
 }
 
 .product-size,
@@ -167,22 +161,28 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .product-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   margin-top: 0.25rem;
   gap: 1rem;
   flex-shrink: 0;
   padding-top: 0.2rem;
+  min-width: 0;
 }
 
 .product-price {
   font-size: 1.2rem;
   font-weight: 700;
   color: #667eea;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .btn-buy {
@@ -195,11 +195,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  white-space: nowrap;
+  white-space: normal;
+  text-wrap: balance;
   min-height: 44px;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
+  max-width: 100%;
+  flex: 1 1 140px;
+  margin-left: auto;
 }
 
 .btn-buy:hover {
@@ -245,15 +249,6 @@
   .products-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
-  }
-
-  .home-header h1 {
-    font-size: 1.75rem;
-  }
-
-  .subtitle {
-    font-size: 1rem;
-    padding: 0 1rem;
   }
 
   .product-image-container {

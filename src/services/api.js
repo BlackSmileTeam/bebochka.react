@@ -880,7 +880,9 @@ export const api = {
             username: user.username || user.Username || '',
             email: user.email || user.Email || null,
             fullName: user.fullName || user.FullName || null,
-            createdAt: user.createdAt || user.CreatedAt || null
+            createdAt: user.createdAt || user.CreatedAt || null,
+            lastLoginAt: user.lastLoginAt || user.LastLoginAt || null,
+            isAdmin: !!(user.isAdmin ?? user.IsAdmin)
           }))
         : []
       

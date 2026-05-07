@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import './AdminUsers.css'
@@ -21,6 +21,19 @@ function AdminUsers() {
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  const formatDate = (value) => {
+    if (!value) return '—'
+    try {
+      return new Date(value).toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      })
+    } catch {
+      return String(value)
+    }
+  }
 
   useEffect(() => {
     loadUsers()
@@ -234,44 +247,40 @@ function AdminUsers() {
               {users.map((user) => {
                 console.log('Rendering user:', user) // Debug log
                 return (
-                  <tr key={user.id || user.Id}>
-                    <td data-label="ID" className="id-cell">{user.id || user.Id}</td>
-                    <td data-label="Имя пользователя" className="username-cell">{user.username || user.Username || '-'}</td>
-                    <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
-                    <td data-label="Полное имя" className="fullname-cell">{user.fullName || user.FullName || '-'}</td>
-                    <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
-                    <td data-label="Создан" className="created-cell">
-                      {(() => {
-                        const createdAt = user.createdAt || user.CreatedAt
-                        if (!createdAt) return '-'
-                        try {
-                          return new Date(createdAt).toLocaleDateString('ru-RU', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit'
-                          })
-                        } catch (e) {
-                          return createdAt
-                        }
-                      })()}
-                    </td>
-                    <td data-label="Действия" className="actions-cell">
-                      <button
-                        className="btn btn-small btn-edit"
-                        onClick={() => setShowPasswordForm(user.id || user.Id)}
-                      >
-                        Изменить пароль
-                      </button>
-                      {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
+                  <Fragment key={user.id || user.Id}>
+                    <tr>
+                      <td data-label="ID" className="id-cell">{user.id || user.Id}</td>
+                      <td data-label="Имя пользователя" className="username-cell">{user.username || user.Username || '-'}</td>
+                      <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
+                      <td data-label="Полное имя" className="fullname-cell">{user.fullName || user.FullName || '-'}</td>
+                      <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
+                      <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
+                      <td data-label="Действия" className="actions-cell">
                         <button
-                          className="btn btn-small btn-delete"
-                          onClick={() => handleDelete(user.id || user.Id)}
+                          className="btn btn-small btn-edit"
+                          onClick={() => setShowPasswordForm(user.id || user.Id)}
                         >
-                          Удалить
+                          Изменить пароль
                         </button>
-                      )}
-                    </td>
-                  </tr>
+                        {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
+                          <button
+                            className="btn btn-small btn-delete"
+                            onClick={() => handleDelete(user.id || user.Id)}
+                          >
+                            Удалить
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    <tr className="mobile-user-meta-row">
+                      <td colSpan={7} className="mobile-user-meta-cell">
+                        <div className="mobile-user-meta">
+                          <span className="mobile-user-meta__item">Создан: {formatDate(user.createdAt || user.CreatedAt)}</span>
+                          <span className="mobile-user-meta__item">Последний вход: {formatDate(user.lastLoginAt || user.LastLoginAt)}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </Fragment>
                 )
               })}
             </tbody>

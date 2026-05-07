@@ -56,6 +56,10 @@
   border-bottom: none;
 }
 
+.mobile-user-meta-row {
+  display: none;
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem;
@@ -305,10 +309,21 @@
     box-sizing: border-box;
   }
 
+  .users-table tr.mobile-user-meta-row {
+    display: flex;
+    margin-top: -0.65rem;
+    margin-bottom: 1rem;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+  }
+
   .users-table td {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 0.4rem;
     padding: 0.5rem 0;
     border: none;
     border-bottom: 1px solid #f7fafc;
@@ -322,7 +337,8 @@
   /* Скрываем колонки ID, Полное имя и Создан на мобильных */
   .users-table .id-cell,
   .users-table .fullname-cell,
-  .users-table .created-cell {
+  .users-table .created-cell,
+  .users-table .admin-cell {
     display: none;
   }
 
@@ -335,7 +351,7 @@
 
   .users-table .username-cell:before {
     content: "👤";
-    margin-right: 0.5rem;
+    margin-right: 0.2rem;
     flex-shrink: 0;
   }
 
@@ -346,8 +362,27 @@
 
   .users-table .email-cell:before {
     content: "📧";
-    margin-right: 0.5rem;
+    margin-right: 0.2rem;
     flex-shrink: 0;
+  }
+
+  .mobile-user-meta-cell {
+    display: block !important;
+    border-bottom: none !important;
+    padding: 0 !important;
+  }
+
+  .mobile-user-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.65rem;
+    font-size: 0.74rem;
+    color: #718096;
+    padding: 0 0.2rem 0.15rem;
+  }
+
+  .mobile-user-meta__item {
+    white-space: nowrap;
   }
 
   /* Действия */
