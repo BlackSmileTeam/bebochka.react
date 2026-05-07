@@ -1417,12 +1417,45 @@ export const api = {
         customerPhone: row.customerPhone ?? row.CustomerPhone ?? '',
         rating: row.rating ?? row.Rating ?? null,
         comment: row.comment ?? row.Comment ?? '',
-        createdAtUtc: row.createdAtUtc ?? row.CreatedAtUtc ?? null
+        createdAtUtc: row.createdAtUtc ?? row.CreatedAtUtc ?? null,
+        imageUrls: row.imageUrls ?? row.ImageUrls ?? []
       }))
     } catch (error) {
       console.error('[API] Error fetching order reviews:', error)
       throw error
     }
+  },
+
+  async createOrderReviewAsAdmin(payload) {
+    const toBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = String(reader.result || '')
+        const base64 = result.includes(',') ? result.split(',')[1] : result
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+
+    const files = Array.isArray(payload?.files) ? payload.files : []
+    const imagesBase64 = []
+    for (const file of files) {
+      if (file instanceof File) {
+        imagesBase64.push(await toBase64(file))
+      }
+    }
+
+    const body = {
+      orderNumber: payload.orderNumber ? String(payload.orderNumber).trim() : null,
+      customerName: payload.customerName ? String(payload.customerName).trim() : null,
+      customerPhone: payload.customerPhone ? String(payload.customerPhone).trim() : null,
+      rating: Number(payload.rating) || 0,
+      comment: payload.comment ? String(payload.comment).trim() : '',
+      imagesBase64
+    }
+    const response = await apiClient.post('/orders/reviews/admin', body)
+    return response.data
   },
 
   /**
