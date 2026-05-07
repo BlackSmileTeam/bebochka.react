@@ -253,9 +253,16 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
 
             {isAdminUser && (
               <div className="product-detail-dates product-detail-dates--below">
-                <div className="product-detail-date-line product-detail-date-line--left">
-                  Номер коробки: {product.boxNumber || '—'} · Посылка: {product.incomingShipmentName || '—'}
-                </div>
+                {product.boxNumber && (
+                  <div className="product-detail-date-line product-detail-date-line--left">
+                    Номер коробки: {product.boxNumber}
+                  </div>
+                )}
+                {product.incomingShipmentName && (
+                  <div className="product-detail-date-line product-detail-date-line--left">
+                    Посылка: {product.incomingShipmentName}
+                  </div>
+                )}
                 <div className="product-detail-date-line product-detail-date-line--left">
                   Создан: {formatDateTime(createdAt)}
                 </div>
