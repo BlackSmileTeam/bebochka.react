@@ -23,7 +23,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     gender: 'мальчик',
     condition: '',
     publishedAt: '',
-    cartAvailableAt: ''
+    cartAvailableAt: '',
+    boxNumber: '',
+    incomingShipmentId: ''
   })
   const [scheduleSend, setScheduleSend] = useState(false)
   const [scheduleCartUnlock, setScheduleCartUnlock] = useState(false)
@@ -33,6 +35,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [brands, setBrands] = useState([])
+  const [incomingShipments, setIncomingShipments] = useState([])
   const [brandSearch, setBrandSearch] = useState('')
   const [showBrandDropdown, setShowBrandDropdown] = useState(false)
   const brandDropdownRef = useRef(null)
@@ -99,6 +102,10 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   }, [])
 
   useEffect(() => {
+    api.getIncomingShipments().then(setIncomingShipments).catch(() => setIncomingShipments([]))
+  }, [])
+
+  useEffect(() => {
     if (product) {
       // Format PublishedAt if it exists (it's stored as Moscow time in database)
       let publishedAtValue = ''
@@ -137,7 +144,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         gender: product.gender || 'мальчик',
         condition: product.condition || '',
         publishedAt: publishedAtValue,
-        cartAvailableAt: cartAtValue
+        cartAvailableAt: cartAtValue,
+        boxNumber: product.boxNumber || '',
+        incomingShipmentId: product.incomingShipmentId ?? ''
       })
       setScheduleSend(!!(product.publishedAt || product.PublishedAt))
       setScheduleCartUnlock(!!(product.cartAvailableAt || product.CartAvailableAt))
@@ -157,7 +166,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         gender: 'мальчик',
         condition: '',
         publishedAt: '',
-        cartAvailableAt: ''
+        cartAvailableAt: '',
+        boxNumber: '',
+        incomingShipmentId: ''
       })
       setBrandSearch('')
       setExistingImages([])
@@ -208,6 +219,8 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('quantityInStock', formData.quantityInStock || 1)
       formDataToSend.append('gender', formData.gender || '')
       formDataToSend.append('condition', formData.condition || '')
+      formDataToSend.append('boxNumber', formData.boxNumber || '')
+      formDataToSend.append('incomingShipmentId', formData.incomingShipmentId === '' ? '' : formData.incomingShipmentId)
       
       // Add PublishedAt if "отправить ко времени" is checked
       // datetime-local gives "YYYY-MM-DDTHH:mm" (interpreted as Moscow time)
@@ -536,6 +549,35 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               />
             </div>
           </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="boxNumber">Номер коробки</label>
+              <input
+                type="text"
+                id="boxNumber"
+                name="boxNumber"
+                value={formData.boxNumber}
+                onChange={handleChange}
+                placeholder="Отсутствует (оставьте пустым) или, например: A-12"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="incomingShipmentId">Поставка</label>
+              <select
+                id="incomingShipmentId"
+                name="incomingShipmentId"
+                value={formData.incomingShipmentId}
+                onChange={handleChange}
+              >
+                <option value="">Отсутствует</option>
+                {incomingShipments.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
 
           <div className="form-row">
             <div className="form-group">
