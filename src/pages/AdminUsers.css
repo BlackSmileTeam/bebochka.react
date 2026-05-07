@@ -273,6 +273,11 @@
   display: none;
 }
 
+.user-mobile-head__right,
+.user-mobile-meta {
+  display: none;
+}
+
 .btn-edit {
   background-color: #4299e1;
   color: white;
@@ -432,6 +437,7 @@
   }
 
   .user-mobile-meta {
+    display: inline;
     font-size: 0.68rem;
     color: #718096;
     line-height: 1.2;
