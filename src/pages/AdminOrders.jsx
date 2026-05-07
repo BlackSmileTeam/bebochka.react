@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, Fragment } from 'react'
 import { api } from '../services/api'
+import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
+import PageShell from '../components/PageShell'
 import './AdminOrders.css'
 
 function OrderDiscountSingleModal({ orderId, order, getOrderNumber, getCustomerName, getTotalAmount, getFinalAmount, formatPrice, hasDiscount, onClose, onApply, onRemove }) {
@@ -35,22 +37,23 @@ function OrderDiscountSingleModal({ orderId, order, getOrderNumber, getCustomerN
   )
 }
 
-const ORDER_STATUSES = [
+/** Все статусы (фильтры, группировка). «Получен» выставляется только клиентом. */
+const ORDER_STATUSES_ALL = [
   'Формирование заказа',
   'Ожидает оплату',
   'В сборке',
   'На доставку',
   'Отправлен',
+  'Получен',
   'Отменен'
 ]
 
-const STATUS_COLORS = {
-  'Формирование заказа': '#a0aec0',
-  'Ожидает оплату': '#4299e1',
-  'В сборке': '#ed8936',
-  'На доставку': '#667eea',
-  'Отправлен': '#48bb78',
-  'Отменен': '#e53e3e'
+/** Статусы, доступные администратору в выпадающих списках и массовых действиях. */
+const ORDER_STATUSES_ADMIN = ORDER_STATUSES_ALL.filter(s => s !== 'Получен')
+
+function getAdminStatusSelectOptions(currentStatus) {
+  if (currentStatus === 'Получен') return ['Получен']
+  return [...ORDER_STATUSES_ADMIN]
 }
 
 const STATUS_TOOLTIPS = {
@@ -58,16 +61,27 @@ const STATUS_TOOLTIPS = {
   'Ожидает оплату': 'Покупатель оформил заказ. Отправлено сообщение об успешном оформлении и необходимости оплаты. Добавлять товары в заказ нельзя',
   'В сборке': 'Заказ собирается и подготавливается к отправке',
   'На доставку': 'Заказ собран, упакован; ожидаются данные от покупателя (адрес, способ отправки)',
-  'Отправлен': 'Финальный статус. Карточка товара более не доступна для публикации в канал',
+  'Отправлен': 'Заказ передан в доставку. Клиент может подтвердить получение',
+  'Получен': 'Клиент подтвердил получение. Состав заказа не меняется',
   'Отменен': 'Заказ отменён'
 }
+
+const PARCEL_EDITABLE_STATUSES = new Set([
+  'Формирование заказа',
+  'Ожидает оплату',
+  'В сборке'
+])
+const ORDER_STATUS_INDEX = ORDER_STATUSES_ALL.reduce((acc, status, idx) => {
+  acc[status] = idx
+  return acc
+}, {})
 
 function AdminOrders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedOrders, setSelectedOrders] = useState(new Set())
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all')
-  const [expandedGroups, setExpandedGroups] = useState(new Set(ORDER_STATUSES))
+  const [expandedGroups, setExpandedGroups] = useState(new Set(ORDER_STATUSES_ALL))
   const [expandedOrderIds, setExpandedOrderIds] = useState(new Set())
   const [updatingStatuses, setUpdatingStatuses] = useState(new Set())
   const [bulkUpdating, setBulkUpdating] = useState(false)
@@ -94,6 +108,7 @@ function AdminOrders() {
   const [adminCartItems, setAdminCartItems] = useState([])
   const [loadingAdminCart, setLoadingAdminCart] = useState(false)
   const [removingAdminCartItemId, setRemovingAdminCartItemId] = useState(null)
+  const [statusChangeWarning, setStatusChangeWarning] = useState(null)
 
   useEffect(() => {
     loadOrders()
@@ -145,17 +160,17 @@ function AdminOrders() {
   // Группировка заказов по статусам
   const groupedOrders = useMemo(() => {
     const grouped = {}
-    ORDER_STATUSES.forEach(status => {
+    ORDER_STATUSES_ALL.forEach(status => {
       grouped[status] = []
     })
     const statusMap = { 'В пути': 'На доставку', 'Доставлен': 'Отправлен' }
     ordersForGrouping.forEach(order => {
-      let status = order.status || order.Status || ORDER_STATUSES[0]
+      let status = order.status || order.Status || ORDER_STATUSES_ALL[0]
       status = statusMap[status] || status
       if (grouped[status]) {
         grouped[status].push(order)
       } else {
-        grouped[ORDER_STATUSES[0]].push(order)
+        grouped[ORDER_STATUSES_ALL[0]].push(order)
       }
     })
     Object.keys(grouped).forEach(status => {
@@ -198,6 +213,8 @@ function AdminOrders() {
   }, [groupBy, groupedOrders, groupedByClient, selectedStatusFilter])
 
   const toggleOrderSelection = (orderId) => {
+    const order = orders.find(o => getOrderId(o) === orderId)
+    if (order && getOrderStatus(order) === 'Получен') return
     setSelectedOrders(prev => {
       const next = new Set(prev)
       if (next.has(orderId)) {
@@ -211,7 +228,9 @@ function AdminOrders() {
 
   const toggleGroupSelection = (groupKey) => {
     const groupOrders = filteredGroups[groupKey] || []
-    const groupOrderIds = groupOrders.map(o => getOrderId(o))
+    const groupOrderIds = groupOrders
+      .filter(o => getOrderStatus(o) !== 'Получен')
+      .map(o => getOrderId(o))
     const allSelected = groupOrderIds.length > 0 && groupOrderIds.every(id => selectedOrders.has(id))
     setSelectedOrders(prev => {
       const next = new Set(prev)
@@ -225,7 +244,9 @@ function AdminOrders() {
   }
 
   const toggleAllSelection = () => {
-    const allOrderIds = orders.map(o => o.id || o.Id)
+    const allOrderIds = orders
+      .filter(o => getOrderStatus(o) !== 'Получен')
+      .map(o => o.id || o.Id)
     const allSelected = allOrderIds.every(id => selectedOrders.has(id))
     
     setSelectedOrders(allSelected ? new Set() : new Set(allOrderIds))
@@ -247,11 +268,11 @@ function AdminOrders() {
     if (groupBy === 'client') {
       setExpandedGroups(new Set(Object.keys(groupedByClient)))
     } else {
-      setExpandedGroups(new Set(ORDER_STATUSES))
+      setExpandedGroups(new Set(ORDER_STATUSES_ALL))
     }
   }, [groupBy, groupedByClient])
 
-  const handleStatusChange = async (orderId, newStatus) => {
+  const performStatusChange = async (orderId, newStatus) => {
     try {
       setUpdatingStatuses(prev => new Set(prev).add(orderId))
       await api.updateOrderStatus(orderId, newStatus)
@@ -273,19 +294,30 @@ function AdminOrders() {
     }
   }
 
-  const handleBulkStatusChange = async (newStatus) => {
-    if (selectedOrders.size === 0) {
-      alert('Выберите хотя бы один заказ')
+  const handleStatusChange = async (orderId, newStatus) => {
+    const order = orders.find(o => getOrderId(o) === orderId)
+    const currentStatus = order ? getOrderStatus(order) : null
+    if (currentStatus && currentStatus === newStatus) return
+
+    if (order && shouldWarnAboutUnmarkedParcelItems(order, currentStatus, newStatus)) {
+      setStatusChangeWarning({
+        type: 'single',
+        orderId,
+        newStatus,
+        text: 'В заказе есть товары, не отмеченные как «В посылке». Перевести заказ в этот статус?'
+      })
       return
     }
 
-    if (!confirm(`Изменить статус ${selectedOrders.size} заказ(ов) на "${newStatus}"?`)) {
+    await performStatusChange(orderId, newStatus)
+  }
+
+  const performBulkStatusChange = async (orderIds, newStatus, askConfirmation = true) => {
+    if (askConfirmation && !confirm(`Изменить статус ${orderIds.length} заказ(ов) на "${newStatus}"?`)) {
       return
     }
-
     try {
       setBulkUpdating(true)
-      const orderIds = Array.from(selectedOrders)
       const results = await api.updateOrdersStatus(orderIds, newStatus)
       
       const successCount = results.filter(r => r.success).length
@@ -305,6 +337,31 @@ function AdminOrders() {
     } finally {
       setBulkUpdating(false)
     }
+  }
+
+  const handleBulkStatusChange = async (newStatus) => {
+    if (selectedOrders.size === 0) {
+      alert('Выберите хотя бы один заказ')
+      return
+    }
+
+    const orderIds = Array.from(selectedOrders)
+    const selectedList = orders.filter(o => selectedOrders.has(getOrderId(o)))
+    const withUnmarked = selectedList.filter((order) =>
+      shouldWarnAboutUnmarkedParcelItems(order, getOrderStatus(order), newStatus)
+    )
+
+    if (withUnmarked.length > 0) {
+      setStatusChangeWarning({
+        type: 'bulk',
+        orderIds,
+        newStatus,
+        text: `В ${withUnmarked.length} заказ(ах) есть товары без отметки «В посылке». Всё равно перевести в статус «${newStatus}»?`
+      })
+      return
+    }
+
+    await performBulkStatusChange(orderIds, newStatus, true)
   }
 
   const formatDate = (dateString) => {
@@ -345,7 +402,26 @@ function AdminOrders() {
 
   const getOrderId = (order) => order.id || order.Id
   const getOrderNumber = (order) => order.orderNumber || order.OrderNumber || `#${getOrderId(order)}`
-  const getOrderStatus = (order) => order.status || order.Status || ORDER_STATUSES[0]
+  const getOrderStatus = (order) => order.status || order.Status || ORDER_STATUSES_ALL[0]
+  const isOrderStatusLocked = (order) => getOrderStatus(order) === 'Получен'
+  const isItemAddedToParcel = (item) => !!(item.addedToParcel ?? item.AddedToParcel)
+  const hasUnmarkedParcelItems = (order) => getOrderItems(order).some(item => !isItemAddedToParcel(item))
+  const isMoveToPastStatus = (oldStatus, nextStatus) => {
+    const oldIdx = ORDER_STATUS_INDEX[oldStatus]
+    const nextIdx = ORDER_STATUS_INDEX[nextStatus]
+    if (oldIdx == null || nextIdx == null) return false
+    return nextIdx < oldIdx
+  }
+  const shouldHighlightMissingParcel = (order) => {
+    const status = getOrderStatus(order)
+    return !PARCEL_EDITABLE_STATUSES.has(status) && hasUnmarkedParcelItems(order)
+  }
+  const shouldWarnAboutUnmarkedParcelItems = (order, oldStatus, nextStatus) => (
+    oldStatus === 'В сборке' &&
+    nextStatus !== 'В сборке' &&
+    !isMoveToPastStatus(oldStatus, nextStatus) &&
+    hasUnmarkedParcelItems(order)
+  )
   const getTelegramUserId = (order) => order.telegramUserId ?? order.TelegramUserId
   const getTelegramUsername = (order) => order.telegramUsername || order.TelegramUsername || order.customerName || order.CustomerName
   // Ссылка на профиль/чат: из API (CustomerProfileLink) или собираем из telegramUserId
@@ -375,6 +451,17 @@ function AdminOrders() {
       setSortDir(key === 'client' || key === 'phone' ? 'asc' : 'desc')
     }
   }
+
+  useEffect(() => {
+    setSelectedOrders(prev => {
+      const next = new Set()
+      prev.forEach((id) => {
+        const order = orders.find(o => getOrderId(o) === id)
+        if (order && !isOrderStatusLocked(order)) next.add(id)
+      })
+      return next
+    })
+  }, [orders])
 
   const sortOrdersInGroup = (statusOrders) => {
     if (!sortBy) return statusOrders
@@ -444,6 +531,19 @@ function AdminOrders() {
       }
     } catch (_) {
       /* keep single image */
+    }
+  }
+
+  const handleConfirmStatusWarning = async () => {
+    const warning = statusChangeWarning
+    if (!warning) return
+    setStatusChangeWarning(null)
+    if (warning.type === 'single') {
+      await performStatusChange(warning.orderId, warning.newStatus)
+      return
+    }
+    if (warning.type === 'bulk') {
+      await performBulkStatusChange(warning.orderIds, warning.newStatus, false)
     }
   }
 
@@ -539,9 +639,11 @@ function AdminOrders() {
 
   if (loading) {
     return (
-      <div className="container">
-        <div className="loading">Загрузка заказов...</div>
-      </div>
+      <PageShell title="Управление заказами">
+        <div className="admin-orders-page">
+          <div className="loading">Загрузка заказов...</div>
+        </div>
+      </PageShell>
     )
   }
 
@@ -549,9 +651,9 @@ function AdminOrders() {
   const selectedCount = selectedOrders.size
 
   return (
-    <div className="container">
-      <div className="admin-orders-header">
-        <h1>Управление заказами</h1>
+    <PageShell
+      title="Управление заказами"
+      actions={(
         <div className="header-actions header-actions--row">
           {selectedCount > 0 && (
             <button
@@ -564,14 +666,16 @@ function AdminOrders() {
           )}
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn-refresh-unified"
             onClick={loadOrders}
             disabled={loading}
           >
             🔄 Обновить
           </button>
         </div>
-      </div>
+      )}
+    >
+      <div className="admin-orders-page">
 
       {/* Группировка и фильтры */}
       <div className={`status-filters ${filtersExpanded ? 'status-filters--expanded' : 'status-filters--collapsed'}`}>
@@ -613,14 +717,14 @@ function AdminOrders() {
         >
           В корзинах ({adminCartItems.length})
         </button>
-        {groupBy === 'status' && ORDER_STATUSES.map(status => {
+        {groupBy === 'status' && ORDER_STATUSES_ALL.map(status => {
           const count = (groupedOrders[status] || []).length
           return (
             <button
               key={status}
               className={`status-filter-btn ${selectedStatusFilter === status ? 'active' : ''}`}
               onClick={() => setSelectedStatusFilter(status)}
-              style={{ '--status-color': STATUS_COLORS[status] }}
+              style={{ '--status-color': ORDER_STATUS_COLORS[status] }}
             >
               {status} ({count})
             </button>
@@ -651,14 +755,14 @@ function AdminOrders() {
             >
               🏷️ Распродажа
             </button>
-            {ORDER_STATUSES.map(status => (
+            {ORDER_STATUSES_ADMIN.map(status => (
               <button
                 key={status}
                 className="btn btn-small"
                 onClick={() => handleBulkStatusChange(status)}
                 disabled={bulkUpdating}
                 style={{ 
-                  backgroundColor: STATUS_COLORS[status],
+                  backgroundColor: ORDER_STATUS_COLORS[status],
                   color: 'white',
                   border: 'none'
                 }}
@@ -686,7 +790,7 @@ function AdminOrders() {
                   Товары в корзинах ({adminCartItems.length})
                 </h2>
               </div>
-              <button type="button" className="btn btn-secondary btn-small" onClick={loadAdminCartItems} disabled={loadingAdminCart}>
+              <button type="button" className="btn-refresh-unified" onClick={loadAdminCartItems} disabled={loadingAdminCart}>
                 {loadingAdminCart ? 'Обновление...' : '🔄 Обновить'}
               </button>
             </div>
@@ -738,11 +842,13 @@ function AdminOrders() {
         {Object.entries(filteredGroups).map(([groupKey, statusOrders]) => {
           if (statusOrders.length === 0) return null
           const isExpanded = expandedGroups.has(groupKey)
-          const groupOrderIds = statusOrders.map(o => getOrderId(o))
+          const groupOrderIds = statusOrders
+            .filter(o => !isOrderStatusLocked(o))
+            .map(o => getOrderId(o))
           const allGroupSelected = groupOrderIds.length > 0 && groupOrderIds.every(id => selectedOrders.has(id))
           const someGroupSelected = groupOrderIds.some(id => selectedOrders.has(id))
           const groupTitle = groupBy === 'client' ? getCustomerName(statusOrders[0]) : groupKey
-          const groupColor = groupBy === 'status' ? STATUS_COLORS[groupKey] : '#718096'
+          const groupColor = groupBy === 'status' ? ORDER_STATUS_COLORS[groupKey] : '#718096'
 
           return (
             <div key={groupKey} className="order-group">
@@ -778,6 +884,17 @@ function AdminOrders() {
               {isExpanded && (
                 <div className="order-group-content">
                   <table className="orders-table">
+                    <colgroup>
+                      <col style={{ width: '36px' }} />
+                      <col style={{ width: '40px' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '13%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '0%' }} />
+                      <col style={{ width: '13%' }} />
+                      <col style={{ width: '20%' }} />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th className="expand-column"></th>
@@ -797,7 +914,7 @@ function AdminOrders() {
                         <SortableTh sortKey="date" className="th-date">Дата</SortableTh>
                         <th className="th-open-details">Подробнее</th>
                         <SortableTh sortKey="amount">Сумма</SortableTh>
-                        <th>Статус и действия</th>
+                        <th className="th-status-actions">Статус и действия</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -806,13 +923,16 @@ function AdminOrders() {
                         const isSelected = selectedOrders.has(orderId)
                         const isUpdating = updatingStatuses.has(orderId)
                         const currentStatus = getOrderStatus(order)
+                        const statusLocked = isOrderStatusLocked(order)
                         const items = getOrderItems(order)
                         const isOrderExpanded = expandedOrderIds.has(orderId)
+                        const parcelActionsAllowed = currentStatus === 'В сборке'
+                        const highlightMissingParcel = shouldHighlightMissingParcel(order)
 
                         return (
                           <Fragment key={orderId}>
                             <tr
-                              className={isSelected ? 'row-selected' : ''}
+                              className={`${isSelected ? 'row-selected' : ''} ${orderRowMenuOpen === orderId ? 'row-menu-open' : ''}`.trim()}
                             >
                               <td className="expand-column">
                                 {items.length > 0 && (
@@ -832,6 +952,7 @@ function AdminOrders() {
                                   checked={isSelected}
                                   onChange={() => toggleOrderSelection(orderId)}
                                   onClick={(e) => e.stopPropagation()}
+                                  disabled={statusLocked}
                                 />
                               </td>
                               <td className="td-number">
@@ -874,13 +995,14 @@ function AdminOrders() {
                                   <select
                                     value={currentStatus}
                                     onChange={(e) => handleStatusChange(orderId, e.target.value)}
-                                    disabled={isUpdating}
-                                    className="status-select"
+                                    disabled={isUpdating || statusLocked}
+                                    className="status-select status-select--colored"
+                                    style={getOrderStatusSelectSurfaceStyle(currentStatus)}
                                     onClick={(e) => e.stopPropagation()}
                                     title={STATUS_TOOLTIPS[currentStatus]}
                                   >
-                                    {ORDER_STATUSES.map(s => (
-                                      <option key={s} value={s}>{s}</option>
+                                    {getAdminStatusSelectOptions(currentStatus).map(s => (
+                                      <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
                                     ))}
                                   </select>
                                   <div className="order-row-dropdown">
@@ -921,12 +1043,12 @@ function AdminOrders() {
                                       const size = item.size ?? item.Size ?? ''
                                       const brand = item.brand ?? item.Brand ?? ''
                                       const color = item.color ?? item.Color ?? ''
-                                      const addedToParcel = !!(item.addedToParcel ?? item.AddedToParcel)
+                                      const addedToParcel = isItemAddedToParcel(item)
                                       const key = `${orderId}-${itemId}`
                                       const isDeleting = deletingItemKey === key
                                       const isTogglingInParcel = inParcelTogglingKey === key
                                       return (
-                                        <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}`}>
+                                        <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}${highlightMissingParcel && !addedToParcel ? ' order-item-card--missing-parcel' : ''}`}>
                                           {imgUrl ? (
                                             <div 
                                               className="order-item-photo"
@@ -948,6 +1070,8 @@ function AdminOrders() {
                                             {color && <span className="order-item-meta">Цвет: {color}</span>}
                                           </div>
                                           <div className="order-item-actions">
+                                            {parcelActionsAllowed && (
+                                              <>
                                             <button
                                               type="button"
                                               className="btn-in-parcel"
@@ -966,6 +1090,8 @@ function AdminOrders() {
                                             >
                                               {isDeleting ? '…' : 'Удалить'}
                                             </button>
+                                              </>
+                                            )}
                                           </div>
                                         </div>
                                       )
@@ -990,6 +1116,23 @@ function AdminOrders() {
       {totalOrders === 0 && (
         <div className="empty-state">
           <p>Заказы не найдены</p>
+        </div>
+      )}
+
+      {statusChangeWarning && (
+        <div className="modal-overlay" onClick={() => setStatusChangeWarning(null)}>
+          <div className="modal-content status-warning-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Проверка перед сменой статуса</h3>
+            <p>{statusChangeWarning.text}</p>
+            <div className="modal-actions status-warning-modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setStatusChangeWarning(null)}>
+                Отмена
+              </button>
+              <button type="button" className="btn btn-primary" onClick={handleConfirmStatusWarning}>
+                Перевести
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1082,7 +1225,11 @@ function AdminOrders() {
         if (!order) return null
         const items = getOrderItems(order)
         const currentStatus = getOrderStatus(order)
+        const statusLocked = isOrderStatusLocked(order)
+        const parcelActionsAllowed = currentStatus === 'В сборке'
+        const statusHistory = order.statusHistory || order.StatusHistory || []
         const isUpdating = updatingStatuses.has(orderDetailsOrderId)
+        const highlightMissingParcel = shouldHighlightMissingParcel(order)
         return (
           <div className="modal-overlay order-details-overlay" onClick={() => setOrderDetailsOrderId(null)}>
             <div className="modal-content order-details-modal" onClick={e => e.stopPropagation()}>
@@ -1103,16 +1250,36 @@ function AdminOrders() {
                   <select
                     value={currentStatus}
                     onChange={(e) => handleStatusChange(orderDetailsOrderId, e.target.value)}
-                    disabled={isUpdating}
-                    className="status-select"
+                    disabled={isUpdating || statusLocked}
+                    className="status-select status-select--colored"
+                    style={getOrderStatusSelectSurfaceStyle(currentStatus)}
                   >
-                    {ORDER_STATUSES.map(s => (
-                      <option key={s} value={s}>{s}</option>
+                    {getAdminStatusSelectOptions(currentStatus).map(s => (
+                      <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
                     ))}
                   </select>
                   <button type="button" className="btn btn-secondary" onClick={() => { setOrderDetailsOrderId(null); setOrderDiscountModal(orderDetailsOrderId) }}>🏷️ Скидка</button>
                   <button type="button" className="btn btn-secondary" onClick={() => { setOrderDetailsOrderId(null); handleDeleteOrder(orderDetailsOrderId) }} disabled={deletingOrderId === orderDetailsOrderId}>🗑️ Удалить</button>
                 </div>
+                {Array.isArray(statusHistory) && statusHistory.length > 0 && (
+                  <div className="order-details-status-history">
+                    <h4>История статусов</h4>
+                    <ul className="order-status-history-list">
+                      {statusHistory.map((row, idx) => {
+                        const st = row.status || row.Status || '—'
+                        const at = row.changedAtUtc || row.ChangedAtUtc
+                        const actor = row.actorKind || row.ActorKind || ''
+                        const label = at ? new Date(at).toLocaleString('ru-RU') : '—'
+                        return (
+                          <li key={`${idx}-${st}-${label}`}>
+                            <strong>{st}</strong>
+                            <span className="order-status-history-meta">{label}{actor ? ` · ${actor}` : ''}</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                )}
                 <h4>Товары</h4>
                 <div className="order-items-list order-details-items">
                   {items.map(item => {
@@ -1122,12 +1289,12 @@ function AdminOrders() {
                     const size = item.size ?? item.Size ?? ''
                     const brand = item.brand ?? item.Brand ?? ''
                     const color = item.color ?? item.Color ?? ''
-                    const addedToParcel = !!(item.addedToParcel ?? item.AddedToParcel)
+                    const addedToParcel = isItemAddedToParcel(item)
                     const key = `${orderDetailsOrderId}-${itemId}`
                     const isDeleting = deletingItemKey === key
                     const isTogglingInParcel = inParcelTogglingKey === key
                     return (
-                      <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}`}>
+                      <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}${highlightMissingParcel && !addedToParcel ? ' order-item-card--missing-parcel' : ''}`}>
                         {imgUrl ? (
                           <div className="order-item-photo" onClick={() => openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} title="Открыть фото">
                             <img src={imgUrl} alt="" />
@@ -1142,10 +1309,14 @@ function AdminOrders() {
                           {color && <span className="order-item-meta">Цвет: {color}</span>}
                         </div>
                         <div className="order-item-actions">
+                          {parcelActionsAllowed && (
+                            <>
                           <button type="button" className="btn-in-parcel" onClick={() => handleToggleInParcel(orderDetailsOrderId, itemId, addedToParcel)} disabled={isTogglingInParcel}>
                             {isTogglingInParcel ? '…' : (addedToParcel ? '✓ В посылке' : 'В посылку')}
                           </button>
                           <button type="button" className="btn-delete-item" onClick={() => handleDeleteOrderItem(orderDetailsOrderId, itemId)} disabled={isDeleting}>{isDeleting ? '…' : 'Удалить'}</button>
+                            </>
+                          )}
                         </div>
                       </div>
                     )
@@ -1191,6 +1362,7 @@ function AdminOrders() {
         </div>
       )}
     </div>
+    </PageShell>
   )
 }
 
