@@ -2,7 +2,7 @@
   width: 100%;
   min-height: 100%;
   display: flex;
-  padding: 1rem 0;
+  padding: 1.5rem 0;
   box-sizing: border-box;
 }
 
@@ -169,7 +169,7 @@
 
 @media (max-width: 768px) {
   .auth-page-root {
-    padding: 0.75rem 0;
+    padding: 1.25rem 0;
   }
 
   .login-container--standalone {
@@ -294,7 +294,7 @@
 
 @media (max-width: 480px) {
   .auth-page-root {
-    padding: 0.5rem 0;
+    padding: 1rem 0;
   }
 
   .login-container--standalone {
