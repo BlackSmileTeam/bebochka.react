@@ -2,6 +2,8 @@
   width: 100%;
   min-height: 100%;
   display: flex;
+  padding: 1rem 0;
+  box-sizing: border-box;
 }
 
 /* Страница входа без общей шапки (/login) */
@@ -166,6 +168,10 @@
 }
 
 @media (max-width: 768px) {
+  .auth-page-root {
+    padding: 0.75rem 0;
+  }
+
   .login-container--standalone {
     padding: 1rem;
   }
@@ -287,6 +293,10 @@
 }
 
 @media (max-width: 480px) {
+  .auth-page-root {
+    padding: 0.5rem 0;
+  }
+
   .login-container--standalone {
     padding: 0.75rem;
   }
