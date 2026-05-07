@@ -717,6 +717,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               onChange={handleChange}
             >
               <option value="">Выберите состояние</option>
+              <option value="новая вещь">Новая вещь</option>
               <option value="состояние новой вещи">Состояние новой вещи</option>
               <option value="очень хорошее">Очень хорошее</option>
               <option value="отличное">Отличное</option>
