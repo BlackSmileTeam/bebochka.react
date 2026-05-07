@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { api } from '../services/api.js'
 import ProductForm from '../components/ProductForm.jsx'
+import ProductDetail from '../components/ProductDetail.jsx'
 import Toast from '../components/Toast.jsx'
 import PageShell from '../components/PageShell.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
@@ -36,7 +37,6 @@ function AdminProducts() {
   const [editingProduct, setEditingProduct] = useState(null)
   const [viewingProduct, setViewingProduct] = useState(null)
   const [showForm, setShowForm] = useState(false)
-  const [showDetails, setShowDetails] = useState(false)
   const [colors, setColors] = useState([])
   const [showFiltersPopup, setShowFiltersPopup] = useState(false) // Popup с фильтрами
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
@@ -452,11 +452,9 @@ function AdminProducts() {
       return
     }
     setViewingProduct(product)
-    setShowDetails(true)
   }
   
   const handleCloseDetails = () => {
-    setShowDetails(false)
     setViewingProduct(null)
   }
   
@@ -1080,15 +1078,10 @@ function AdminProducts() {
         </div>
       )}
 
-      {showDetails && viewingProduct && (
-        <ProductDetailsModal
+      {viewingProduct && (
+        <ProductDetail
           product={viewingProduct}
           onClose={handleCloseDetails}
-          onEdit={handleEditFromDetails}
-          isPublished={isPublished(viewingProduct)}
-          getGenderIcon={getGenderIcon}
-          capitalize={capitalize}
-          formatMoscowTime={formatMoscowTime}
         />
       )}
 
@@ -1317,125 +1310,6 @@ function AdminProducts() {
       )}
     </div>
     </PageShell>
-  )
-}
-
-// Компонент модального окна деталей товара
-function ProductDetailsModal({ product, onClose, onEdit, isPublished, getGenderIcon, capitalize, formatMoscowTime }) {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content product-details-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Детали товара</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
-        
-        <div className="product-details-content">
-          <div className="product-details-top">
-            <div className="product-details-images">
-              {product.images && product.images.length > 0 ? (
-                <div className="product-images-grid">
-                  {product.images.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image.startsWith('http') ? image : `${apiUrl}${image}`}
-                      alt={`${product.name} - фото ${index + 1}`}
-                      className="product-detail-image"
-                      onError={(e) => {
-                        e.target.src = '/logo.jpg'
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="product-image-placeholder-large">
-                  Нет фотографий
-                </div>
-              )}
-            </div>
-            <div className="product-details-dates" aria-label="Даты создания и обновления">
-              <div className="product-details-dates__line">
-                Создан: {product.createdAt ? new Date(product.createdAt).toLocaleString('ru-RU') : '—'}
-              </div>
-              <div className="product-details-dates__line">
-                Обновлён: {product.updatedAt ? new Date(product.updatedAt).toLocaleString('ru-RU') : '—'}
-              </div>
-            </div>
-          </div>
-
-          <div className="product-details-info">
-            <div className="detail-section">
-              <h3>{product.name}</h3>
-            </div>
-
-            {product.description && (
-              <div className="detail-row">
-                <span className="detail-label">Описание:</span>
-                <span className="detail-value">{product.description}</span>
-              </div>
-            )}
-
-            <div className="detail-grid">
-              <div className="detail-row"><span className="detail-label">Бренд:</span><span className="detail-value">{product.brand || '-'}</span></div>
-              <div className="detail-pair-row">
-                <div className="detail-pair-item">
-                  <span className="detail-label">Цена:</span>
-                  <span className="detail-value detail-value--nowrap">{product.price != null ? `${product.price.toLocaleString('ru-RU')}\u00A0₽` : '—'}</span>
-                </div>
-                <div className="detail-pair-item">
-                  <span className="detail-label">Размер:</span>
-                  <span className="detail-value">{product.size || '-'}</span>
-                </div>
-              </div>
-              <div className="detail-pair-row">
-                <div className="detail-pair-item">
-                  <span className="detail-label">Цвет:</span>
-                  <span className="detail-value">{product.color || '-'}</span>
-                </div>
-                <div className="detail-pair-item">
-                  <span className="detail-label">Пол:</span>
-                  <span className="detail-value">
-                    <span className="gender-icon-large" title={product.gender || '-'}>{getGenderIcon(product.gender)}</span>
-                    {product.gender ? ` ${product.gender}` : ''}
-                  </span>
-                </div>
-              </div>
-              <div className="detail-row"><span className="detail-label">Состояние:</span><span className="detail-value">{formatCondition(product.condition)}</span></div>
-              <div className="detail-pair-row">
-                <div className="detail-pair-item">
-                  <span className="detail-label">Номер коробки:</span>
-                  <span className="detail-value">{product.boxNumber || '-'}</span>
-                </div>
-                <div className="detail-pair-item">
-                  <span className="detail-label">Из посылки:</span>
-                  <span className="detail-value">{product.incomingShipmentName || '-'}</span>
-                </div>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Статус публикации в ТГ:</span>
-                <span className="detail-value">
-                  {product.publishedAt ? (
-                    isPublished ? <span style={{ color: '#48bb78', fontWeight: 'bold' }}>Опубликован</span>
-                    : <span style={{ color: '#ed8936', fontWeight: 'bold' }}>Запланировано на {formatMoscowTime(product.publishedAt)}</span>
-                  ) : <span style={{ color: '#e53e3e', fontWeight: 'bold' }}>Не опубликован</span>}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>
-            Закрыть
-          </button>
-          <button className="btn btn-primary" onClick={onEdit}>
-            Редактировать
-          </button>
-        </div>
-      </div>
-    </div>
   )
 }
 

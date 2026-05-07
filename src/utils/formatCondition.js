@@ -11,6 +11,6 @@ export function formatCondition(c) {
   if (v === 'очень хорошее') return 'Очень хорошее'
   if (v === 'отличное') return 'Отличное'
   if (v === 'хорошее') return 'Хорошее'
-  if (v === 'недостаток') return 'Недостаток'
+  if (v === 'недостаток' || v === 'нюанс') return 'Нюанс'
   return String(c).trim().charAt(0).toUpperCase() + String(c).trim().slice(1).toLowerCase()
 }

@@ -722,7 +722,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               <option value="очень хорошее">Очень хорошее</option>
               <option value="отличное">Отличное</option>
               <option value="хорошее">Хорошее</option>
-              <option value="недостаток">Недостаток</option>
+              <option value="нюанс">Нюанс</option>
             </select>
           </div>
 

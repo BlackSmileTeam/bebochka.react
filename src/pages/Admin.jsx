@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
+import PageShell from '../components/PageShell'
 import './Admin.css'
 
 function Admin() {
   return (
-    <div className="container">
+    <PageShell title="Панель администратора">
       <div className="admin-dashboard">
-        <h1>Панель администратора</h1>
         <div className="admin-cards">
           <Link to="/admin/products" className="admin-card">
             <div className="admin-card-icon">📦</div>
@@ -23,9 +23,19 @@ function Admin() {
             <p>Создавайте и планируйте отправку анонсов пользователям</p>
           </Link>
           <Link to="/admin/orders" className="admin-card">
-            <div className="admin-card-icon">📦</div>
+            <div className="admin-card-icon">🧾</div>
             <h2>Заказы</h2>
             <p>Просматривайте и управляйте заказами пользователей</p>
+          </Link>
+          <Link to="/reviews" className="admin-card">
+            <div className="admin-card-icon">⭐</div>
+            <h2>Отзывы</h2>
+            <p>Публичная страница отзывов клиентов</p>
+          </Link>
+          <Link to="/admin/incoming-shipments" className="admin-card">
+            <div className="admin-card-icon">🚚</div>
+            <h2>Поступления</h2>
+            <p>Учитывайте вес, количество, закупку и прибыль по посылкам</p>
           </Link>
           <Link to="/admin/telegram-errors" className="admin-card">
             <div className="admin-card-icon">⚠️</div>
@@ -34,7 +44,7 @@ function Admin() {
           </Link>
         </div>
       </div>
-    </div>
+    </PageShell>
   )
 }
 

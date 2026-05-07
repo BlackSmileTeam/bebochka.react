@@ -98,12 +98,6 @@ function Layout() {
                 >
                   Заказы
                 </Link>
-                <Link
-                  to="/admin/reviews"
-                  className={location.pathname === '/admin/reviews' ? 'active' : ''}
-                >
-                  Отзывы
-                </Link>
               </>
             ) : (
               <>
@@ -122,12 +116,26 @@ function Layout() {
                     >
                       {isAdminUser ? 'Профиль' : 'Заказы'}
                     </Link>
+                    <Link
+                      to="/reviews"
+                      className={location.pathname === '/reviews' ? 'active' : ''}
+                    >
+                      Отзывы
+                    </Link>
                     {isAdminUser && (
                       <Link to="/admin" className="admin-link">
                         Админка
                       </Link>
                     )}
                   </>
+                )}
+                {!isLoggedIn && (
+                  <Link
+                    to="/reviews"
+                    className={location.pathname === '/reviews' ? 'active' : ''}
+                  >
+                    Отзывы
+                  </Link>
                 )}
                 {showShopLoginLink && <Link to="/account">Войти</Link>}
               </>
