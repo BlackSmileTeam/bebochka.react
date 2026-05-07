@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
 import { formatCondition } from '../utils/formatCondition'
+import Toast from './Toast'
 import './ProductDetail.css'
 
 function ProductDetail({ product, onClose, getAvailableQuantity }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isAdding, setIsAdding] = useState(false)
   const [queueLoading, setQueueLoading] = useState(false)
+  const [toast, setToast] = useState(null)
   const { addToCart, cartItems } = useCart()
   const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') : null
   let user = {}
@@ -54,15 +56,15 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
 
   const handleJoinQueue = async () => {
     if (!authToken) {
-      alert('Войдите в аккаунт, чтобы встать в очередь')
+      setToast({ type: 'warning', message: 'Войдите в аккаунт, чтобы встать в очередь' })
       return
     }
     setQueueLoading(true)
     try {
       await api.joinCartQueue(productId)
-      alert('Вы в очереди: когда товар освободится, он попадёт в вашу корзину.')
+      setToast({ type: 'success', message: 'Вы в очереди: когда товар освободится, он попадет в вашу корзину.' })
     } catch (e) {
-      alert(e.message || 'Не удалось добавить в очередь')
+      setToast({ type: 'error', message: e.message || 'Не удалось добавить в очередь' })
     } finally {
       setQueueLoading(false)
     }
@@ -76,7 +78,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
       await addToCart(product)
       onClose()
     } catch (error) {
-      alert(error.message || 'Не удалось добавить товар в корзину')
+      setToast({ type: 'error', message: error.message || 'Не удалось добавить товар в корзину' })
       console.error('Error adding to cart:', error)
     } finally {
       setIsAdding(false)
@@ -311,6 +313,13 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
           </div>
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }

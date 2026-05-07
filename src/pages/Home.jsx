@@ -97,8 +97,7 @@ function Home() {
       // Перезагружаем товары после добавления, чтобы обновить availableQuantity
       await loadProducts()
     } catch (error) {
-      // Показываем ошибку пользователю
-      alert(error.message || 'Не удалось добавить товар в корзину')
+      setToast({ type: 'error', message: error.message || 'Не удалось добавить товар в корзину' })
       console.error('Error in handleAddToCart:', error)
     } finally {
       // Разблокируем кнопку

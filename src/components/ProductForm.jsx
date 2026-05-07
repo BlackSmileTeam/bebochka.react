@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
+import Toast from './Toast'
 import './ProductForm.css'
 
 // Фолбэк-список для автозаполнения названия товара
@@ -46,6 +47,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const fileInputRef = useRef(null)
   const [draggingImage, setDraggingImage] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
+  const [toast, setToast] = useState(null)
 
   const moveImage = (kind, fromIndex, toIndex) => {
     if (fromIndex === toIndex || fromIndex == null || toIndex == null) return
@@ -646,6 +648,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             <div className="form-group">
               <label htmlFor="incomingShipmentId">Поставка</label>
               <select
+                className="form-native-select"
                 id="incomingShipmentId"
                 name="incomingShipmentId"
                 value={formData.incomingShipmentId}
@@ -664,6 +667,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             <div className="form-group">
               <label htmlFor="color">Цвет</label>
               <select
+                className="form-native-select"
                 id="color"
                 name="color"
                 value={formData.color}
@@ -689,6 +693,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             <div className="form-group">
               <label htmlFor="gender">Пол</label>
               <select
+                className="form-native-select"
                 id="gender"
                 name="gender"
                 value={formData.gender}
@@ -705,6 +710,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           <div className="form-group">
             <label htmlFor="condition">Состояние</label>
             <select
+              className="form-native-select"
               id="condition"
               name="condition"
               value={formData.condition}
@@ -730,7 +736,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           </div>
 
           <div className="form-group">
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <label className="form-checkbox-inline">
               <input
                 type="checkbox"
                 checked={scheduleSend}
@@ -756,7 +762,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           </div>
 
           <div className="form-group">
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <label className="form-checkbox-inline">
               <input
                 type="checkbox"
                 checked={scheduleCartUnlock}
@@ -791,9 +797,12 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                   setPreviewLoading(true)
                   try {
                     await api.publishProduct(product.id)
-                    alert('Товар опубликован в каталоге на сайте (время МСК). В Telegram пост не отправляется, пока включено в настройках API.')
+                    setToast({
+                      type: 'success',
+                      message: 'Товар опубликован в каталоге (МСК). В Telegram пост не отправляется, пока отключен флаг PostNewProductsToChannel.'
+                    })
                   } catch (e) {
-                    alert(e.message || 'Не удалось обновить публикацию')
+                    setToast({ type: 'error', message: e.message || 'Не удалось обновить публикацию' })
                   } finally {
                     setPreviewLoading(false)
                   }
@@ -824,6 +833,13 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               <img src={previewImage.src} alt={previewImage.label || 'Фото'} className="image-lightbox-image" />
             </div>
           </div>
+        )}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
         )}
       </div>
     </div>

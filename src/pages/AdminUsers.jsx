@@ -21,6 +21,7 @@ function AdminUsers() {
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [openActionsFor, setOpenActionsFor] = useState(null)
 
   const formatDate = (value) => {
     if (!value) return '—'
@@ -240,6 +241,7 @@ function AdminUsers() {
                 <th>Полное имя</th>
                 <th>Админ</th>
                 <th>Создан</th>
+                <th>Последний вход</th>
                 <th>Действия</th>
               </tr>
             </thead>
@@ -265,21 +267,60 @@ function AdminUsers() {
                       <td data-label="Полное имя" className="fullname-cell">{user.fullName || user.FullName || '-'}</td>
                       <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
                       <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
+                      <td data-label="Последний вход" className="last-login-cell">{formatDate(user.lastLoginAt || user.LastLoginAt)}</td>
                       <td data-label="Действия" className="actions-cell">
-                        <button
-                          className="btn btn-small btn-edit"
-                          onClick={() => setShowPasswordForm(user.id || user.Id)}
-                        >
-                          Изменить пароль
-                        </button>
-                        {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
+                        <div className="actions-menu-desktop">
                           <button
-                            className="btn btn-small btn-delete"
-                            onClick={() => handleDelete(user.id || user.Id)}
+                            type="button"
+                            className="btn btn-icon-dots"
+                            aria-label="Действия"
+                            onClick={() => setOpenActionsFor(openActionsFor === (user.id || user.Id) ? null : (user.id || user.Id))}
                           >
-                            Удалить
+                            ⋯
                           </button>
-                        )}
+                          {openActionsFor === (user.id || user.Id) && (
+                            <div className="actions-dropdown">
+                              <button
+                                type="button"
+                                className="actions-dropdown-item"
+                                onClick={() => {
+                                  setShowPasswordForm(user.id || user.Id)
+                                  setOpenActionsFor(null)
+                                }}
+                              >
+                                Изменить пароль
+                              </button>
+                              {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
+                                <button
+                                  type="button"
+                                  className="actions-dropdown-item actions-dropdown-item--danger"
+                                  onClick={() => {
+                                    handleDelete(user.id || user.Id)
+                                    setOpenActionsFor(null)
+                                  }}
+                                >
+                                  Удалить
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="actions-mobile-inline">
+                          <button
+                            className="btn btn-small btn-edit"
+                            onClick={() => setShowPasswordForm(user.id || user.Id)}
+                          >
+                            Изменить пароль
+                          </button>
+                          {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
+                            <button
+                              className="btn btn-small btn-delete"
+                              onClick={() => handleDelete(user.id || user.Id)}
+                            >
+                              Удалить
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                 )
