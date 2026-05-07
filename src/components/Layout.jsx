@@ -81,12 +81,6 @@ function Layout() {
                   Товары
                 </Link>
                 <Link
-                  to="/admin/announcements"
-                  className={location.pathname === '/admin/announcements' ? 'active' : ''}
-                >
-                  Анонсы
-                </Link>
-                <Link
                   to="/admin/users"
                   className={location.pathname === '/admin/users' ? 'active' : ''}
                 >

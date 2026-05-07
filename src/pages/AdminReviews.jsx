@@ -120,39 +120,54 @@ function AdminReviews() {
           <form className="admin-reviews-create-form" onSubmit={handleCreateReview}>
             <h3>Добавить отзыв вручную</h3>
             <div className="admin-reviews-create-grid">
-              <input
-                type="text"
-                placeholder="Номер заказа (опционально)"
-                value={form.orderNumber}
-                onChange={(e) => onFormChange('orderNumber', e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Клиент (опционально)"
-                value={form.customerName}
-                onChange={(e) => onFormChange('customerName', e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Телефон (опционально)"
-                value={form.customerPhone}
-                onChange={(e) => onFormChange('customerPhone', e.target.value)}
-              />
-              <select value={form.rating} onChange={(e) => onFormChange('rating', e.target.value)}>
-                <option value={5}>5</option>
-                <option value={4}>4</option>
-                <option value={3}>3</option>
-                <option value={2}>2</option>
-                <option value={1}>1</option>
-              </select>
+              <label className="admin-review-field">
+                <span className="admin-review-field-label">Номер заказа</span>
+                <input
+                  type="text"
+                  placeholder="Опционально"
+                  value={form.orderNumber}
+                  onChange={(e) => onFormChange('orderNumber', e.target.value)}
+                />
+              </label>
+              <label className="admin-review-field">
+                <span className="admin-review-field-label">Клиент</span>
+                <input
+                  type="text"
+                  placeholder="Опционально"
+                  value={form.customerName}
+                  onChange={(e) => onFormChange('customerName', e.target.value)}
+                />
+              </label>
+              <label className="admin-review-field">
+                <span className="admin-review-field-label">Телефон</span>
+                <input
+                  type="text"
+                  placeholder="Опционально"
+                  value={form.customerPhone}
+                  onChange={(e) => onFormChange('customerPhone', e.target.value)}
+                />
+              </label>
+              <label className="admin-review-field">
+                <span className="admin-review-field-label">Оценка</span>
+                <select value={form.rating} onChange={(e) => onFormChange('rating', e.target.value)}>
+                  <option value={5}>5 - Отлично</option>
+                  <option value={4}>4 - Хорошо</option>
+                  <option value={3}>3 - Нормально</option>
+                  <option value={2}>2 - Плохо</option>
+                  <option value={1}>1 - Очень плохо</option>
+                </select>
+              </label>
             </div>
-            <textarea
-              placeholder="Комментарий"
-              value={form.comment}
-              onChange={(e) => onFormChange('comment', e.target.value)}
-              rows={3}
-              required
-            />
+            <label className="admin-review-field admin-review-field--full">
+              <span className="admin-review-field-label">Комментарий</span>
+              <textarea
+                placeholder="Текст отзыва"
+                value={form.comment}
+                onChange={(e) => onFormChange('comment', e.target.value)}
+                rows={3}
+                required
+              />
+            </label>
             <label className="admin-reviews-upload">
               Фото (можно несколько)
               <input
