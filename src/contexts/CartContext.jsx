@@ -8,6 +8,11 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [sessionId] = useState(() => getSessionId())
+  const isAdminPath = () => {
+    if (typeof window === 'undefined') return false
+    const path = window.location.pathname || ''
+    return path.startsWith('/admin')
+  }
 
   // Загружаем корзину с сервера при монтировании и после входа
   useEffect(() => {
@@ -16,6 +21,11 @@ export function CartProvider({ children }) {
 
   const loadCart = useCallback(async () => {
     try {
+      if (isAdminPath()) {
+        setCartItems([])
+        setLoading(false)
+        return
+      }
       const token = localStorage.getItem('authToken')
       if (!token && !sessionId) {
         console.warn('[CartContext] No session for guest cart')
