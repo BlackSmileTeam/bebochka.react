@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useCart } from '../contexts/CartContext'
 import CookieNotice from './CookieNotice'
+import Toast from './Toast'
 import './Layout.css'
 
 function readUser() {
@@ -34,12 +35,26 @@ function Layout() {
   const isLoggedIn = useAuthNav()
 
   const { cartItems } = useCart()
+  const [toast, setToast] = useState(null)
   const totalItems = Array.isArray(cartItems)
     ? cartItems.reduce((total, item) => total + (item.quantity || 0), 0)
     : 0
 
   const logoTo = isLoggedIn ? '/' : '/account'
   const showShopLoginLink = !isLoggedIn && location.pathname !== '/account'
+
+  useEffect(() => {
+    const onToast = (event) => {
+      const message = event?.detail?.message
+      if (!message) return
+      setToast({
+        type: event.detail.type || 'info',
+        message
+      })
+    }
+    window.addEventListener('bebochka-toast', onToast)
+    return () => window.removeEventListener('bebochka-toast', onToast)
+  }, [])
 
   return (
     <div className="layout">
@@ -124,6 +139,13 @@ function Layout() {
         <Outlet />
       </main>
       <CookieNotice />
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <footer className="footer">
         <div className="container">
           <p className="footer-text">

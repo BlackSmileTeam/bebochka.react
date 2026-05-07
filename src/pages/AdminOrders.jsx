@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, Fragment } from 'react'
 import { api } from '../services/api'
 import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
 import PageShell from '../components/PageShell'
+import Toast from '../components/Toast'
 import './AdminOrders.css'
 
 function OrderDiscountSingleModal({ orderId, order, getOrderNumber, getCustomerName, getTotalAmount, getFinalAmount, formatPrice, hasDiscount, onClose, onApply, onRemove }) {
@@ -109,6 +110,12 @@ function AdminOrders() {
   const [loadingAdminCart, setLoadingAdminCart] = useState(false)
   const [removingAdminCartItemId, setRemovingAdminCartItemId] = useState(null)
   const [statusChangeWarning, setStatusChangeWarning] = useState(null)
+  const [toast, setToast] = useState(null)
+
+  const showToast = (message, type = 'error') => {
+    if (!message) return
+    setToast({ message, type })
+  }
 
   useEffect(() => {
     loadOrders()
@@ -122,7 +129,7 @@ function AdminOrders() {
       setOrders(data)
     } catch (err) {
       console.error('Ошибка загрузки заказов:', err)
-      alert('Ошибка при загрузке заказов: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка при загрузке заказов: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setLoading(false)
     }
@@ -284,7 +291,7 @@ function AdminOrders() {
       })
     } catch (err) {
       console.error('Ошибка обновления статуса:', err)
-      alert('Ошибка при обновлении статуса: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка при обновлении статуса: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setUpdatingStatuses(prev => {
         const next = new Set(prev)
@@ -324,16 +331,16 @@ function AdminOrders() {
       const failCount = results.filter(r => !r.success).length
       
       if (failCount > 0) {
-        alert(`Обновлено: ${successCount}, Ошибок: ${failCount}`)
+        showToast(`Обновлено: ${successCount}, Ошибок: ${failCount}`, 'warning')
       } else {
-        alert(`Успешно обновлено ${successCount} заказ(ов)`)
+        showToast(`Успешно обновлено ${successCount} заказ(ов)`, 'success')
       }
       
       await loadOrders()
       setSelectedOrders(new Set())
     } catch (err) {
       console.error('Ошибка массового обновления:', err)
-      alert('Ошибка при обновлении статусов: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка при обновлении статусов: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setBulkUpdating(false)
     }
@@ -341,7 +348,7 @@ function AdminOrders() {
 
   const handleBulkStatusChange = async (newStatus) => {
     if (selectedOrders.size === 0) {
-      alert('Выберите хотя бы один заказ')
+      showToast('Выберите хотя бы один заказ', 'warning')
       return
     }
 
@@ -394,7 +401,7 @@ function AdminOrders() {
       await loadOrders()
     } catch (err) {
       console.error('Ошибка удаления заказа:', err)
-      alert('Ошибка при удалении заказа: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка при удалении заказа: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setDeletingOrderId(null)
     }
@@ -512,7 +519,7 @@ function AdminOrders() {
       await loadAdminCartItems()
     } catch (err) {
       console.error('Ошибка удаления товара из корзины:', err)
-      alert('Ошибка удаления из корзины: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка удаления из корзины: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setRemovingAdminCartItemId(null)
     }
@@ -566,7 +573,7 @@ function AdminOrders() {
       setExpandedOrderIds(prev => new Set(prev).add(orderId))
     } catch (err) {
       console.error('Ошибка удаления позиции:', err)
-      alert('Ошибка при удалении позиции: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка при удалении позиции: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setDeletingItemKey(null)
     }
@@ -589,7 +596,7 @@ function AdminOrders() {
       }))
     } catch (err) {
       console.error('Ошибка отметки «в посылку»:', err)
-      alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setInParcelTogglingKey(null)
     }
@@ -609,7 +616,7 @@ function AdminOrders() {
       await loadOrders()
     } catch (err) {
       console.error('Ошибка применения скидки:', err)
-      alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
     } finally {
       setApplyingDiscount(false)
     }
@@ -622,7 +629,7 @@ function AdminOrders() {
       setSaleModalOpen(false)
     } catch (err) {
       console.error('Ошибка отмены скидки:', err)
-      alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
     }
   }
 
@@ -633,7 +640,7 @@ function AdminOrders() {
       await loadOrders()
     } catch (err) {
       console.error('Ошибка установки скидки:', err)
-      alert('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
+      showToast('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
     }
   }
 
@@ -1360,6 +1367,13 @@ function AdminOrders() {
         >
           <img src={imageModalUrl} alt="" onClick={(e) => e.stopPropagation()} />
         </div>
+      )}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
     </PageShell>

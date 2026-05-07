@@ -8,6 +8,10 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [sessionId] = useState(() => getSessionId())
+  const emitToast = (message, type = 'error') => {
+    if (!message || typeof window === 'undefined') return
+    window.dispatchEvent(new CustomEvent('bebochka-toast', { detail: { type, message } }))
+  }
   const isAdminPath = () => {
     if (typeof window === 'undefined') return false
     const path = window.location.pathname || ''
@@ -101,7 +105,7 @@ export function CartProvider({ children }) {
       }
     } catch (error) {
       console.error('Error removing from cart:', error)
-      alert(error?.message || 'Не удалось удалить товар из корзины')
+      emitToast(error?.message || 'Не удалось удалить товар из корзины')
     }
   }, [sessionId, loadCart])
 
@@ -121,7 +125,7 @@ export function CartProvider({ children }) {
       }
     } catch (error) {
       console.error('Error updating quantity:', error)
-      alert(error?.message || 'Не удалось изменить количество')
+      emitToast(error?.message || 'Не удалось изменить количество')
     }
   }, [sessionId, loadCart, removeFromCart])
 
@@ -131,7 +135,7 @@ export function CartProvider({ children }) {
       await loadCart() // Перезагружаем корзину
     } catch (error) {
       console.error('Error clearing cart:', error)
-      alert(error?.message || 'Не удалось очистить корзину')
+      emitToast(error?.message || 'Не удалось очистить корзину')
     }
   }, [sessionId, loadCart])
 
