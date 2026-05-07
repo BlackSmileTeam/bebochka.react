@@ -1195,6 +1195,22 @@ export const api = {
   },
 
   /**
+   * Gets all product name suggestions with optional search.
+   * @param {string} search
+   * @returns {Promise<Array>}
+   */
+  async getProductNameSuggestions(search = null) {
+    try {
+      const params = search ? { search } : {}
+      const response = await apiClient.get('/productnamesuggestions', { params })
+      return Array.isArray(response.data) ? response.data : []
+    } catch (error) {
+      console.error('[API] Error fetching product name suggestions:', error)
+      return []
+    }
+  },
+
+  /**
    * Creates a new brand
    * @param {Object} brand - Brand data
    * @returns {Promise<Object>} Created brand

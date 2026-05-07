@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import './ProductForm.css'
 
-// Типы одежды для автозаполнения названия товара
-const PRODUCT_NAME_SUGGESTIONS = [
+// Фолбэк-список для автозаполнения названия товара
+const DEFAULT_PRODUCT_NAME_SUGGESTIONS = [
   'Футболка', 'Куртка', 'Платье', 'Брюки', 'Шорты', 'Юбка', 'Свитер', 'Кардиган',
   'Жилет', 'Комбинезон', 'Сарафан', 'Боди', 'Пижама', 'Халат', 'Пальто', 'Пуховик',
   'Джинсы', 'Леггинсы', 'Лосины', 'Костюм', 'Водолазка', 'Блузка', 'Рубашка',
@@ -41,6 +41,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const brandDropdownRef = useRef(null)
   const [nameSuggestions, setNameSuggestions] = useState([])
   const [showNameDropdown, setShowNameDropdown] = useState(false)
+  const [allNameSuggestions, setAllNameSuggestions] = useState(DEFAULT_PRODUCT_NAME_SUGGESTIONS)
   const nameDropdownRef = useRef(null)
   const fileInputRef = useRef(null)
   const [draggingImage, setDraggingImage] = useState(null)
@@ -100,11 +101,30 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     }
   }, [brandSearch])
 
+  useEffect(() => {
+    let mounted = true
+    api.getProductNameSuggestions()
+      .then((rows) => {
+        if (!mounted) return
+        const names = rows
+          .map((r) => (typeof r === 'string' ? r : (r.name || r.Name || '')).trim())
+          .filter(Boolean)
+        if (names.length > 0) {
+          setAllNameSuggestions(names)
+        }
+      })
+      .catch(() => {
+        // keep fallback list
+      })
+
+    return () => { mounted = false }
+  }, [])
+
   // Name autocomplete: filter suggestions when user types
   useEffect(() => {
     const query = (formData.name || '').trim().toLowerCase()
     if (query.length >= 2) {
-      const filtered = PRODUCT_NAME_SUGGESTIONS.filter(s =>
+      const filtered = allNameSuggestions.filter(s =>
         s.toLowerCase().includes(query)
       )
       setNameSuggestions(filtered)
@@ -113,7 +133,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       setNameSuggestions([])
       setShowNameDropdown(false)
     }
-  }, [formData.name])
+  }, [formData.name, allNameSuggestions])
 
   // Close dropdowns when clicking outside
   useEffect(() => {
