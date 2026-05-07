@@ -8,6 +8,14 @@ import { formatCondition } from '../utils/formatCondition'
 import './Home.css'
 
 const CATALOG_SUBTITLE = 'Недорогая и качественная одежда для мальчиков и девочек от 62 до 152 размера \u{1F9F8}'
+const CONDITION_PRIORITY = {
+  'состояние новой вещи': 0,
+  'новая вещь': 0,
+  'новая': 0,
+  'очень хорошее': 1,
+  'хорошее': 2,
+  'отличное': 2
+}
 
 function Home() {
   const [products, setProducts] = useState([])
@@ -145,12 +153,22 @@ function Home() {
         String(a).localeCompare(String(b), 'ru')
       )
 
+    const conditions = [...new Set(products.map((p) => p.condition).filter(Boolean))]
+      .sort((a, b) => {
+        const av = String(a).trim().toLowerCase()
+        const bv = String(b).trim().toLowerCase()
+        const ap = CONDITION_PRIORITY[av] ?? 999
+        const bp = CONDITION_PRIORITY[bv] ?? 999
+        if (ap !== bp) return ap - bp
+        return String(a).localeCompare(String(b), 'ru')
+      })
+
     return {
       brands: collect('brand'),
       sizes: collect('size'),
       colors: collect('color'),
       genders: collect('gender'),
-      conditions: collect('condition')
+      conditions
     }
   }, [products])
 

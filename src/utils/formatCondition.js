@@ -5,7 +5,9 @@
  */
 export function formatCondition(c) {
   if (c == null || String(c).trim() === '') return '-'
-  const v = String(c).trim()
-  if (v === 'новая' || v === 'новая вещь') return 'Новая вещь'
-  return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase()
+  const v = String(c).trim().toLowerCase()
+  if (v === 'новая' || v === 'новая вещь' || v === 'состояние новой вещи') return 'Состояние новой вещи'
+  if (v === 'очень хорошее') return 'Очень хорошее'
+  if (v === 'хорошее' || v === 'отличное') return 'Хорошее'
+  return String(c).trim().charAt(0).toUpperCase() + String(c).trim().slice(1).toLowerCase()
 }
