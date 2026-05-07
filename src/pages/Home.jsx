@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { api } from '../services/api'
 import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
@@ -18,6 +18,7 @@ const CONDITION_PRIORITY = {
   'нюанс': 4,
   'недостаток': 4
 }
+const ITEMS_PER_PAGE = 24
 
 function Home() {
   const [products, setProducts] = useState([])
@@ -28,6 +29,8 @@ function Home() {
   const [joiningQueue, setJoiningQueue] = useState(new Set())
   const [myQueueProductIds, setMyQueueProductIds] = useState(new Set())
   const [toast, setToast] = useState(null)
+  const [page, setPage] = useState(1)
+  const loadMoreRef = useRef(null)
   const [filters, setFilters] = useState({
     brand: '',
     size: '',
@@ -185,6 +188,33 @@ function Home() {
     })
   }, [products, filters])
 
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE))
+  const hasMoreProducts = page < totalPages
+
+  const visibleProducts = useMemo(
+    () => filteredProducts.slice(0, page * ITEMS_PER_PAGE),
+    [filteredProducts, page]
+  )
+
+  useEffect(() => {
+    setPage(1)
+  }, [filters, products.length])
+
+  useEffect(() => {
+    if (!hasMoreProducts || !loadMoreRef.current) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (entry?.isIntersecting) {
+          setPage((prev) => Math.min(prev + 1, totalPages))
+        }
+      },
+      { rootMargin: '320px 0px', threshold: 0.01 }
+    )
+    observer.observe(loadMoreRef.current)
+    return () => observer.disconnect()
+  }, [hasMoreProducts, totalPages])
+
   const formatGender = (gender) => {
     if (!gender) return ''
     return gender.charAt(0).toUpperCase() + gender.slice(1)
@@ -249,7 +279,7 @@ function Home() {
         </div>
       ) : (
         <div className="products-grid">
-          {filteredProducts.map((product) => (
+          {visibleProducts.map((product) => (
             <div 
               key={product.id} 
               className="product-card"
@@ -405,6 +435,23 @@ function Home() {
           ))}
         </div>
       )}
+      {filteredProducts.length > 0 && (
+        <div className="catalog-pagination">
+          <span>
+            Показано {visibleProducts.length} из {filteredProducts.length} товаров · страница {Math.min(page, totalPages)} из {totalPages}
+          </span>
+          {hasMoreProducts && (
+            <button
+              type="button"
+              className="catalog-load-more"
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+            >
+              Показать еще
+            </button>
+          )}
+        </div>
+      )}
+      {hasMoreProducts && <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />}
       
       {selectedProduct && (
         <ProductDetail 
