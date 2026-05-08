@@ -1,6 +1,5 @@
-# Деплой SPA + nginx на VPS (порт по умолчанию 55502 — под системный nginx proxy_pass).
-# Секреты те же по смыслу, что в репозитории API (PROD_HOST, PROD_USER, PROD_SSH_PRIVATE_KEY, PROD_SSH_PORT).
-# API должен быть доступен на хосте 127.0.0.1:55501 (как в Bebochka.Api deploy).
+# Деплой SPA + nginx на VPS (:55502). VITE_API_URL — секрет или https://bebochka.ru при сборке.
+# Nginx в образе проксирует /api на сервис backend:44315 (docker-compose на сервере).
 
 name: Deploy frontend to VPS
 
@@ -42,14 +41,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build image (standalone nginx → host API :55501)
+      - name: Build image
         run: |
           docker buildx create --use 2>/dev/null || true
           VITE="${{ secrets.VITE_API_URL }}"
           if [ -z "$VITE" ]; then VITE="https://bebochka.ru"; fi
           docker buildx build \
             --build-arg VITE_API_URL="$VITE" \
-            --build-arg DEPLOY_MODE=standalone \
             -t "$IMAGE_NAME:latest" \
             --platform linux/amd64 \
             --load \
@@ -108,7 +106,6 @@ jobs:
             docker run -d \
               --name $IMAGE_NAME \
               --restart unless-stopped \
-              --add-host=host.docker.internal:host-gateway \
               -p ${HOST_PORT}:${CONTAINER_PORT} \
               $IMAGE_NAME:latest
             sleep 2
