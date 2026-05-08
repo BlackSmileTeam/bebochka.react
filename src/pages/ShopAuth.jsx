@@ -105,11 +105,15 @@ function ShopAuth() {
     window.location.reload()
   }, [searchParams, navigate])
 
-  const apiOrigin = getApiPublicOrigin()
-
   const startVkOAuth = () => {
     setError('')
-    const u = new URL(`${apiOrigin}/api/auth/vk/start`)
+    // Тот же origin, что в адресной строке (www / apex / https), чтобы не уводить на http://IP из VITE
+    // и не смешивать хосты — иначе Chrome может показывать предупреждение о «обманной» странице.
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : getApiPublicOrigin()
+    const u = new URL(`${origin}/api/auth/vk/start`)
     u.searchParams.set('returnUrl', returnAfterAuth)
     if (sessionId) u.searchParams.set('sessionId', sessionId)
     // Нажатие кнопки "Войти через ВК" считается действием пользователя,
