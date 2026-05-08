@@ -1,6 +1,5 @@
-# Деплой SPA + nginx на VPS (:55502). VITE_API_URL — секрет или https://bebochka.ru при сборке.
-# Nginx в образе проксирует /api на сервис backend:44315 (docker-compose на сервере).
-# Кэш слоёв Docker — GitHub Actions cache (Docker Hub не нужен).
+# Деплой SPA + nginx на VPS (:55502). /api и /uploads → host.docker.internal:55501 (контейнер API на хосте).
+# Контейнер: --add-host=host.docker.internal:host-gateway. VITE_API_URL — секрет или https://bebochka.ru.
 
 name: Deploy frontend to VPS
 
@@ -143,6 +142,7 @@ jobs:
             docker run -d \
               --name $IMAGE_NAME \
               --restart unless-stopped \
+              --add-host=host.docker.internal:host-gateway \
               -p ${HOST_PORT}:${CONTAINER_PORT} \
               $IMAGE_NAME:latest
             sleep 2
