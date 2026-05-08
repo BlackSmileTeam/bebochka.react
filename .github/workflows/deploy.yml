@@ -1,4 +1,8 @@
-name: Frontend Deployment Pipeline
+# Деплой SPA + nginx на VPS (порт по умолчанию 55502 — под системный nginx proxy_pass).
+# Секреты те же по смыслу, что в репозитории API (PROD_HOST, PROD_USER, PROD_SSH_PRIVATE_KEY, PROD_SSH_PORT).
+# API должен быть доступен на хосте 127.0.0.1:55501 (как в Bebochka.Api deploy).
+
+name: Deploy frontend to VPS
 
 on:
   push:
@@ -6,237 +10,108 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKERFILE_PATH: Dockerfile
-  CONTAINER_PORT: 80
-  HOST_PORT: 55502
-  DEPLOY_DIR: /opt/bebochka
   IMAGE_NAME: bebochka-frontend
+  HOST_PORT: '55502'
+  CONTAINER_PORT: '80'
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-    - name: Validate SSH Key
-      run: |
-        if [ -z "${{ secrets.PROD_HOST }}" ]; then
-          echo "Missing secret: PROD_HOST"
-          exit 1
-        fi
-        if [ -z "${{ secrets.PROD_USER }}" ]; then
-          echo "Missing secret: PROD_USER"
-          exit 1
-        fi
-        if [ -z "${{ secrets.PROD_SSH_PRIVATE_KEY }}" ]; then
-          echo "Missing secret: PROD_SSH_PRIVATE_KEY"
-          exit 1
-        fi
-        mkdir -p ~/.ssh
-        echo "$SSH_KEY" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
-        echo "SSH key validated successfully"
-      env:
-        SSH_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-
-  test-connection:
-    needs: validate
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || success() }}
-    steps:
-    - name: Test SSH connection
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.PROD_HOST }}
-        port: ${{ secrets.PROD_SSH_PORT }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-        script: |
-          echo "=== SSH Connection Test ==="
-          echo "Connection successful!"
-          echo "Docker version: $(docker --version)"
-          echo "Disk space: $(df -h)"
-          echo "Existing containers:"
-          docker ps -a
-          echo "=== Test completed successfully ==="
-
-  test:
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: |
-        npm ci
-        
-    - name: Build project
-      run: |
-        npm run build
-      env:
-        VITE_API_URL: http://157.22.199.24:55501
-        
-    - name: Run tests (if available)
-      run: |
-        if [ -f "package.json" ] && grep -q '"test"' package.json; then
-          npm test
-        else
-          echo "No test script found, skipping tests"
-        fi
-      continue-on-error: true
+      - name: Validate secrets
+        run: |
+          set -e
+          missing=0
+          [ -z "${{ secrets.PROD_HOST }}" ] && echo "Missing PROD_HOST" && missing=1 || true
+          [ -z "${{ secrets.PROD_USER }}" ] && echo "Missing PROD_USER" && missing=1 || true
+          [ -z "${{ secrets.PROD_SSH_PRIVATE_KEY }}" ] && echo "Missing PROD_SSH_PRIVATE_KEY" && missing=1 || true
+          [ -z "${{ secrets.PROD_SSH_PORT }}" ] && echo "Missing PROD_SSH_PORT" && missing=1 || true
+          [ "$missing" -ne 0 ] && exit 1
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "${{ secrets.PROD_SSH_PORT }}" "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null \
+            || ssh-keyscan "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts
 
   build:
-    needs: [validate, test]
+    needs: validate
     runs-on: ubuntu-latest
-    outputs:
-      docker_tag: ${{ steps.determine_tag.outputs.TAG }}
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
 
-    - name: Determine Docker tag
-      id: determine_tag
-      run: |
-        if [ -n "$(git tag --points-at HEAD)" ]; then
-          echo "TAG=$(git tag --points-at HEAD)" >> $GITHUB_OUTPUT
-        else
-          echo "TAG=$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_OUTPUT
-        fi
-        echo "Using tag: $TAG"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Build image (standalone nginx → host API :55501)
+        run: |
+          docker buildx create --use 2>/dev/null || true
+          VITE="${{ secrets.VITE_API_URL }}"
+          if [ -z "$VITE" ]; then VITE="https://bebochka.ru"; fi
+          docker buildx build \
+            --build-arg VITE_API_URL="$VITE" \
+            --build-arg DEPLOY_MODE=standalone \
+            -t "$IMAGE_NAME:latest" \
+            --platform linux/amd64 \
+            --load \
+            .
 
-    - name: Build Docker image
-      run: |
-        docker buildx create --use
-        docker buildx build \
-          -f ${{ env.DOCKERFILE_PATH }} \
-          -t ${{ env.IMAGE_NAME }}:${{ steps.determine_tag.outputs.TAG }} \
-          -t ${{ env.IMAGE_NAME }}:latest \
-          --build-arg VITE_API_URL=http://157.22.199.24:55501 \
-          --platform linux/amd64 \
-          --load \
-          .
+      - name: Save image
+        run: docker save ${{ env.IMAGE_NAME }}:latest | gzip > ${{ env.IMAGE_NAME }}.tar.gz
 
-    - name: Save Docker image
-      run: |
-        docker save ${{ env.IMAGE_NAME }}:latest | gzip > ${{ env.IMAGE_NAME }}.tar.gz
-
-    - name: Upload Docker image artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: docker-image
-        path: ${{ env.IMAGE_NAME }}.tar.gz
-        retention-days: 1
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-frontend
+          path: ${{ env.IMAGE_NAME }}.tar.gz
+          retention-days: 1
 
   deploy:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Download Docker image artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: docker-image
-        path: .
+      - name: Download image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image-frontend
+          path: .
 
-    - name: Prepare deployment directory
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-        port: ${{ secrets.PROD_SSH_PORT }}
-        script: |
-          mkdir -p ${{ env.DEPLOY_DIR }}/frontend
+      - name: Copy image to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT }}
+          source: "${{ env.IMAGE_NAME }}.tar.gz"
+          target: "/tmp"
+          overwrite: true
 
-    - name: Copy Docker image to server
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-        port: ${{ secrets.PROD_SSH_PORT }}
-        source: "${{ env.IMAGE_NAME }}.tar.gz"
-        target: "/tmp/"
-
-    - name: Deploy application
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-        port: ${{ secrets.PROD_SSH_PORT }}
-        envs: CONTAINER_PORT,HOST_PORT,IMAGE_NAME,DEPLOY_DIR
-        script: |
-          #!/bin/bash
-          set -euo pipefail
-
-          # Load Docker image
-          echo "Loading Docker image..."
-          docker load < /tmp/$IMAGE_NAME.tar.gz
-          rm /tmp/$IMAGE_NAME.tar.gz
-
-          # Stop existing container
-          docker stop $IMAGE_NAME || true
-          docker rm $IMAGE_NAME || true
-
-          # Stop any container using port 80
-          echo "Checking for containers using port $HOST_PORT..."
-          EXISTING_CONTAINER=$(docker ps -q -f publish=$HOST_PORT)
-          if [ -n "$EXISTING_CONTAINER" ]; then
-            echo "Stopping container using port $HOST_PORT: $EXISTING_CONTAINER"
-            docker stop $EXISTING_CONTAINER || true
-            docker rm $EXISTING_CONTAINER || true
-          fi
-
-          # Run new container
-          docker run -d \
-            --name $IMAGE_NAME \
-            --restart unless-stopped \
-            -p $HOST_PORT:$CONTAINER_PORT \
-            $IMAGE_NAME:latest
-
-          # Clean up old images
-          docker image prune -f
-
-          echo "=== Deployment successful ==="
-      env:
-        CONTAINER_PORT: ${{ env.CONTAINER_PORT }}
-        HOST_PORT: ${{ env.HOST_PORT }}
-        IMAGE_NAME: ${{ env.IMAGE_NAME }}
-        DEPLOY_DIR: ${{ env.DEPLOY_DIR }}
-
-  post-deploy-test:
-    needs: [deploy, test-connection]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Verify deployment
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.PROD_HOST }}
-        username: ${{ secrets.PROD_USER }}
-        key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-        port: ${{ secrets.PROD_SSH_PORT }}
-        script: |
-          echo "=== Deployment Verification ==="
-          echo "Container status:"
-          docker ps -a | grep ${{ env.IMAGE_NAME }} || echo "Container not found"
-          echo ""
-          echo "Container logs (last 50 lines):"
-          docker logs --tail 50 ${{ env.IMAGE_NAME }} || echo "Could not retrieve logs"
-          echo ""
-          echo "Checking frontend health..."
-          sleep 5
-          curl -f http://localhost:${{ env.HOST_PORT }}/ || echo "Frontend health check failed"
-          echo ""
-          echo "=== Verification completed ==="
-
+      - name: Load and run container
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            IMAGE_NAME="${{ env.IMAGE_NAME }}"
+            HOST_PORT="${{ env.HOST_PORT }}"
+            CONTAINER_PORT="${{ env.CONTAINER_PORT }}"
+            docker load < /tmp/$IMAGE_NAME.tar.gz
+            rm -f /tmp/$IMAGE_NAME.tar.gz
+            docker stop $IMAGE_NAME 2>/dev/null || true
+            docker rm -f $IMAGE_NAME 2>/dev/null || true
+            docker run -d \
+              --name $IMAGE_NAME \
+              --restart unless-stopped \
+              --add-host=host.docker.internal:host-gateway \
+              -p ${HOST_PORT}:${CONTAINER_PORT} \
+              $IMAGE_NAME:latest
+            sleep 2
+            docker ps --filter "name=$IMAGE_NAME"
+            curl -sf --max-time 10 "http://127.0.0.1:${HOST_PORT}/" | head -c 120 && echo " ... OK index" || echo "WARN: curl frontend root"
+            echo "=== Frontend deploy done (listen :${HOST_PORT}) ==="
