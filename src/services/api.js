@@ -1,12 +1,10 @@
 import axios from 'axios'
 import { getApiBaseUrl } from '../utils/apiBase'
 
-const API_BASE_URL = getApiBaseUrl()
-
-console.log('API Base URL:', API_BASE_URL)
+let _loggedApiBase = false
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '',
   headers: {
     'Content-Type': 'application/json'
   },
@@ -20,6 +18,13 @@ const apiClient = axios.create({
 // Request interceptor for logging and adding auth token
 apiClient.interceptors.request.use(
   (config) => {
+    // На каждый запрос: актуальный origin (HTTPS-страница не ходит на http:// IP из VITE_API_URL)
+    config.baseURL = getApiBaseUrl()
+    if (!_loggedApiBase) {
+      console.log('API Base URL:', config.baseURL)
+      _loggedApiBase = true
+    }
+
     // Add auth token to requests if available
     const token = localStorage.getItem('authToken')
     if (token) {
@@ -354,7 +359,7 @@ export const api = {
       const jsonSize = JSON.stringify(productData).length
       console.log('[API] Sending JSON request with', productData.images.length, 'images')
       console.log('[API] Total JSON size:', jsonSize, 'bytes (', (jsonSize / 1024).toFixed(2), 'KB)')
-      console.log('[API] Request URL:', `${API_BASE_URL}/products`)
+      console.log('[API] Request URL:', `${getApiBaseUrl()}/products`)
       console.log('[API] Auth token:', localStorage.getItem('authToken') ? 'Present' : 'Missing')
       
       const response = await apiClient.post('/products', productData, {
@@ -553,7 +558,7 @@ export const api = {
    */
   async getColors() {
     try {
-      console.log('[API] Fetching colors from:', `${API_BASE_URL}/colors`)
+      console.log('[API] Fetching colors from:', `${getApiBaseUrl()}/colors`)
       
       const response = await apiClient.get('/colors', {
         headers: {
