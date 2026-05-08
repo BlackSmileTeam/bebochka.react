@@ -5,6 +5,7 @@ import ProductDetail from '../components/ProductDetail'
 import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
 import { formatCondition } from '../utils/formatCondition'
+import { getApiPublicOrigin } from '../utils/apiBase'
 import './Home.css'
 
 const CATALOG_SUBTITLE = 'Недорогая и качественная одежда для детей и взрослых от 62 до 152 размера \u{1F9F8}'
@@ -293,7 +294,7 @@ function Home() {
                     <img
                       src={product.images[0].startsWith('http') 
                         ? product.images[0] 
-                            : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${product.images[0]}`}
+                            : `${getApiPublicOrigin()}${product.images[0]}`}
                       alt={product.name}
                       className="product-image"
                       onError={(e) => {

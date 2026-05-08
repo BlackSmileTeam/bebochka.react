@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
 import { formatCondition } from '../utils/formatCondition'
+import { getApiPublicOrigin } from '../utils/apiBase'
 import Toast from './Toast'
 import './ProductDetail.css'
 
@@ -88,7 +89,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   if (!product) return null
 
   const images = product.images || []
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = getApiPublicOrigin()
 
   const publishedAtRaw = product.publishedAt ?? product.PublishedAt
   const createdAtRaw = product.createdAt ?? product.CreatedAt

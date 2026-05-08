@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import Toast from '../components/Toast'
+import { getApiPublicOrigin } from '../utils/apiBase'
 import './AdminReviews.css'
 
 function renderStars(rating) {
@@ -30,9 +31,7 @@ function getViewerIsAdmin() {
 function getImageUrl(path) {
   if (!path) return null
   if (String(path).startsWith('http')) return path
-  const base = import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
-    : 'http://localhost:5000'
+  const base = getApiPublicOrigin()
   return base + (String(path).startsWith('/') ? String(path) : `/${String(path)}`)
 }
 

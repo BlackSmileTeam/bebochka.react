@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
+import { getApiPublicOrigin } from '../utils/apiBase'
 import Toast from './Toast'
 import './ProductForm.css'
 
@@ -425,14 +426,14 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       <img
                         src={img.startsWith('http') 
                           ? img 
-                          : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${img}`}
+                          : `${getApiPublicOrigin()}${img}`}
                         alt={`Existing ${index}`}
                         className="preview-image"
                         onClick={() =>
                           setPreviewImage({
                             src: img.startsWith('http')
                               ? img
-                              : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${img}`,
+                              : `${getApiPublicOrigin()}${img}`,
                             label: `Фото #${index + 1}`
                           })
                         }

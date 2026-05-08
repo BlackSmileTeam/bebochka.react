@@ -7,6 +7,7 @@ import Toast from '../components/Toast.jsx'
 import PageShell from '../components/PageShell.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
+import { getApiPublicOrigin } from '../utils/apiBase.js'
 import './AdminProducts.css'
 
 function getDeleteProductErrorMessage(err) {
@@ -1170,7 +1171,7 @@ function AdminProducts() {
                           <img
                             src={product.images[0].startsWith('http') 
                               ? product.images[0] 
-                              : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${product.images[0]}`}
+                              : `${getApiPublicOrigin()}${product.images[0]}`}
                             alt={product.name}
                             className="table-image"
                             title={product.name}

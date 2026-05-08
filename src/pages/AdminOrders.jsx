@@ -5,6 +5,7 @@ import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOp
 import PageShell from '../components/PageShell'
 import Toast from '../components/Toast'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { getApiPublicOrigin } from '../utils/apiBase'
 import './AdminOrders.css'
 
 function OrderDiscountSingleModal({ orderId, order, getOrderNumber, getCustomerName, getTotalAmount, getFinalAmount, formatPrice, hasDiscount, onClose, onApply, onRemove }) {
@@ -536,9 +537,7 @@ function AdminOrders() {
     const path = item.imageUrl || item.ImageUrl
     if (!path) return null
     if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL
-      ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
-      : 'http://localhost:5000'
+    const base = getApiPublicOrigin()
     return base + (path.startsWith('/') ? path : '/' + path)
   }
 
@@ -546,9 +545,7 @@ function AdminOrders() {
     const first = cartItem.productImages?.[0] ?? cartItem.ProductImages?.[0]
     if (!first) return null
     if (first.startsWith('http')) return first
-    const base = import.meta.env.VITE_API_URL
-      ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
-      : 'http://localhost:5000'
+    const base = getApiPublicOrigin()
     return base + (first.startsWith('/') ? first : '/' + first)
   }
 
@@ -581,7 +578,7 @@ function AdminOrders() {
     try {
       const product = await api.getProduct(productId)
       const images = product?.images || product?.Images || []
-      const base = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000'
+      const base = getApiPublicOrigin()
       const fullUrls = images.map(p => (p && (p.startsWith('http') ? p : base + (p.startsWith('/') ? p : '/' + p))))
       if (fullUrls.length > 0) {
         const idx = fullUrls.findIndex(u => u === initialUrl)

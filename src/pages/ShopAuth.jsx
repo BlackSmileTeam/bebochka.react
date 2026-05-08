@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
+import { getApiPublicOrigin } from '../utils/apiBase'
 import { getSessionId } from '../utils/sessionId'
 import './Login.css'
 
@@ -104,7 +105,7 @@ function ShopAuth() {
     window.location.reload()
   }, [searchParams, navigate])
 
-  const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '')
+  const apiOrigin = getApiPublicOrigin()
 
   const startVkOAuth = () => {
     setError('')
