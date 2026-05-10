@@ -245,10 +245,11 @@ function AdminReviews() {
           </div>
         )}
         {!loading && !error && !isAdmin && (
-          <div className="public-reviews-list">
-            {reviews.length === 0 ? (
-              <div className="admin-reviews-empty">Отзывов пока нет.</div>
-            ) : reviews.map((row) => (
+          reviews.length === 0 ? (
+            <p className="public-reviews-empty">Отзывов пока нет.</p>
+          ) : (
+            <div className="public-reviews-list">
+              {reviews.map((row) => (
               <article key={row.id} className="public-review-card">
                 <div className="public-review-head">
                   <strong>{renderStars(row.rating)}</strong>
@@ -265,8 +266,9 @@ function AdminReviews() {
                   </div>
                 )}
               </article>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
         )}
       </div>
       {toast && (
