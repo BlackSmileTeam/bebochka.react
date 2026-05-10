@@ -177,6 +177,31 @@ function Profile() {
       ? (paymentHintOrder.orderNumber ?? paymentHintOrder.OrderNumber ?? String(paymentHintOrderId))
       : ''
 
+  const copyPaymentOrderNumber = async () => {
+    const text = String(paymentHintOrderNumber || '').trim()
+    if (!text) return
+    const notify = (type, message) => {
+      window.dispatchEvent(new CustomEvent('bebochka-toast', { detail: { type, message } }))
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.style.position = 'fixed'
+        ta.style.left = '-9999px'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+      notify('success', 'Номер заказа скопирован')
+    } catch {
+      notify('error', 'Не удалось скопировать номер')
+    }
+  }
+
   return (
     <>
       <PageShell className="page-shell--catalog" title="Профиль" subtitle={profileSubtitle}>
@@ -404,7 +429,7 @@ function Profile() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Telegram — @mamka_vseya_russi
+                    Telegram
                   </a>
                 </li>
                 <li>
@@ -414,7 +439,7 @@ function Profile() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    ВКонтакте — vk.com/i7911729911
+                    ВКонтакте
                   </a>
                 </li>
                 <li>
@@ -424,15 +449,27 @@ function Profile() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Авито —{' '}
-                    {PAYMENT_AVITO_PROFILE_URL ? 'перейти к профилю' : 'открыть Авито'}
+                    Авито
                   </a>
                 </li>
               </ul>
               <p className="profile-pay-hint-text profile-pay-hint-text--footer">
-                {paymentHintOrderNumber
-                  ? `Укажите номер заказа ${paymentHintOrderNumber} — вам подскажут, как оплатить удобным способом.`
-                  : 'Сообщите номер заказа — вам подскажут, как оплатить удобным способом.'}
+                {paymentHintOrderNumber ? (
+                  <>
+                    Укажите номер заказа{' '}
+                    <button
+                      type="button"
+                      className="profile-pay-order-number-btn"
+                      onClick={copyPaymentOrderNumber}
+                      title="Скопировать номер заказа"
+                    >
+                      {paymentHintOrderNumber}
+                    </button>
+                    {' '}— вам подскажут, как оплатить удобным способом.
+                  </>
+                ) : (
+                  'Сообщите номер заказа — вам подскажут, как оплатить удобным способом.'
+                )}
               </p>
             </div>
             <button
