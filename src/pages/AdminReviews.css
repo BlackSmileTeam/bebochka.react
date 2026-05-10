@@ -162,10 +162,21 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Как у .admin-reviews-table-wrap и сетки каталога (.products-grid в Home.css) */
 .public-reviews-list {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(3, calc((100% - 2 * 1.25rem) / 3));
+  gap: 1.25rem;
+  overflow-x: clip;
 }
 
 .public-review-card {
@@ -173,6 +184,8 @@
   border-radius: 10px;
   background: #fff;
   padding: 0.9rem;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .public-review-head {
@@ -198,5 +211,26 @@
 @media (max-width: 520px) {
   .admin-reviews-create-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .public-reviews-list {
+    grid-template-columns: repeat(2, calc((100% - 1 * 1rem) / 2));
+    gap: 1rem;
+    padding: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-reviews-list {
+    grid-template-columns: repeat(2, calc((100% - 1 * 0.6rem) / 2));
+    gap: 0.6rem;
+    padding: 0.75rem;
+  }
+
+  .public-review-card {
+    padding: 0.75rem;
+    border-radius: 8px;
   }
 }
