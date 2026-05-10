@@ -5,7 +5,7 @@ import ProductDetail from '../components/ProductDetail'
 import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
 import { formatCondition } from '../utils/formatCondition'
-import { getApiPublicOrigin } from '../utils/apiBase'
+import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import './Home.css'
 
 const CATALOG_SUBTITLE = 'Недорогая и качественная одежда для детей и взрослых от 62 до 152 размера \u{1F9F8}'
@@ -292,9 +292,7 @@ function Home() {
                 {product.images && product.images.length > 0 ? (
                   <>
                     <img
-                      src={product.images[0].startsWith('http') 
-                        ? product.images[0] 
-                            : `${getApiPublicOrigin()}${product.images[0]}`}
+                      src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
                       alt={product.name}
                       className="product-image"
                       onError={(e) => {

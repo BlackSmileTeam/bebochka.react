@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
-import { getApiPublicOrigin } from '../utils/apiBase'
+import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import Toast from './Toast'
 import './ProductForm.css'
 
@@ -424,16 +424,12 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                       onDrop={() => handleDrop('existing', index)}
                     >
                       <img
-                        src={img.startsWith('http') 
-                          ? img 
-                          : `${getApiPublicOrigin()}${img}`}
+                        src={toAbsoluteMediaUrl(img) || '/logo.jpg'}
                         alt={`Existing ${index}`}
                         className="preview-image"
                         onClick={() =>
                           setPreviewImage({
-                            src: img.startsWith('http')
-                              ? img
-                              : `${getApiPublicOrigin()}${img}`,
+                            src: toAbsoluteMediaUrl(img) || '/logo.jpg',
                             label: `Фото #${index + 1}`
                           })
                         }

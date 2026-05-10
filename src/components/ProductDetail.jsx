@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
 import { formatCondition } from '../utils/formatCondition'
-import { getApiPublicOrigin } from '../utils/apiBase'
+import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import Toast from './Toast'
 import './ProductDetail.css'
 
@@ -89,7 +89,6 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   if (!product) return null
 
   const images = product.images || []
-  const apiUrl = getApiPublicOrigin()
 
   const publishedAtRaw = product.publishedAt ?? product.PublishedAt
   const createdAtRaw = product.createdAt ?? product.CreatedAt
@@ -112,10 +111,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   const isScheduled = publishedAt ? publishedAt.getTime() > Date.now() : false
 
   const getImageUrl = (imagePath) => {
-    if (imagePath.startsWith('http')) {
-      return imagePath
-    }
-    return `${apiUrl}${imagePath}`
+    return toAbsoluteMediaUrl(imagePath) || '/logo.jpg'
   }
 
   const openOriginalImage = () => {

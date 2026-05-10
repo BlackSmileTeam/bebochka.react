@@ -7,7 +7,7 @@ import Toast from '../components/Toast.jsx'
 import PageShell from '../components/PageShell.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
-import { getApiPublicOrigin } from '../utils/apiBase.js'
+import { toAbsoluteMediaUrl } from '../utils/mediaUrl.js'
 import './AdminProducts.css'
 
 function getDeleteProductErrorMessage(err) {
@@ -1169,9 +1169,7 @@ function AdminProducts() {
                       {product.images && product.images.length > 0 ? (
                         <>
                           <img
-                            src={product.images[0].startsWith('http') 
-                              ? product.images[0] 
-                              : `${getApiPublicOrigin()}${product.images[0]}`}
+                            src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
                             alt={product.name}
                             className="table-image"
                             title={product.name}
