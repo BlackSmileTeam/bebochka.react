@@ -261,11 +261,53 @@ main.main > .profile-page .profile-actions {
   background: #9b2c2c;
 }
 
+.profile-pay-hint-body {
+  margin-bottom: 1rem;
+}
+
 .profile-pay-hint-text {
-  margin: 0 0 1rem;
+  margin: 0 0 0.65rem;
   font-size: 0.95rem;
   line-height: 1.5;
   color: #4a5568;
+}
+
+.profile-pay-hint-text--footer {
+  margin-bottom: 0;
+}
+
+.profile-pay-contact-list {
+  margin: 0 0 0.85rem;
+  padding-left: 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #4a5568;
+}
+
+.profile-pay-contact-list li {
+  margin-bottom: 0.4rem;
+}
+
+.profile-pay-contact-list li:last-child {
+  margin-bottom: 0;
+}
+
+.profile-pay-hint-text a,
+.profile-pay-contact-list a {
+  color: #2b6cb0;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.profile-pay-hint-text a:hover,
+.profile-pay-contact-list a:hover {
+  color: #2c5282;
+}
+
+.profile-pay-contact-pending {
+  color: #718096;
+  font-style: italic;
 }
 
 .profile-btn-pay-modal-ok {

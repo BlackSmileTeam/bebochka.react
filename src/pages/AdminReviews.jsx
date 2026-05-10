@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
+import TelegramContactHint from '../components/TelegramContactHint'
 import Toast from '../components/Toast'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import './AdminReviews.css'
@@ -46,6 +47,7 @@ function AdminReviews() {
     customerName: '',
     customerPhone: '',
     rating: 5,
+    reviewDateLocal: '',
     comment: '',
     files: []
   })
@@ -78,6 +80,7 @@ function AdminReviews() {
       customerName: '',
       customerPhone: '',
       rating: 5,
+      reviewDateLocal: '',
       comment: '',
       files: []
     })
@@ -91,7 +94,12 @@ function AdminReviews() {
     }
     try {
       setSubmitting(true)
-      await api.createOrderReviewAsAdmin(form)
+      const { files, reviewDateLocal, ...formRest } = form
+      const createdAtUtc =
+        reviewDateLocal && String(reviewDateLocal).trim()
+          ? new Date(reviewDateLocal).toISOString()
+          : null
+      await api.createOrderReviewAsAdmin({ ...formRest, files, createdAtUtc })
       setToast({ message: 'Отзыв добавлен', type: 'success' })
       resetForm()
       await loadReviews()
@@ -105,7 +113,12 @@ function AdminReviews() {
   return (
     <PageShell
       title="Отзывы клиентов"
-      subtitle={isAdmin ? 'Полный список отзывов и ручное добавление' : 'Оценки, комментарии и фото покупателей'}
+      subtitle={
+        <>
+          <p>{isAdmin ? 'Полный список отзывов и ручное добавление' : 'Оценки, комментарии и фото покупателей'}</p>
+          <TelegramContactHint />
+        </>
+      }
     >
       <div className="admin-reviews-page">
         {loading && <div className="admin-reviews-loading">Загрузка отзывов…</div>}
@@ -114,6 +127,15 @@ function AdminReviews() {
           <form className="admin-reviews-create-form" onSubmit={handleCreateReview}>
             <h3>Добавить отзыв вручную</h3>
             <div className="admin-reviews-create-grid">
+              <label className="admin-review-field">
+                <span className="admin-review-field-label">Дата отзыва</span>
+                <input
+                  type="datetime-local"
+                  title="Если не указать — подставится текущее время"
+                  value={form.reviewDateLocal}
+                  onChange={(e) => onFormChange('reviewDateLocal', e.target.value)}
+                />
+              </label>
               <label className="admin-review-field">
                 <span className="admin-review-field-label">Номер заказа</span>
                 <input
@@ -143,7 +165,11 @@ function AdminReviews() {
               </label>
               <label className="admin-review-field">
                 <span className="admin-review-field-label">Оценка</span>
-                <select value={form.rating} onChange={(e) => onFormChange('rating', e.target.value)}>
+                <select
+                  className="admin-reviews-rating-select"
+                  value={form.rating}
+                  onChange={(e) => onFormChange('rating', Number(e.target.value))}
+                >
                   <option value={5}>5 - Отлично</option>
                   <option value={4}>4 - Хорошо</option>
                   <option value={3}>3 - Нормально</option>

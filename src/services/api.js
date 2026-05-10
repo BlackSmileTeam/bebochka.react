@@ -1458,7 +1458,8 @@ export const api = {
       customerPhone: payload.customerPhone ? String(payload.customerPhone).trim() : null,
       rating: Number(payload.rating) || 0,
       comment: payload.comment ? String(payload.comment).trim() : '',
-      imagesBase64
+      imagesBase64,
+      createdAtUtc: payload.createdAtUtc ?? payload.CreatedAtUtc ?? null
     }
     const response = await apiClient.post('/orders/reviews/admin', body)
     return response.data

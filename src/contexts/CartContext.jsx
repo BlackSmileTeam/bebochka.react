@@ -71,6 +71,35 @@ export function CartProvider({ children }) {
     return () => window.removeEventListener('bebochka-auth', h)
   }, [loadCart])
 
+  const mergeCartLineFromAddResponse = useCallback((result, product) => {
+    const id = result?.Id ?? result?.id
+    const productId = result?.ProductId ?? result?.productId ?? product?.id
+    const qty = result?.Quantity ?? result?.quantity ?? 1
+    if (productId == null) return
+
+    setCartItems((prev) => {
+      const idx = prev.findIndex((i) => i.productId === productId)
+      const line = {
+        id: productId,
+        productId,
+        name: result?.ProductName ?? result?.productName ?? product?.name ?? '',
+        brand: result?.ProductBrand ?? result?.productBrand ?? product?.brand,
+        size: result?.ProductSize ?? result?.productSize ?? product?.size,
+        color: result?.ProductColor ?? result?.productColor ?? product?.color,
+        images: result?.ProductImages ?? result?.productImages ?? product?.images ?? [],
+        price: result?.ProductPrice ?? result?.productPrice ?? product?.price ?? 0,
+        quantity: qty,
+        cartItemId: id
+      }
+      if (idx >= 0) {
+        const next = [...prev]
+        next[idx] = { ...next[idx], ...line }
+        return next
+      }
+      return [...prev, line]
+    })
+  }, [])
+
   const addToCart = useCallback(async (product) => {
     try {
       if (!product || !product.id) {
@@ -80,19 +109,15 @@ export function CartProvider({ children }) {
       
       console.log('[CartContext] Adding to cart:', { productId: product.id, sessionId })
       
-      // Просто вызываем API - сервер сам проверит, есть ли товар в корзине, и либо добавит, либо обновит
       const result = await api.addToCart(sessionId, product.id, 1)
       console.log('[CartContext] Add to cart result:', result)
-      
-      // Перезагружаем корзину после успешного добавления
-      await loadCart()
-      console.log('[CartContext] Cart reloaded after adding item')
+      mergeCartLineFromAddResponse(result, product)
     } catch (error) {
       console.error('[CartContext] Error adding to cart:', error)
       const errorMessage = error?.message || error?.response?.data?.message || 'Не удалось добавить товар в корзину'
       throw new Error(errorMessage) // Пробрасываем ошибку, чтобы обработать её в компоненте
     }
-  }, [sessionId, loadCart])
+  }, [sessionId, mergeCartLineFromAddResponse])
 
   const removeFromCart = useCallback(async (productId) => {
     try {

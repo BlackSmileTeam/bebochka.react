@@ -4,11 +4,20 @@ import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
 import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
+import TelegramContactHint from '../components/TelegramContactHint'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import './Home.css'
 
-const CATALOG_SUBTITLE = 'Недорогая и качественная одежда для детей и взрослых от 62 до 152 размера \u{1F9F8}'
+const CATALOG_LEAD =
+  'Недорогая и качественная одежда для детей и взрослых от 62 до 152 размера \u{1F9F8}'
+
+const catalogSubtitle = (
+  <>
+    <p>{CATALOG_LEAD}</p>
+    <TelegramContactHint />
+  </>
+)
 const CONDITION_PRIORITY = {
   'состояние новой вещи': 0,
   'новая вещь': 0,
@@ -39,7 +48,23 @@ function Home() {
     gender: '',
     condition: ''
   })
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const { addToCart, sessionId, cartItems } = useCart()
+
+  const activeFilterCount = useMemo(
+    () => Object.values(filters).filter(Boolean).length,
+    [filters]
+  )
+
+  const resetCatalogFilters = () => {
+    setFilters({
+      brand: '',
+      size: '',
+      color: '',
+      gender: '',
+      condition: ''
+    })
+  }
   
   // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailableQuantity = (product) => {
@@ -108,8 +133,15 @@ function Home() {
     
     try {
       await addToCart(product)
-      // Перезагружаем товары после добавления, чтобы обновить availableQuantity
-      await loadProducts()
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (p.id !== product.id) return p
+          const stock = p.quantityInStock ?? p.QuantityInStock ?? 0
+          const avail =
+            p.availableQuantity !== undefined ? p.availableQuantity : stock
+          return { ...p, availableQuantity: Math.max(0, avail - 1) }
+        })
+      )
     } catch (error) {
       setToast({ type: 'error', message: error.message || 'Не удалось добавить товар в корзину' })
       console.error('Error in handleAddToCart:', error)
@@ -202,7 +234,10 @@ function Home() {
   }, [filters, products.length])
 
   useEffect(() => {
-    if (!hasMoreProducts || !loadMoreRef.current) return
+    if (!hasMoreProducts) return
+    const el = loadMoreRef.current
+    if (!el) return
+
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
@@ -210,11 +245,11 @@ function Home() {
           setPage((prev) => Math.min(prev + 1, totalPages))
         }
       },
-      { rootMargin: '320px 0px', threshold: 0.01 }
+      { root: null, rootMargin: '400px 0px', threshold: 0 }
     )
-    observer.observe(loadMoreRef.current)
+    observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMoreProducts, totalPages])
+  }, [hasMoreProducts, totalPages, page, filteredProducts.length])
 
   const formatGender = (gender) => {
     if (!gender) return ''
@@ -223,7 +258,7 @@ function Home() {
 
   if (loading) {
     return (
-      <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={CATALOG_SUBTITLE}>
+      <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={catalogSubtitle}>
         <div className="loading">Загрузка...</div>
       </PageShell>
     )
@@ -231,47 +266,77 @@ function Home() {
 
   if (error) {
     return (
-      <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={CATALOG_SUBTITLE}>
+      <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={catalogSubtitle}>
         <div className="error">{error}</div>
       </PageShell>
     )
   }
 
   return (
-    <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={CATALOG_SUBTITLE}>
-      <div className="catalog-filters">
-        <select value={filters.brand} onChange={(e) => setFilters((prev) => ({ ...prev, brand: e.target.value }))}>
-          <option value="">Все бренды</option>
-          {filterOptions.brands.map((brand) => (
-            <option key={brand} value={brand}>{brand}</option>
-          ))}
-        </select>
-        <select value={filters.size} onChange={(e) => setFilters((prev) => ({ ...prev, size: e.target.value }))}>
-          <option value="">Все размеры</option>
-          {filterOptions.sizes.map((size) => (
-            <option key={size} value={size}>{size}</option>
-          ))}
-        </select>
-        <select value={filters.color} onChange={(e) => setFilters((prev) => ({ ...prev, color: e.target.value }))}>
-          <option value="">Все цвета</option>
-          {filterOptions.colors.map((color) => (
-            <option key={color} value={color}>{color}</option>
-          ))}
-        </select>
-        <select value={filters.gender} onChange={(e) => setFilters((prev) => ({ ...prev, gender: e.target.value }))}>
-          <option value="">Любой пол</option>
-          {filterOptions.genders.map((gender) => (
-            <option key={gender} value={gender}>{formatGender(gender)}</option>
-          ))}
-        </select>
-        <select value={filters.condition} onChange={(e) => setFilters((prev) => ({ ...prev, condition: e.target.value }))}>
-          <option value="">Любое состояние</option>
-          {filterOptions.conditions.map((condition) => (
-            <option key={condition} value={condition}>
-              {formatCondition(condition)}
-            </option>
-          ))}
-        </select>
+    <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={catalogSubtitle}>
+      <div className="catalog-filters-wrap">
+        <div className="catalog-filters-mobile-bar">
+          <button
+            type="button"
+            className="catalog-filters-toggle"
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            aria-controls="catalog-filters-panel"
+          >
+            {filtersOpen ? 'Свернуть' : 'Фильтры'}
+            {activeFilterCount > 0 && (
+              <span className="catalog-filters-badge" aria-hidden="true">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              className="catalog-filters-reset"
+              onClick={resetCatalogFilters}
+            >
+              Сбросить
+            </button>
+          )}
+        </div>
+        <div
+          id="catalog-filters-panel"
+          className={`catalog-filters ${filtersOpen ? 'catalog-filters--open' : ''}`}
+        >
+          <select value={filters.brand} onChange={(e) => setFilters((prev) => ({ ...prev, brand: e.target.value }))}>
+            <option value="">Все бренды</option>
+            {filterOptions.brands.map((brand) => (
+              <option key={brand} value={brand}>{brand}</option>
+            ))}
+          </select>
+          <select value={filters.size} onChange={(e) => setFilters((prev) => ({ ...prev, size: e.target.value }))}>
+            <option value="">Все размеры</option>
+            {filterOptions.sizes.map((size) => (
+              <option key={size} value={size}>{size}</option>
+            ))}
+          </select>
+          <select value={filters.color} onChange={(e) => setFilters((prev) => ({ ...prev, color: e.target.value }))}>
+            <option value="">Все цвета</option>
+            {filterOptions.colors.map((color) => (
+              <option key={color} value={color}>{color}</option>
+            ))}
+          </select>
+          <select value={filters.gender} onChange={(e) => setFilters((prev) => ({ ...prev, gender: e.target.value }))}>
+            <option value="">Любой пол</option>
+            {filterOptions.genders.map((gender) => (
+              <option key={gender} value={gender}>{formatGender(gender)}</option>
+            ))}
+          </select>
+          <select value={filters.condition} onChange={(e) => setFilters((prev) => ({ ...prev, condition: e.target.value }))}>
+            <option value="">Любое состояние</option>
+            {filterOptions.conditions.map((condition) => (
+              <option key={condition} value={condition}>
+                {formatCondition(condition)}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {filteredProducts.length === 0 ? (
@@ -437,17 +502,8 @@ function Home() {
       {filteredProducts.length > 0 && (
         <div className="catalog-pagination">
           <span>
-            Показано {visibleProducts.length} из {filteredProducts.length} товаров · страница {Math.min(page, totalPages)} из {totalPages}
+            Показано {visibleProducts.length} из {filteredProducts.length} товаров
           </span>
-          {hasMoreProducts && (
-            <button
-              type="button"
-              className="catalog-load-more"
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-            >
-              Показать еще
-            </button>
-          )}
         </div>
       )}
       {hasMoreProducts && <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />}

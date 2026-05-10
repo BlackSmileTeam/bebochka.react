@@ -110,6 +110,13 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
 
   const isScheduled = publishedAt ? publishedAt.getTime() > Date.now() : false
 
+  const showPrimaryCartButton =
+    !cartUnlocked ||
+    isInMyCart ||
+    isReservedByAnotherUser ||
+    canAdd ||
+    isAdding
+
   const getImageUrl = (imagePath) => {
     return toAbsoluteMediaUrl(imagePath) || '/logo.jpg'
   }
@@ -211,11 +218,13 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
             )}
 
             <h2 className="product-detail-name">{product.name}</h2>
-            <div className={`product-detail-stock ${isReserved ? 'reserved' : (available > 0 ? 'in-stock' : 'out-of-stock')}`}>
-              {isInMyCart ? 'В корзине' : (isReservedByAnotherUser ? 'Забронирован' : (available > 0 ? 'В наличии' : 'Нет в наличии'))}
-            </div>
+            {(isInMyCart || isReservedByAnotherUser || available > 0) && (
+              <div className={`product-detail-stock ${isReserved ? 'reserved' : 'in-stock'}`}>
+                {isInMyCart ? 'В корзине' : (isReservedByAnotherUser ? 'Забронирован' : 'В наличии')}
+              </div>
+            )}
             
-            {product.brand && (
+            {product.brand && String(product.brand).trim() !== '' && String(product.brand).trim() !== '-' && (
               <p className="product-detail-brand">
                 <strong>Бренд:</strong> {product.brand}
               </p>
@@ -279,29 +288,31 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                   «В корзину» с {cartAvailableAt.toLocaleString('ru-RU')}
                 </p>
               )}
-              <button
-                className="btn-buy-detail"
-                onClick={handleAddToCart}
-                disabled={!canAdd || isAdding}
-                title={
-                  !cartUnlocked
-                    ? 'Корзина откроется позже'
-                    : !canAdd 
-                    ? (isInMyCart
-                      ? 'Товар уже в вашей корзине'
-                      : (isReservedByAnotherUser ? 'Товар зарезервирован другим пользователем' : 'Товар закончился'))
-                    : (isAdding ? 'Добавление...' : 'Добавить в корзину')
-                }
-              >
-                {isAdding 
-                  ? 'Добавление...' 
-                  : (!cartUnlocked
-                    ? 'Скоро в продаже'
-                    : (!canAdd 
-                    ? (isInMyCart ? 'В корзине' : (isReservedByAnotherUser ? 'Забронирован' : 'Нет в наличии'))
-                    : 'В корзину'))
-                }
-              </button>
+              {showPrimaryCartButton && (
+                <button
+                  className="btn-buy-detail"
+                  onClick={handleAddToCart}
+                  disabled={!canAdd || isAdding}
+                  title={
+                    !cartUnlocked
+                      ? 'Корзина откроется позже'
+                      : !canAdd
+                        ? (isInMyCart
+                          ? 'Товар уже в вашей корзине'
+                          : (isReservedByAnotherUser ? 'Товар зарезервирован другим пользователем' : 'Добавить в корзину'))
+                        : (isAdding ? 'Добавление...' : 'Добавить в корзину')
+                  }
+                >
+                  {isAdding
+                    ? 'Добавление...'
+                    : (!cartUnlocked
+                      ? 'Скоро в продаже'
+                      : (!canAdd
+                        ? (isInMyCart ? 'В корзине' : 'Забронирован')
+                        : 'В корзину'))
+                  }
+                </button>
+              )}
               {cartUnlocked && isReservedByAnotherUser && !isInMyCart && (
                 <button
                   type="button"

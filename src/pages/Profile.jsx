@@ -6,6 +6,11 @@ import ProductDetail from '../components/ProductDetail'
 import PageShell from '../components/PageShell'
 import './Profile.css'
 
+/** Реквизиты оплаты: контакты в модалке «К оплате». Авито — через VITE_PAYMENT_AVITO_URL или пусто. */
+const PAYMENT_TELEGRAM_URL = 'https://t.me/mamka_vseya_russi'
+const PAYMENT_VK_URL = 'https://vk.com/i7911729911'
+const PAYMENT_AVITO_URL = (import.meta.env.VITE_PAYMENT_AVITO_URL || '').trim()
+
 function getOrderItems(o) {
   return o.orderItems || o.OrderItems || []
 }
@@ -383,13 +388,41 @@ function Profile() {
             <h3 id="profile-pay-hint-title" className="profile-receive-modal-title">
               Оплата заказа
             </h3>
-            <p className="profile-pay-hint-text">
-              Чтобы получить реквизиты и пошаговую инструкцию по оплате, свяжитесь с администратором
-              магазина (например, через Telegram или по контактам на сайте).
-              {paymentHintOrderNumber
-                ? ` Укажите номер заказа ${paymentHintOrderNumber} — вам подскажут, как оплатить удобным способом.`
-                : ' Сообщите номер заказа — вам подскажут, как оплатить удобным способом.'}
-            </p>
+            <div className="profile-pay-hint-body">
+              <p className="profile-pay-hint-text">
+                Чтобы получить реквизиты и пошаговую инструкцию по оплате, свяжитесь с администратором магазина
+                одним из способов:
+              </p>
+              <ul className="profile-pay-contact-list">
+                <li>
+                  Telegram —{' '}
+                  <a href={PAYMENT_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
+                    @mamka_vseya_russi
+                  </a>
+                </li>
+                <li>
+                  ВКонтакте —{' '}
+                  <a href={PAYMENT_VK_URL} target="_blank" rel="noopener noreferrer">
+                    vk.com/i7911729911
+                  </a>
+                </li>
+                <li>
+                  Авито —{' '}
+                  {PAYMENT_AVITO_URL ? (
+                    <a href={PAYMENT_AVITO_URL} target="_blank" rel="noopener noreferrer">
+                      перейти к профилю
+                    </a>
+                  ) : (
+                    <span className="profile-pay-contact-pending">ссылку уточните у администратора</span>
+                  )}
+                </li>
+              </ul>
+              <p className="profile-pay-hint-text profile-pay-hint-text--footer">
+                {paymentHintOrderNumber
+                  ? `Укажите номер заказа ${paymentHintOrderNumber} — вам подскажут, как оплатить удобным способом.`
+                  : 'Сообщите номер заказа — вам подскажут, как оплатить удобным способом.'}
+              </p>
+            </div>
             <button
               type="button"
               className="profile-btn-pay-modal-ok"
