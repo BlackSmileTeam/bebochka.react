@@ -158,13 +158,8 @@ function Layout() {
           </p>
           <p className="footer-text">
             По всем вопросам{' '}
-            <a href="https://t.me/bebochkaa" target="_blank" rel="noopener noreferrer">
-              @bebochkaa
-            </a>
-          </p>
-          <p className="footer-text">
-            <a href="https://t.me/bebochkasekond" target="_blank" rel="noopener noreferrer">
-              Наш канал в Telegram
+            <a href="https://t.me/mamka_vseya_russi" target="_blank" rel="noopener noreferrer">
+              bebochkaa
             </a>
           </p>
         </div>

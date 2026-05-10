@@ -10,8 +10,8 @@ export default function Contacts() {
       <section className="contacts-block">
         <h2>Telegram</h2>
         <p>
-          <a href="https://t.me/bebochkaa" target="_blank" rel="noopener noreferrer">
-            @bebochkaa
+          <a href="https://t.me/mamka_vseya_russi" target="_blank" rel="noopener noreferrer">
+            bebochkaa
           </a>
         </p>
       </section>

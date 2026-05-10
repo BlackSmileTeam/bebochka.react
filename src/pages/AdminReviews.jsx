@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
-import TelegramContactHint from '../components/TelegramContactHint'
 import Toast from '../components/Toast'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import './AdminReviews.css'
@@ -113,12 +112,7 @@ function AdminReviews() {
   return (
     <PageShell
       title="Отзывы клиентов"
-      subtitle={
-        <>
-          <p>{isAdmin ? 'Полный список отзывов и ручное добавление' : 'Оценки, комментарии и фото покупателей'}</p>
-          <TelegramContactHint />
-        </>
-      }
+      subtitle={isAdmin ? 'Полный список отзывов и ручное добавление' : 'Оценки, комментарии и фото покупателей'}
     >
       <div className="admin-reviews-page">
         {loading && <div className="admin-reviews-loading">Загрузка отзывов…</div>}

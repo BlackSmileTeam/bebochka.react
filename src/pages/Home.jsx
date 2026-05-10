@@ -4,20 +4,10 @@ import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
 import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
-import TelegramContactHint from '../components/TelegramContactHint'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import './Home.css'
 
-const CATALOG_LEAD =
-  'Недорогая и качественная одежда для детей и взрослых от 62 до 152 размера \u{1F9F8}'
-
-const catalogSubtitle = (
-  <>
-    <p>{CATALOG_LEAD}</p>
-    <TelegramContactHint />
-  </>
-)
 const CONDITION_PRIORITY = {
   'состояние новой вещи': 0,
   'новая вещь': 0,
@@ -258,7 +248,7 @@ function Home() {
 
   if (loading) {
     return (
-      <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={catalogSubtitle}>
+      <PageShell className="page-shell--catalog" title="Каталог товаров">
         <div className="loading">Загрузка...</div>
       </PageShell>
     )
@@ -266,14 +256,14 @@ function Home() {
 
   if (error) {
     return (
-      <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={catalogSubtitle}>
+      <PageShell className="page-shell--catalog" title="Каталог товаров">
         <div className="error">{error}</div>
       </PageShell>
     )
   }
 
   return (
-    <PageShell className="page-shell--catalog" title="Каталог товаров" subtitle={catalogSubtitle}>
+    <PageShell className="page-shell--catalog" title="Каталог товаров">
       <div className="catalog-filters-wrap">
         <div className="catalog-filters-mobile-bar">
           <button

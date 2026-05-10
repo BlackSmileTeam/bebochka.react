@@ -6,10 +6,13 @@ import ProductDetail from '../components/ProductDetail'
 import PageShell from '../components/PageShell'
 import './Profile.css'
 
-/** Реквизиты оплаты: контакты в модалке «К оплате». Авито — через VITE_PAYMENT_AVITO_URL или пусто. */
+/** Реквизиты оплаты: модалка «К оплате». Авито: VITE_PAYMENT_AVITO_URL или запасная ссылка на сайт. */
 const PAYMENT_TELEGRAM_URL = 'https://t.me/mamka_vseya_russi'
 const PAYMENT_VK_URL = 'https://vk.com/i7911729911'
-const PAYMENT_AVITO_URL = (import.meta.env.VITE_PAYMENT_AVITO_URL || '').trim()
+const PAYMENT_AVITO_PROFILE_URL = (import.meta.env.VITE_PAYMENT_AVITO_URL || '').trim()
+/** Пока нет ссылки на профиль — ведёт на главную Авито (всё строка кликабельна). Задайте VITE_PAYMENT_AVITO_URL для своего профиля. */
+const PAYMENT_AVITO_FALLBACK_URL = 'https://www.avito.ru/'
+const payAvitoHref = PAYMENT_AVITO_PROFILE_URL || PAYMENT_AVITO_FALLBACK_URL
 
 function getOrderItems(o) {
   return o.orderItems || o.OrderItems || []
@@ -395,26 +398,35 @@ function Profile() {
               </p>
               <ul className="profile-pay-contact-list">
                 <li>
-                  Telegram —{' '}
-                  <a href={PAYMENT_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
-                    @mamka_vseya_russi
+                  <a
+                    className="profile-pay-contact-row"
+                    href={PAYMENT_TELEGRAM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Telegram — @mamka_vseya_russi
                   </a>
                 </li>
                 <li>
-                  ВКонтакте —{' '}
-                  <a href={PAYMENT_VK_URL} target="_blank" rel="noopener noreferrer">
-                    vk.com/i7911729911
+                  <a
+                    className="profile-pay-contact-row"
+                    href={PAYMENT_VK_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ВКонтакте — vk.com/i7911729911
                   </a>
                 </li>
                 <li>
-                  Авито —{' '}
-                  {PAYMENT_AVITO_URL ? (
-                    <a href={PAYMENT_AVITO_URL} target="_blank" rel="noopener noreferrer">
-                      перейти к профилю
-                    </a>
-                  ) : (
-                    <span className="profile-pay-contact-pending">ссылку уточните у администратора</span>
-                  )}
+                  <a
+                    className="profile-pay-contact-row"
+                    href={payAvitoHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Авито —{' '}
+                    {PAYMENT_AVITO_PROFILE_URL ? 'перейти к профилю' : 'открыть Авито'}
+                  </a>
                 </li>
               </ul>
               <p className="profile-pay-hint-text profile-pay-hint-text--footer">
