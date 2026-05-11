@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import Toast from '../components/Toast'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import './AdminReviews.css'
 
@@ -51,7 +52,8 @@ function AdminReviews() {
   const [error, setError] = useState('')
   const [toast, setToast] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-  const [deletingReviewId, setDeletingReviewId] = useState(null)
+  const [deleteConfirmReviewId, setDeleteConfirmReviewId] = useState(null)
+  const [deleteReviewBusy, setDeleteReviewBusy] = useState(false)
   const [form, setForm] = useState({
     orderNumber: '',
     customerName: '',
@@ -120,17 +122,23 @@ function AdminReviews() {
     }
   }
 
-  const handleDeleteReview = async (reviewId) => {
-    if (!reviewId || !window.confirm('Удалить этот отзыв без возможности восстановления?')) return
+  const requestDeleteReview = (reviewId) => {
+    if (!reviewId) return
+    setDeleteConfirmReviewId(reviewId)
+  }
+
+  const confirmDeleteReview = async () => {
+    if (deleteConfirmReviewId == null) return
+    setDeleteReviewBusy(true)
     try {
-      setDeletingReviewId(reviewId)
-      await api.deleteOrderReview(reviewId)
+      await api.deleteOrderReview(deleteConfirmReviewId)
       setToast({ message: 'Отзыв удалён', type: 'success' })
+      setDeleteConfirmReviewId(null)
       await loadReviews()
     } catch (e) {
       setToast({ message: e?.message || 'Не удалось удалить отзыв', type: 'error' })
     } finally {
-      setDeletingReviewId(null)
+      setDeleteReviewBusy(false)
     }
   }
 
@@ -268,11 +276,11 @@ function AdminReviews() {
                       <button
                         type="button"
                         className="btn-review-delete"
-                        disabled={deletingReviewId === row.id}
-                        onClick={() => handleDeleteReview(row.id)}
+                        disabled={deleteReviewBusy && deleteConfirmReviewId === row.id}
+                        onClick={() => requestDeleteReview(row.id)}
                         title="Удалить отзыв"
                       >
-                        {deletingReviewId === row.id ? '…' : 'Удалить'}
+                        {deleteReviewBusy && deleteConfirmReviewId === row.id ? '…' : 'Удалить'}
                       </button>
                     </td>
                   </tr>
@@ -308,6 +316,19 @@ function AdminReviews() {
           )
         )}
       </div>
+      <ConfirmDialog
+        open={deleteConfirmReviewId !== null}
+        title="Удалить отзыв?"
+        message="Отзыв будет удалён без возможности восстановления. Продолжить?"
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        variant="danger"
+        busy={deleteReviewBusy}
+        onCancel={() => {
+          if (!deleteReviewBusy) setDeleteConfirmReviewId(null)
+        }}
+        onConfirm={confirmDeleteReview}
+      />
       {toast && (
         <Toast
           message={toast.message}
