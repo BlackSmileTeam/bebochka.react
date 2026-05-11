@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import './AdminUsers.css'
 
 function AdminUsers() {
@@ -24,6 +25,8 @@ function AdminUsers() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [openActionsFor, setOpenActionsFor] = useState(null)
+  const [deleteConfirmUserId, setDeleteConfirmUserId] = useState(null)
+  const [deleteUserBusy, setDeleteUserBusy] = useState(false)
 
   const formatDate = (value) => {
     if (!value) return '—'
@@ -111,31 +114,39 @@ function AdminUsers() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-      return
-    }
+  const requestDeleteUser = (id) => {
+    setOpenActionsFor(null)
+    setError('')
+    setDeleteConfirmUserId(id)
+  }
 
+  const confirmDeleteUser = async () => {
+    if (deleteConfirmUserId == null) return
+    setDeleteUserBusy(true)
+    setError('')
     try {
-      await api.deleteUser(id)
+      await api.deleteUser(deleteConfirmUserId)
       setSuccess('Пользователь успешно удален')
+      setDeleteConfirmUserId(null)
       await loadUsers()
     } catch (err) {
       setError(err.message || 'Ошибка при удалении пользователя')
+    } finally {
+      setDeleteUserBusy(false)
     }
   }
 
   const handleGoToOrders = (user) => {
-    const rawName = (user.fullName || user.FullName || user.username || user.Username || '').trim()
-    const clientName = rawName || '-'
-    const clientPhone = (user.phone || user.Phone || '').trim()
-    const params = new URLSearchParams({
-      groupBy: 'client',
-      clientName,
-      clientPhone
-    })
-    navigate(`/admin/orders?${params.toString()}`)
+    const uid = Number(user.id ?? user.Id)
+    if (!Number.isFinite(uid) || uid <= 0) {
+      setError('Некорректный идентификатор пользователя')
+      return
+    }
+    setOpenActionsFor(null)
+    navigate(`/admin/users/${uid}/orders`)
   }
+
+  const ordersPathForUser = (user) => `/admin/users/${user.id ?? user.Id}/orders`
 
   if (loading) {
     return (
@@ -261,14 +272,22 @@ function AdminUsers() {
             </thead>
             <tbody>
               {users.map((user) => {
-                console.log('Rendering user:', user) // Debug log
                 return (
                     <tr key={user.id || user.Id}>
                       <td data-label="ID" className="id-cell">{user.id || user.Id}</td>
                       <td data-label="Имя пользователя" className="username-cell">
                         <div className="user-mobile-head">
                           <div className="user-mobile-head__left">
-                            <span className="user-mobile-username">{user.username || user.Username || '-'}</span>
+                            <span className="user-mobile-username">
+                              <Link
+                                className="admin-users-orders-link"
+                                to={ordersPathForUser(user)}
+                                onClick={() => setOpenActionsFor(null)}
+                                title="Заказы пользователя"
+                              >
+                                {user.username || user.Username || '-'}
+                              </Link>
+                            </span>
                           </div>
                           <div className="user-mobile-head__right">
                             <span className="user-mobile-meta">Создан: {formatDate(user.createdAt || user.CreatedAt)}</span>
@@ -278,7 +297,16 @@ function AdminUsers() {
                         </div>
                       </td>
                       <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
-                      <td data-label="Полное имя" className="fullname-cell">{user.fullName || user.FullName || '-'}</td>
+                      <td data-label="Полное имя" className="fullname-cell">
+                        <Link
+                          className="admin-users-orders-link"
+                          to={ordersPathForUser(user)}
+                          onClick={() => setOpenActionsFor(null)}
+                          title="Заказы пользователя"
+                        >
+                          {user.fullName || user.FullName || '-'}
+                        </Link>
+                      </td>
                       <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
                       <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
                       <td data-label="Последний вход" className="last-login-cell">{formatDate(user.lastLoginAt || user.LastLoginAt)}</td>
@@ -319,8 +347,7 @@ function AdminUsers() {
                                   type="button"
                                   className="actions-dropdown-item actions-dropdown-item--danger"
                                   onClick={() => {
-                                    handleDelete(user.id || user.Id)
-                                    setOpenActionsFor(null)
+                                    requestDeleteUser(user.id || user.Id)
                                   }}
                                 >
                                   Удалить
@@ -345,7 +372,7 @@ function AdminUsers() {
                           {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
                             <button
                               className="btn btn-small btn-delete"
-                              onClick={() => handleDelete(user.id || user.Id)}
+                              onClick={() => requestDeleteUser(user.id || user.Id)}
                             >
                               Удалить
                             </button>
@@ -404,6 +431,20 @@ function AdminUsers() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmUserId !== null}
+        title="Удалить пользователя?"
+        message="Пользователь будет удалён без возможности восстановления. Продолжить?"
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        variant="danger"
+        busy={deleteUserBusy}
+        onCancel={() => {
+          if (!deleteUserBusy) setDeleteConfirmUserId(null)
+        }}
+        onConfirm={confirmDeleteUser}
+      />
       </div>
     </PageShell>
   )

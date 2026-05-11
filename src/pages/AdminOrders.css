@@ -1392,6 +1392,8 @@
 
 /* Ссылка на страницу заказов пользователя (админка) */
 .admin-order-user-link {
+  position: relative;
+  z-index: 2;
   color: #2b6cb0;
   text-decoration: underline;
   text-underline-offset: 2px;

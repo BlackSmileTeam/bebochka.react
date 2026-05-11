@@ -480,7 +480,14 @@ function AdminOrders() {
     !isMoveToPastStatus(oldStatus, nextStatus) &&
     hasUnmarkedParcelItems(order)
   )
-  const getWebUserId = (order) => order.userId ?? order.UserId
+  /** Id аккаунта на сайте для ссылок «заказы пользователя» (> 0). */
+  const getPositiveWebUserId = (order) => {
+    const raw = order.userId ?? order.UserId
+    if (raw === undefined || raw === null || raw === '') return null
+    const n = typeof raw === 'number' ? raw : parseInt(String(raw).trim(), 10)
+    if (!Number.isFinite(n) || n <= 0) return null
+    return n
+  }
   const getTelegramUserId = (order) => order.telegramUserId ?? order.TelegramUserId
   const getTelegramUsername = (order) => order.telegramUsername || order.TelegramUsername || order.customerName || order.CustomerName
   // Ссылка на профиль/чат: из API (CustomerProfileLink) или собираем из telegramUserId
@@ -1052,9 +1059,9 @@ function AdminOrders() {
                                 />
                               </td>
                               <td className="td-number">
-                                {getWebUserId(order) != null && !Number.isNaN(Number(getWebUserId(order))) ? (
+                                {getPositiveWebUserId(order) != null ? (
                                   <Link
-                                    to={`/admin/users/${getWebUserId(order)}/orders?order=${orderId}`}
+                                    to={`/admin/users/${getPositiveWebUserId(order)}/orders?order=${orderId}`}
                                     className="admin-order-user-link"
                                     onClick={(e) => e.stopPropagation()}
                                     title="История заказов пользователя"
@@ -1069,10 +1076,10 @@ function AdminOrders() {
                                 )}
                               </td>
                               <td className="td-client client-cell">
-                                {getWebUserId(order) != null && !Number.isNaN(Number(getWebUserId(order))) ? (
+                                {getPositiveWebUserId(order) != null ? (
                                   <span className="client-cell-with-user-link">
                                     <Link
-                                      to={`/admin/users/${getWebUserId(order)}/orders?order=${orderId}`}
+                                      to={`/admin/users/${getPositiveWebUserId(order)}/orders?order=${orderId}`}
                                       className="admin-order-user-link"
                                       onClick={(e) => e.stopPropagation()}
                                       title="История заказов пользователя"
@@ -1371,9 +1378,36 @@ function AdminOrders() {
               <div className="order-details-body">
                 <p><strong>Номер:</strong> {getOrderNumber(order)}</p>
                 <p><strong>Телефон:</strong> {getCustomerPhone(order)}</p>
-                <p><strong>Клиент:</strong> {hasClientLink(order) ? (
-                  <a href={getCustomerProfileLink(order)} target="_blank" rel="noopener noreferrer" className="client-link-telegram">{getCustomerName(order)}</a>
-                ) : getCustomerName(order)}</p>
+                <p><strong>Клиент:</strong>{' '}
+                  {getPositiveWebUserId(order) != null ? (
+                    <span className="client-cell-with-user-link">
+                      <Link
+                        to={`/admin/users/${getPositiveWebUserId(order)}/orders?order=${orderDetailsOrderId}`}
+                        className="admin-order-user-link"
+                        onClick={() => setOrderDetailsOrderId(null)}
+                        title="История заказов пользователя"
+                      >
+                        {getCustomerName(order)}
+                      </Link>
+                      {hasClientLink(order) && (
+                        <a
+                          href={getCustomerProfileLink(order)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="client-link-telegram client-link-telegram--icon"
+                          title="Открыть профиль/чат в Telegram"
+                          aria-label="Telegram"
+                        >
+                          ↗
+                        </a>
+                      )}
+                    </span>
+                  ) : hasClientLink(order) ? (
+                    <a href={getCustomerProfileLink(order)} target="_blank" rel="noopener noreferrer" className="client-link-telegram">{getCustomerName(order)}</a>
+                  ) : (
+                    getCustomerName(order)
+                  )}
+                </p>
                 <p><strong>Дата:</strong> {formatDate(order.createdAt || order.CreatedAt)}</p>
                 <p><strong>Сумма:</strong> {formatPrice(getFinalAmount(order))}{hasOrderDiscount(order) && getFinalAmount(order) !== getTotalAmount(order) && ` (${formatPrice(getTotalAmount(order))})`}</p>
                 <div className="order-details-actions">

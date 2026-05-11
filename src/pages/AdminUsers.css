@@ -515,3 +515,15 @@
   }
 }
 
+/* Ссылка на страницу заказов пользователя (как в админке заказов) */
+.admin-users-orders-link {
+  color: #2b6cb0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+
+.admin-users-orders-link:hover {
+  color: #2c5282;
+}
+
