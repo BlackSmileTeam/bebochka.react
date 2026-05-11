@@ -55,6 +55,35 @@
   font-weight: 600;
 }
 
+.admin-reviews-th-actions {
+  width: 5.5rem;
+}
+
+.admin-reviews-actions-cell {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.btn-review-delete {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8rem;
+  border: 1px solid #feb2b2;
+  border-radius: 6px;
+  background: #fff5f5;
+  color: #c53030;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-review-delete:hover:not(:disabled) {
+  background: #fed7d7;
+}
+
+.btn-review-delete:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .admin-reviews-empty-cell {
   text-align: center !important;
   color: #718096 !important;
@@ -222,18 +251,19 @@
   }
 }
 
+/* Публичный список: на узких экранах один отзыв на строку */
 @media (max-width: 768px) {
   .public-reviews-list {
-    grid-template-columns: repeat(2, calc((100% - 1 * 1rem) / 2));
-    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
     padding: 0.85rem;
   }
 }
 
 @media (max-width: 480px) {
   .public-reviews-list {
-    grid-template-columns: repeat(2, calc((100% - 1 * 0.6rem) / 2));
-    gap: 0.6rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
     padding: 0.75rem;
   }
 

@@ -7,6 +7,7 @@ import AdminProducts from './pages/AdminProducts'
 import AdminUsers from './pages/AdminUsers'
 import AdminAnnouncements from './pages/AdminAnnouncements'
 import AdminOrders from './pages/AdminOrders'
+import AdminUserOrders from './pages/AdminUserOrders'
 import AdminTelegramErrors from './pages/AdminTelegramErrors'
 import AdminReviews from './pages/AdminReviews'
 import AdminIncomingShipments from './pages/AdminIncomingShipments'
@@ -37,6 +38,7 @@ function App() {
             <Route path="admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
             <Route path="admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
             <Route path="admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+            <Route path="admin/users/:userId/orders" element={<AdminRoute><AdminUserOrders /></AdminRoute>} />
             <Route path="admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="admin/incoming-shipments" element={<AdminRoute><AdminIncomingShipments /></AdminRoute>} />

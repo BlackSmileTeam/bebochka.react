@@ -1389,3 +1389,35 @@
     min-width: auto;
   }
 }
+
+/* Ссылка на страницу заказов пользователя (админка) */
+.admin-order-user-link {
+  color: #2b6cb0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-order-user-link:hover {
+  color: #2c5282;
+}
+
+.client-cell-with-user-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.client-link-telegram--icon {
+  font-size: 0.85rem;
+  line-height: 1;
+  text-decoration: none;
+  color: #3182ce;
+  padding: 0.15rem 0.25rem;
+  border-radius: 4px;
+}
+
+.client-link-telegram--icon:hover {
+  background: #ebf8ff;
+  color: #2c5282;
+}

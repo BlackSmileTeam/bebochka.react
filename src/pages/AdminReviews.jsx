@@ -11,10 +11,20 @@ function renderStars(rating) {
   return `${'★'.repeat(value)}${'☆'.repeat(Math.max(0, 5 - value))}`
 }
 
-function formatDate(dateRaw) {
+function formatReviewDate(dateRaw) {
   if (!dateRaw) return '—'
   const d = new Date(dateRaw)
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('ru-RU')
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('ru-RU')
+}
+
+function sortReviewsByDisplayDate(rows) {
+  const list = Array.isArray(rows) ? [...rows] : []
+  list.sort((a, b) => {
+    const ta = new Date(a.createdAtUtc || 0).getTime()
+    const tb = new Date(b.createdAtUtc || 0).getTime()
+    return tb - ta
+  })
+  return list
 }
 
 function getViewerIsAdmin() {
@@ -41,6 +51,7 @@ function AdminReviews() {
   const [error, setError] = useState('')
   const [toast, setToast] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [deletingReviewId, setDeletingReviewId] = useState(null)
   const [form, setForm] = useState({
     orderNumber: '',
     customerName: '',
@@ -57,7 +68,7 @@ function AdminReviews() {
       setLoading(true)
       setError('')
       const data = await api.getOrderReviews()
-      setReviews(Array.isArray(data) ? data : [])
+      setReviews(sortReviewsByDisplayDate(Array.isArray(data) ? data : []))
     } catch (e) {
       setError(e?.message || 'Не удалось загрузить отзывы')
     } finally {
@@ -94,11 +105,11 @@ function AdminReviews() {
     try {
       setSubmitting(true)
       const { files, reviewDateLocal, ...formRest } = form
-      const createdAtUtc =
+      const createdDate =
         reviewDateLocal && String(reviewDateLocal).trim()
-          ? new Date(reviewDateLocal).toISOString()
+          ? String(reviewDateLocal).trim().slice(0, 10)
           : null
-      await api.createOrderReviewAsAdmin({ ...formRest, files, createdAtUtc })
+      await api.createOrderReviewAsAdmin({ ...formRest, files, createdDate, createdAtUtc: null })
       setToast({ message: 'Отзыв добавлен', type: 'success' })
       resetForm()
       await loadReviews()
@@ -106,6 +117,20 @@ function AdminReviews() {
       setToast({ message: e?.message || 'Не удалось добавить отзыв', type: 'error' })
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!reviewId || !window.confirm('Удалить этот отзыв без возможности восстановления?')) return
+    try {
+      setDeletingReviewId(reviewId)
+      await api.deleteOrderReview(reviewId)
+      setToast({ message: 'Отзыв удалён', type: 'success' })
+      await loadReviews()
+    } catch (e) {
+      setToast({ message: e?.message || 'Не удалось удалить отзыв', type: 'error' })
+    } finally {
+      setDeletingReviewId(null)
     }
   }
 
@@ -124,8 +149,8 @@ function AdminReviews() {
               <label className="admin-review-field">
                 <span className="admin-review-field-label">Дата отзыва</span>
                 <input
-                  type="datetime-local"
-                  title="Если не указать — подставится текущее время"
+                  type="date"
+                  title="Если не указать — будет дата создания отзыва"
                   value={form.reviewDateLocal}
                   onChange={(e) => onFormChange('reviewDateLocal', e.target.value)}
                 />
@@ -214,17 +239,18 @@ function AdminReviews() {
                   <th>Комментарий</th>
                   <th>Фото</th>
                   <th>Дата</th>
+                  <th className="admin-reviews-th-actions" aria-label="Действия" />
                 </tr>
               </thead>
               <tbody>
                 {reviews.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="admin-reviews-empty-cell">Отзывов пока нет.</td>
+                    <td colSpan={8} className="admin-reviews-empty-cell">Отзывов пока нет.</td>
                   </tr>
                 ) : reviews.map((row) => (
                   <tr key={row.id}>
-                    <td>{row.orderNumber || `#${row.orderId}`}</td>
-                    <td>{row.customerName || `Пользователь #${row.userId}`}</td>
+                    <td>{row.orderNumber || 'Отсутствует'}</td>
+                    <td>{row.customerName || 'Отсутствует'}</td>
                     <td>{row.customerPhone || '—'}</td>
                     <td title={row.rating ? `Оценка: ${row.rating}/5` : 'Без оценки'}>{renderStars(row.rating)}</td>
                     <td>{row.comment || 'Комментарий не оставлен.'}</td>
@@ -237,7 +263,18 @@ function AdminReviews() {
                         ))}
                       </div>
                     </td>
-                    <td>{formatDate(row.createdAtUtc)}</td>
+                    <td>{formatReviewDate(row.createdAtUtc)}</td>
+                    <td className="admin-reviews-actions-cell">
+                      <button
+                        type="button"
+                        className="btn-review-delete"
+                        disabled={deletingReviewId === row.id}
+                        onClick={() => handleDeleteReview(row.id)}
+                        title="Удалить отзыв"
+                      >
+                        {deletingReviewId === row.id ? '…' : 'Удалить'}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -253,7 +290,7 @@ function AdminReviews() {
               <article key={row.id} className="public-review-card">
                 <div className="public-review-head">
                   <strong>{renderStars(row.rating)}</strong>
-                  <span>{formatDate(row.createdAtUtc)}</span>
+                  <span>{formatReviewDate(row.createdAtUtc)}</span>
                 </div>
                 <p>{row.comment || 'Комментарий не оставлен.'}</p>
                 {Array.isArray(row.imageUrls) && row.imageUrls.length > 0 && (

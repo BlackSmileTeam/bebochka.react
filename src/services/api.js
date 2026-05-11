@@ -894,6 +894,40 @@ export const api = {
   },
 
   /**
+   * Пользователь по id (админка).
+   * @param {number} userId
+   */
+  async getUserById(userId) {
+    const response = await apiClient.get(`/users/${userId}`)
+    const u = response.data
+    if (!u) return null
+    return {
+      id: u.id ?? u.Id,
+      username: u.username ?? u.Username ?? '',
+      email: u.email ?? u.Email ?? null,
+      fullName: u.fullName ?? u.FullName ?? null,
+      isAdmin: !!(u.isAdmin ?? u.IsAdmin)
+    }
+  },
+
+  /**
+   * Заказы пользователя (только админ).
+   * @param {number} userId
+   */
+  async getOrdersByUserForAdmin(userId) {
+    const response = await apiClient.get(`/orders/by-user/${userId}`)
+    return Array.isArray(response.data) ? response.data : []
+  },
+
+  /**
+   * Удалить отзыв (админ).
+   * @param {number} reviewId
+   */
+  async deleteOrderReview(reviewId) {
+    await apiClient.delete(`/orders/reviews/${reviewId}`)
+  },
+
+  /**
    * Creates a new user
    * @param {Object} userData - User data
    * @returns {Promise<Object>} Created user
@@ -1459,6 +1493,7 @@ export const api = {
       rating: Number(payload.rating) || 0,
       comment: payload.comment ? String(payload.comment).trim() : '',
       imagesBase64,
+      createdDate: payload.createdDate ?? payload.CreatedDate ?? null,
       createdAtUtc: payload.createdAtUtc ?? payload.CreatedAtUtc ?? null
     }
     const response = await apiClient.post('/orders/reviews/admin', body)

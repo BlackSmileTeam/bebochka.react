@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
 import PageShell from '../components/PageShell'
@@ -81,6 +81,12 @@ const ORDER_STATUS_INDEX = ORDER_STATUSES_ALL.reduce((acc, status, idx) => {
   acc[status] = idx
   return acc
 }, {})
+
+/** Совпадает с нормализацией на API (устаревшие значения в БД). */
+const LEGACY_ORDER_STATUS_MAP = {
+  'В пути': 'На доставку',
+  Доставлен: 'Отправлен'
+}
 
 function AdminOrders() {
   const [searchParams] = useSearchParams()
@@ -451,7 +457,10 @@ function AdminOrders() {
 
   const getOrderId = (order) => order.id || order.Id
   const getOrderNumber = (order) => order.orderNumber || order.OrderNumber || `#${getOrderId(order)}`
-  const getOrderStatus = (order) => order.status || order.Status || ORDER_STATUSES_ALL[0]
+  const getOrderStatus = (order) => {
+    const s = order.status || order.Status || ORDER_STATUSES_ALL[0]
+    return LEGACY_ORDER_STATUS_MAP[s] || s
+  }
   const isOrderStatusLocked = (order) => getOrderStatus(order) === 'Получен'
   const isItemAddedToParcel = (item) => !!(item.addedToParcel ?? item.AddedToParcel)
   const hasUnmarkedParcelItems = (order) => getOrderItems(order).some(item => !isItemAddedToParcel(item))
@@ -471,6 +480,7 @@ function AdminOrders() {
     !isMoveToPastStatus(oldStatus, nextStatus) &&
     hasUnmarkedParcelItems(order)
   )
+  const getWebUserId = (order) => order.userId ?? order.UserId
   const getTelegramUserId = (order) => order.telegramUserId ?? order.TelegramUserId
   const getTelegramUsername = (order) => order.telegramUsername || order.TelegramUsername || order.customerName || order.CustomerName
   // Ссылка на профиль/чат: из API (CustomerProfileLink) или собираем из telegramUserId
@@ -1042,13 +1052,48 @@ function AdminOrders() {
                                 />
                               </td>
                               <td className="td-number">
-                                <strong>{getOrderNumber(order)}</strong>
+                                {getWebUserId(order) != null && !Number.isNaN(Number(getWebUserId(order))) ? (
+                                  <Link
+                                    to={`/admin/users/${getWebUserId(order)}/orders?order=${orderId}`}
+                                    className="admin-order-user-link"
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="История заказов пользователя"
+                                  >
+                                    <strong>{getOrderNumber(order)}</strong>
+                                  </Link>
+                                ) : (
+                                  <strong>{getOrderNumber(order)}</strong>
+                                )}
                                 {hasOrderDiscount(order) && (
                                   <span className="order-discount-icon" title="У заказа есть скидка">🏷️</span>
                                 )}
                               </td>
                               <td className="td-client client-cell">
-                                {hasClientLink(order) ? (
+                                {getWebUserId(order) != null && !Number.isNaN(Number(getWebUserId(order))) ? (
+                                  <span className="client-cell-with-user-link">
+                                    <Link
+                                      to={`/admin/users/${getWebUserId(order)}/orders?order=${orderId}`}
+                                      className="admin-order-user-link"
+                                      onClick={(e) => e.stopPropagation()}
+                                      title="История заказов пользователя"
+                                    >
+                                      {getCustomerName(order)}
+                                    </Link>
+                                    {hasClientLink(order) && (
+                                      <a
+                                        href={getCustomerProfileLink(order)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="client-link-telegram client-link-telegram--icon"
+                                        onClick={(e) => e.stopPropagation()}
+                                        title="Открыть профиль/чат в Telegram"
+                                        aria-label="Telegram"
+                                      >
+                                        ↗
+                                      </a>
+                                    )}
+                                  </span>
+                                ) : hasClientLink(order) ? (
                                   <a
                                     href={getCustomerProfileLink(order)}
                                     target="_blank"

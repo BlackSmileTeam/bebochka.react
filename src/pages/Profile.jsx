@@ -4,6 +4,7 @@ import { getOrderStatusColor } from '../constants/orderStatusColors'
 import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
 import PageShell from '../components/PageShell'
+import { buildTelegramPaymentHref, buildVkPaymentHref } from '../utils/paymentMessengerLinks'
 import './Profile.css'
 
 /** Реквизиты оплаты: модалка «К оплате». Авито: VITE_PAYMENT_AVITO_URL или запасная ссылка на сайт. */
@@ -176,6 +177,18 @@ function Profile() {
     paymentHintOrder != null
       ? (paymentHintOrder.orderNumber ?? paymentHintOrder.OrderNumber ?? String(paymentHintOrderId))
       : ''
+
+  const paymentContactOrderLabel =
+    String(paymentHintOrderNumber || '').trim() ||
+    (paymentHintOrderId != null ? String(paymentHintOrderId) : '')
+  const paymentTelegramHrefWithDraft =
+    paymentHintOrderId != null
+      ? buildTelegramPaymentHref(PAYMENT_TELEGRAM_URL, paymentContactOrderLabel)
+      : PAYMENT_TELEGRAM_URL
+  const paymentVkHrefWithDraft =
+    paymentHintOrderId != null
+      ? buildVkPaymentHref(PAYMENT_VK_URL, paymentContactOrderLabel)
+      : PAYMENT_VK_URL
 
   const copyPaymentOrderNumber = async () => {
     const text = String(paymentHintOrderNumber || '').trim()
@@ -425,7 +438,7 @@ function Profile() {
                 <li>
                   <a
                     className="profile-pay-contact-row"
-                    href={PAYMENT_TELEGRAM_URL}
+                    href={paymentTelegramHrefWithDraft}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -435,7 +448,7 @@ function Profile() {
                 <li>
                   <a
                     className="profile-pay-contact-row"
-                    href={PAYMENT_VK_URL}
+                    href={paymentVkHrefWithDraft}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
