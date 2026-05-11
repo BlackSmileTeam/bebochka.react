@@ -154,9 +154,6 @@ function Layout() {
             Недорогая и качественная одежда для мальчиков и девочек от 62 до 152 размера 🧸
           </p>
           <p className="footer-text">
-            Отправка заказов через Авито доставку, яндекс, ozon, 5post 📦
-          </p>
-          <p className="footer-text">
             По всем вопросам{' '}
             <a href="https://t.me/mamka_vseya_russi" target="_blank" rel="noopener noreferrer">
               bebochkaa

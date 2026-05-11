@@ -292,11 +292,6 @@ export default function AdminUserOrders() {
           <p className="admin-user-orders-muted">У этого пользователя пока нет заказов.</p>
         )}
         {!loading && !error && sortedOrders.length > 0 && (
-          <p className="admin-user-orders-hint">
-            Строка заказа сворачивает список. Карточка товара открывает просмотр. В статусе «В сборке» — кнопка «В посылку».
-          </p>
-        )}
-        {!loading && !error && sortedOrders.length > 0 && (
           <>
             <section className="admin-user-orders-section">
               <h2 className="admin-user-orders-section-title">

@@ -22,17 +22,6 @@
   margin: 0.5rem 0;
 }
 
-.admin-user-orders-hint {
-  margin: 0 0 1rem;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.88rem;
-  line-height: 1.45;
-  color: #4a5568;
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
 .admin-user-orders-error {
   color: #c53030;
   padding: 0.75rem;
