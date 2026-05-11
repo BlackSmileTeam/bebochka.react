@@ -72,11 +72,6 @@ const STATUS_TOOLTIPS = {
   'Отменен': 'Заказ отменён'
 }
 
-const PARCEL_EDITABLE_STATUSES = new Set([
-  'Формирование заказа',
-  'Ожидает оплату',
-  'В сборке'
-])
 const ORDER_STATUS_INDEX = ORDER_STATUSES_ALL.reduce((acc, status, idx) => {
   acc[status] = idx
   return acc
@@ -470,9 +465,15 @@ function AdminOrders() {
     if (oldIdx == null || nextIdx == null) return false
     return nextIdx < oldIdx
   }
+  /** Красная рамка: только после «В сборке», если позиция ещё не в посылке (не для «Оплачен» и ранних статусов). */
   const shouldHighlightMissingParcel = (order) => {
     const status = getOrderStatus(order)
-    return !PARCEL_EDITABLE_STATUSES.has(status) && hasUnmarkedParcelItems(order)
+    if (status === 'Отменен') return false
+    const assemblyIdx = ORDER_STATUS_INDEX['В сборке']
+    const curIdx = ORDER_STATUS_INDEX[status]
+    if (assemblyIdx == null || curIdx == null) return false
+    if (curIdx <= assemblyIdx) return false
+    return hasUnmarkedParcelItems(order)
   }
   const shouldWarnAboutUnmarkedParcelItems = (order, oldStatus, nextStatus) => (
     oldStatus === 'В сборке' &&

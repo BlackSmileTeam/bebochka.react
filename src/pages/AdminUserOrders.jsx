@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
+import ProductDetail from '../components/ProductDetail'
+import { useCart } from '../contexts/CartContext'
 import { getOrderStatusColor } from '../constants/orderStatusColors'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import './AdminUserOrders.css'
@@ -12,6 +14,10 @@ function getOrderId(o) {
 
 function getItems(o) {
   return o.orderItems || o.OrderItems || []
+}
+
+function getOrderStatus(o) {
+  return (o.status || o.Status || '').trim() || '—'
 }
 
 function formatMoney(n) {
@@ -32,28 +38,79 @@ function toImgUrl(path) {
   return base + (String(path).startsWith('/') ? String(path) : `/${String(path)}`)
 }
 
-function OrderItemsGrid({ order }) {
+function isItemAddedToParcel(item) {
+  return !!(item.addedToParcel ?? item.AddedToParcel)
+}
+
+function OrderItemsGrid({
+  order,
+  orderId,
+  parcelAllowed,
+  togglingKey,
+  onToggleInParcel,
+  onOpenProduct,
+  detailLoadingId
+}) {
   const items = getItems(order)
   if (!items.length) return <p className="admin-user-orders-no-items">Нет позиций</p>
   return (
     <ul className="admin-user-orders-items">
       {items.map((it) => {
+        const itemId = it.id ?? it.Id
         const pid = it.productId ?? it.ProductId
         const name = it.productName || it.ProductName || `Товар #${pid}`
         const qty = it.quantity ?? it.Quantity ?? 1
-        const price = it.productPrice ?? it.ProductPrice ?? 0
+        const price = it.productPrice || it.ProductPrice || 0
         const img = it.imageUrl || it.ImageUrl
+        const size = it.size ?? it.Size ?? ''
+        const brand = it.brand ?? it.Brand ?? ''
+        const color = it.color ?? it.Color ?? ''
+        const addedToParcel = isItemAddedToParcel(it)
+        const toggleKey = `${orderId}-${itemId}`
+        const toggling = togglingKey === toggleKey
+        const loadingThis = detailLoadingId === pid
         return (
-          <li key={it.id ?? it.Id} className="admin-user-orders-item-card">
-            <div className="admin-user-orders-item-thumb">
-              <img src={toImgUrl(img)} alt="" onError={(e) => { e.target.src = '/logo.jpg' }} />
-            </div>
-            <div className="admin-user-orders-item-body">
-              <div className="admin-user-orders-item-name">{name}</div>
-              <div className="admin-user-orders-item-meta">
-                {qty > 1 ? `${formatMoney(price)} × ${qty}` : formatMoney(price * qty)}
+          <li
+            key={itemId}
+            className={`admin-user-orders-item-card${addedToParcel ? ' admin-user-orders-item-card--in-parcel' : ''}`}
+          >
+            <button
+              type="button"
+              className="admin-user-orders-item-card-main"
+              onClick={() => onOpenProduct(pid)}
+              disabled={!pid || loadingThis}
+              title="Открыть карточку товара"
+            >
+              <div className="admin-user-orders-item-thumb">
+                <img src={toImgUrl(img)} alt="" onError={(e) => { e.target.src = '/logo.jpg' }} />
               </div>
-            </div>
+              <div className="admin-user-orders-item-body">
+                <div className="admin-user-orders-item-name">{loadingThis ? 'Загрузка…' : name}</div>
+                <div className="admin-user-orders-item-meta">
+                  {qty > 1 ? `${formatMoney(price)} × ${qty}` : formatMoney(price * qty)}
+                </div>
+                {(brand || size || color) && (
+                  <div className="admin-user-orders-item-extra">
+                    {brand && <span>{brand}</span>}
+                    {size && <span>· {size}</span>}
+                    {color && <span>· {color}</span>}
+                  </div>
+                )}
+              </div>
+            </button>
+            {parcelAllowed && (
+              <div className="admin-user-orders-item-actions">
+                <button
+                  type="button"
+                  className="admin-user-orders-btn-parcel"
+                  onClick={() => onToggleInParcel(orderId, itemId, addedToParcel)}
+                  disabled={toggling}
+                  title={addedToParcel ? 'Убрать отметку «в посылке»' : 'Отметить: добавлен в посылку'}
+                >
+                  {toggling ? '…' : (addedToParcel ? '✓ В посылке' : 'В посылку')}
+                </button>
+              </div>
+            )}
           </li>
         )
       })}
@@ -61,28 +118,46 @@ function OrderItemsGrid({ order }) {
   )
 }
 
-function OrderCard({ order, defaultOpen }) {
+function OrderCard({
+  order,
+  defaultOpen,
+  parcelAllowed,
+  togglingKey,
+  onToggleInParcel,
+  onOpenProduct,
+  detailLoadingId
+}) {
   const oid = getOrderId(order)
-  const status = (order.status || order.Status || '').trim() || '—'
+  const status = getOrderStatus(order)
   const num = order.orderNumber || order.OrderNumber || `#${oid}`
   const sum = order.finalAmount ?? order.FinalAmount ?? order.totalAmount ?? order.TotalAmount ?? 0
   const color = getOrderStatusColor(status)
   return (
     <details className="admin-user-orders-order" open={defaultOpen}>
       <summary className="admin-user-orders-order-summary">
+        <span className="admin-user-orders-order-chevron" aria-hidden>▶</span>
         <span className="admin-user-orders-order-num">{num}</span>
         <span className="admin-user-orders-order-sum">{formatMoney(sum)}</span>
         <span className="admin-user-orders-order-status" style={{ backgroundColor: color }}>{status}</span>
         <span className="admin-user-orders-order-date">{formatWhen(order.createdAt || order.CreatedAt)}</span>
       </summary>
       <div className="admin-user-orders-order-body">
-        <OrderItemsGrid order={order} />
+        <OrderItemsGrid
+          order={order}
+          orderId={oid}
+          parcelAllowed={parcelAllowed}
+          togglingKey={togglingKey}
+          onToggleInParcel={onToggleInParcel}
+          onOpenProduct={onOpenProduct}
+          detailLoadingId={detailLoadingId}
+        />
       </div>
     </details>
   )
 }
 
 export default function AdminUserOrders() {
+  const { sessionId } = useCart()
   const { userId: userIdParam } = useParams()
   const [searchParams] = useSearchParams()
   const userId = Number(userIdParam)
@@ -93,6 +168,16 @@ export default function AdminUserOrders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [detailProduct, setDetailProduct] = useState(null)
+  const [detailLoadingId, setDetailLoadingId] = useState(null)
+  const [inParcelTogglingKey, setInParcelTogglingKey] = useState(null)
+
+  const reloadOrders = useCallback(async () => {
+    if (!userId || Number.isNaN(userId)) return
+    const list = await api.getOrdersByUserForAdmin(userId)
+    setOrders(Array.isArray(list) ? list : [])
+  }, [userId])
+
   const sortedOrders = useMemo(() => {
     const list = Array.isArray(orders) ? [...orders] : []
     list.sort((a, b) => {
@@ -139,9 +224,56 @@ export default function AdminUserOrders() {
     return () => { cancelled = true }
   }, [userId])
 
+  const openProductDetail = async (productId) => {
+    if (productId == null) return
+    setDetailLoadingId(productId)
+    try {
+      const p = await api.getProduct(productId, sessionId)
+      setDetailProduct(p)
+    } catch (e) {
+      window.dispatchEvent(new CustomEvent('bebochka-toast', {
+        detail: { type: 'error', message: e?.message || 'Не удалось открыть товар' }
+      }))
+    } finally {
+      setDetailLoadingId(null)
+    }
+  }
+
+  const handleToggleInParcel = async (orderId, itemId, currentAdded) => {
+    const key = `${orderId}-${itemId}`
+    setInParcelTogglingKey(key)
+    try {
+      await api.setOrderItemInParcel(orderId, itemId, !currentAdded)
+      await reloadOrders()
+    } catch (e) {
+      window.dispatchEvent(new CustomEvent('bebochka-toast', {
+        detail: { type: 'error', message: e?.message || 'Не удалось обновить отметку «в посылке»' }
+      }))
+    } finally {
+      setInParcelTogglingKey(null)
+    }
+  }
+
   const userLabel = user
     ? (user.fullName || user.FullName || user.username || user.Username || user.email || user.Email || `id ${userId}`)
     : `id ${userId}`
+
+  const renderOrderCard = (o, defaultOpen) => {
+    const st = getOrderStatus(o)
+    const parcelAllowed = st === 'В сборке'
+    return (
+      <OrderCard
+        key={getOrderId(o)}
+        order={o}
+        defaultOpen={defaultOpen}
+        parcelAllowed={parcelAllowed}
+        togglingKey={inParcelTogglingKey}
+        onToggleInParcel={handleToggleInParcel}
+        onOpenProduct={openProductDetail}
+        detailLoadingId={detailLoadingId}
+      />
+    )
+  }
 
   return (
     <PageShell
@@ -160,6 +292,11 @@ export default function AdminUserOrders() {
           <p className="admin-user-orders-muted">У этого пользователя пока нет заказов.</p>
         )}
         {!loading && !error && sortedOrders.length > 0 && (
+          <p className="admin-user-orders-hint">
+            Строка заказа сворачивает список. Карточка товара открывает просмотр. В статусе «В сборке» — кнопка «В посылку».
+          </p>
+        )}
+        {!loading && !error && sortedOrders.length > 0 && (
           <>
             <section className="admin-user-orders-section">
               <h2 className="admin-user-orders-section-title">
@@ -167,23 +304,23 @@ export default function AdminUserOrders() {
               </h2>
               {sortedOrders
                 .filter((o) => getOrderId(o) === primaryOrderId)
-                .map((o) => (
-                  <OrderCard key={getOrderId(o)} order={o} defaultOpen={true} />
-                ))}
+                .map((o) => renderOrderCard(o, true))}
             </section>
             {sortedOrders.filter((o) => getOrderId(o) !== primaryOrderId).length > 0 && (
               <section className="admin-user-orders-section">
                 <h2 className="admin-user-orders-section-title">Прошлые заказы</h2>
                 {sortedOrders
                   .filter((o) => getOrderId(o) !== primaryOrderId)
-                  .map((o) => (
-                    <OrderCard key={getOrderId(o)} order={o} defaultOpen={false} />
-                  ))}
+                  .map((o) => renderOrderCard(o, false))}
               </section>
             )}
           </>
         )}
       </div>
+
+      {detailProduct && (
+        <ProductDetail product={detailProduct} onClose={() => setDetailProduct(null)} />
+      )}
     </PageShell>
   )
 }
