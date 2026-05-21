@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
+import { TELEGRAM_UI_ENABLED } from '../constants/featureFlags'
+import { isProductPublishedToCatalog } from '../utils/productPublication'
 import Toast from './Toast'
 import './ProductForm.css'
 
@@ -200,7 +202,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         boxNumber: product.boxNumber || '',
         incomingShipmentId: product.incomingShipmentId ?? ''
       })
-      setScheduleSend(!!(product.publishedAt || product.PublishedAt))
+      setScheduleSend(TELEGRAM_UI_ENABLED && !!(product.publishedAt || product.PublishedAt))
       setScheduleCartUnlock(!!(product.cartAvailableAt || product.CartAvailableAt))
       setBrandSearch(product.brand || '')
       setExistingImages(product.images || [])
@@ -276,7 +278,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       
       // Add PublishedAt if "отправить ко времени" is checked
       // datetime-local gives "YYYY-MM-DDTHH:mm" (interpreted as Moscow time)
-      if (scheduleSend && formData.publishedAt) {
+      if (TELEGRAM_UI_ENABLED && scheduleSend && formData.publishedAt) {
         const [datePart, timePart] = formData.publishedAt.split('T')
         const [year, month, day] = datePart.split('-').map(Number)
         const [hours, minutes] = timePart.split(':').map(Number)
@@ -737,31 +739,33 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-checkbox-inline">
-              <input
-                type="checkbox"
-                checked={scheduleSend}
-                onChange={(e) => setScheduleSend(e.target.checked)}
-              />
-              Отправить ко времени
-            </label>
-            {scheduleSend && (
-              <>
+          {TELEGRAM_UI_ENABLED && (
+            <div className="form-group">
+              <label className="form-checkbox-inline">
                 <input
-                  type="datetime-local"
-                  id="publishedAt"
-                  name="publishedAt"
-                  value={formData.publishedAt}
-                  onChange={handleChange}
-                  style={{ marginTop: '8px' }}
+                  type="checkbox"
+                  checked={scheduleSend}
+                  onChange={(e) => setScheduleSend(e.target.checked)}
                 />
-                <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-                  Укажите дату и время публикации (МСК).
-                </small>
-              </>
-            )}
-          </div>
+                Отправить ко времени
+              </label>
+              {scheduleSend && (
+                <>
+                  <input
+                    type="datetime-local"
+                    id="publishedAt"
+                    name="publishedAt"
+                    value={formData.publishedAt}
+                    onChange={handleChange}
+                    style={{ marginTop: '8px' }}
+                  />
+                  <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                    Укажите дату и время публикации (МСК).
+                  </small>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="form-group">
             <label className="form-checkbox-inline">
@@ -789,7 +793,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             )}
           </div>
 
-          {product && (
+          {product && !isProductPublishedToCatalog(product) && (
             <div className="form-group">
               <button
                 type="button"
@@ -801,8 +805,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                     await api.publishProduct(product.id)
                     setToast({
                       type: 'success',
-                      message: 'Товар опубликован в каталоге (МСК). В Telegram пост не отправляется, пока отключен флаг PostNewProductsToChannel.'
+                      message: 'Товар опубликован в каталоге (МСК).'
                     })
+                    onSuccess()
                   } catch (e) {
                     setToast({ type: 'error', message: e.message || 'Не удалось обновить публикацию' })
                   } finally {
@@ -813,7 +818,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 {previewLoading ? '…' : 'Превью: показать в каталоге сейчас'}
               </button>
               <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-                Ставит время появления карточки на текущий момент (МСК). Рассылка в Telegram отключена флагом PostNewProductsToChannel.
+                Ставит время появления карточки на текущий момент (МСК).
               </small>
             </div>
           )}

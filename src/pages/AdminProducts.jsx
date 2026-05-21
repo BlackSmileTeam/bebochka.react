@@ -8,6 +8,7 @@ import PageShell from '../components/PageShell.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl.js'
+import { TELEGRAM_UI_ENABLED } from '../constants/featureFlags.js'
 import './AdminProducts.css'
 
 function getDeleteProductErrorMessage(err) {
@@ -781,7 +782,7 @@ function AdminProducts() {
           >
             🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
           </button>
-          {selectedProductIds.size > 0 && (
+          {TELEGRAM_UI_ENABLED && selectedProductIds.size > 0 && (
             <div className="send-channel-wrapper">
               <div className="send-channel-group">
                 <button 
@@ -1142,7 +1143,9 @@ function AdminProducts() {
                 <th>Состояние</th>
                 <th>Цена</th>
                 <th>Номер коробки</th>
-                <th title="Статус публикации в ТГ"><span style={{cursor: 'help'}}>📢</span></th>
+                {TELEGRAM_UI_ENABLED && (
+                  <th title="Статус публикации в ТГ"><span style={{cursor: 'help'}}>📢</span></th>
+                )}
                 <th>Действия</th>
               </tr>
             </thead>
@@ -1212,34 +1215,36 @@ function AdminProducts() {
                   <td data-label="Состояние" className="condition-cell desktop-only">{product.condition ? capitalize(product.condition) : '-'}</td>
                   <td data-label="Цена" className="price-cell desktop-only">{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
                   <td data-label="Коробка" className="desktop-only">{product.boxNumber || '-'}</td>
-                  <td data-label="Статус" className="publication-cell">
-                    <div className="publication-icon-wrapper">
-                      {product.publishedAt ? (
-                        published ? (
-                          <span 
-                            className="publication-icon published" 
+                  {TELEGRAM_UI_ENABLED && (
+                    <td data-label="Статус" className="publication-cell">
+                      <div className="publication-icon-wrapper">
+                        {product.publishedAt ? (
+                          published ? (
+                            <span
+                              className="publication-icon published"
+                              title="Опубликован"
+                            >
+                              ✓
+                            </span>
+                          ) : (
+                            <span
+                              className="publication-icon scheduled"
+                              title={`Запланировано на ${formatMoscowTime(product.publishedAt)}`}
+                            >
+                              ⏰
+                            </span>
+                          )
+                        ) : (
+                          <span
+                            className="publication-icon published"
                             title="Опубликован"
                           >
                             ✓
                           </span>
-                        ) : (
-                          <span 
-                            className="publication-icon scheduled" 
-                            title={`Запланировано на ${formatMoscowTime(product.publishedAt)}`}
-                          >
-                            ⏰
-                          </span>
-                        )
-                      ) : (
-                        <span 
-                          className="publication-icon published" 
-                          title="Опубликован"
-                        >
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                  </td>
+                        )}
+                      </div>
+                    </td>
+                  )}
                   <td data-label="Действия" className="actions-cell">
                     <div className="action-menu-wrapper">
                       <button
