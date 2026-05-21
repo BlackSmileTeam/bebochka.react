@@ -989,18 +989,17 @@ function AdminOrders() {
                 <div className="order-group-content">
                   <table className="orders-table">
                     <colgroup>
-                      <col style={{ width: '36px' }} />
-                      <col style={{ width: '40px' }} />
-                      <col style={{ width: '12%' }} />
-                      <col style={{ width: '18%' }} />
-                      <col style={{ width: '13%' }} />
-                      <col style={{ width: '14%' }} />
-                      <col style={{ width: '0%' }} />
-                      <col style={{ width: '13%' }} />
-                      <col style={{ width: '20%' }} />
+                      <col className="col-expand" style={{ width: '36px' }} />
+                      <col className="col-checkbox" style={{ width: '40px' }} />
+                      <col className="col-number" style={{ width: '12%' }} />
+                      <col className="col-client" style={{ width: '18%' }} />
+                      <col className="col-phone" style={{ width: '13%' }} />
+                      <col className="col-date" style={{ width: '14%' }} />
+                      <col className="col-amount" style={{ width: '13%' }} />
+                      <col className="col-actions" style={{ width: '20%' }} />
                     </colgroup>
                     <thead>
-                      <tr>
+                      <tr className="orders-table-head-row">
                         <th className="expand-column"></th>
                         <th className="checkbox-column">
                           <input
@@ -1016,9 +1015,8 @@ function AdminOrders() {
                         <SortableTh sortKey="client" className="th-client">Клиент</SortableTh>
                         <SortableTh sortKey="phone" className="th-phone">Телефон</SortableTh>
                         <SortableTh sortKey="date" className="th-date">Дата</SortableTh>
-                        <th className="th-open-details">Подробнее</th>
-                        <SortableTh sortKey="amount">Сумма</SortableTh>
-                        <th className="th-status-actions">Статус и действия</th>
+                        <SortableTh sortKey="amount" className="th-amount">Сумма</SortableTh>
+                        <th className="th-status-actions th-menu">Действия</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1036,7 +1034,7 @@ function AdminOrders() {
                         return (
                           <Fragment key={orderId}>
                             <tr
-                              className={`${isSelected ? 'row-selected' : ''} ${orderRowMenuOpen === orderId ? 'row-menu-open' : ''}`.trim()}
+                              className={`order-data-row ${isSelected ? 'row-selected' : ''} ${orderRowMenuOpen === orderId ? 'row-menu-open' : ''}`.trim()}
                             >
                               <td className="expand-column">
                                 {items.length > 0 && (
@@ -1077,57 +1075,80 @@ function AdminOrders() {
                                 )}
                               </td>
                               <td className="td-client client-cell">
-                                {getPositiveWebUserId(order) != null ? (
-                                  <span className="client-cell-with-user-link">
-                                    <Link
-                                      to={`/admin/users/${getPositiveWebUserId(order)}/orders?order=${orderId}`}
-                                      className="admin-order-user-link"
-                                      onClick={(e) => e.stopPropagation()}
-                                      title="История заказов пользователя"
-                                    >
-                                      {getCustomerName(order)}
-                                    </Link>
-                                    {hasClientLink(order) && (
+                                <div className="order-row-client-stack">
+                                  <div className="order-row-client-name">
+                                    {getPositiveWebUserId(order) != null ? (
+                                      <span className="client-cell-with-user-link">
+                                        <Link
+                                          to={`/admin/users/${getPositiveWebUserId(order)}/orders?order=${orderId}`}
+                                          className="admin-order-user-link"
+                                          onClick={(e) => e.stopPropagation()}
+                                          title="История заказов пользователя"
+                                        >
+                                          {getCustomerName(order)}
+                                        </Link>
+                                        {hasClientLink(order) && (
+                                          <a
+                                            href={getCustomerProfileLink(order)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="client-link-telegram client-link-telegram--icon"
+                                            onClick={(e) => e.stopPropagation()}
+                                            title="Открыть профиль/чат в Telegram"
+                                            aria-label="Telegram"
+                                          >
+                                            ↗
+                                          </a>
+                                        )}
+                                      </span>
+                                    ) : hasClientLink(order) ? (
                                       <a
                                         href={getCustomerProfileLink(order)}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="client-link-telegram client-link-telegram--icon"
+                                        className="client-link-telegram"
                                         onClick={(e) => e.stopPropagation()}
                                         title="Открыть профиль/чат в Telegram"
-                                        aria-label="Telegram"
                                       >
-                                        ↗
+                                        {getCustomerName(order)}
                                       </a>
+                                    ) : (
+                                      getCustomerName(order)
                                     )}
-                                  </span>
-                                ) : hasClientLink(order) ? (
-                                  <a
-                                    href={getCustomerProfileLink(order)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="client-link-telegram"
-                                    onClick={(e) => e.stopPropagation()}
-                                    title="Открыть профиль/чат в Telegram"
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="btn-open-order-details btn-open-order-details--stacked"
+                                    onClick={(e) => { e.stopPropagation(); setOrderDetailsOrderId(orderId) }}
                                   >
-                                    {getCustomerName(order)}
-                                  </a>
-                                ) : (
-                                  getCustomerName(order)
-                                )}
+                                    Подробнее
+                                  </button>
+                                </div>
                               </td>
                               <td className="td-phone">{getCustomerPhone(order)}</td>
                               <td className="td-date">{formatDate(order.createdAt || order.CreatedAt)}</td>
-                              <td className="td-open-details">
-                                <button type="button" className="btn-open-order-details" onClick={(e) => { e.stopPropagation(); setOrderDetailsOrderId(orderId) }}>
-                                  Подробнее
-                                </button>
-                              </td>
-                              <td>
-                                <strong>{formatPrice(getFinalAmount(order))}</strong>
-                                {hasOrderDiscount(order) && getFinalAmount(order) !== getTotalAmount(order) && (
-                                  <span className="order-sum-original"> ({formatPrice(getTotalAmount(order))})</span>
-                                )}
+                              <td className="td-amount amount-cell">
+                                <div className="order-row-amount-stack">
+                                  <div className="order-row-sum">
+                                    <strong>{formatPrice(getFinalAmount(order))}</strong>
+                                    {hasOrderDiscount(order) && getFinalAmount(order) !== getTotalAmount(order) && (
+                                      <span className="order-sum-original"> ({formatPrice(getTotalAmount(order))})</span>
+                                    )}
+                                  </div>
+                                  <select
+                                    value={currentStatus}
+                                    onChange={(e) => handleStatusChange(orderId, e.target.value)}
+                                    disabled={isUpdating || statusLocked}
+                                    className="status-select status-select--colored status-select--amount-stack"
+                                    style={getOrderStatusSelectSurfaceStyle(currentStatus)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    title={STATUS_TOOLTIPS[currentStatus]}
+                                  >
+                                    {getAdminStatusSelectOptions(currentStatus).map(s => (
+                                      <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
+                                    ))}
+                                  </select>
+                                </div>
                               </td>
                               <td className="status-actions-cell">
                                 <div className="status-actions-wrapper">
@@ -1135,7 +1156,7 @@ function AdminOrders() {
                                     value={currentStatus}
                                     onChange={(e) => handleStatusChange(orderId, e.target.value)}
                                     disabled={isUpdating || statusLocked}
-                                    className="status-select status-select--colored"
+                                    className="status-select status-select--colored status-select--desktop"
                                     style={getOrderStatusSelectSurfaceStyle(currentStatus)}
                                     onClick={(e) => e.stopPropagation()}
                                     title={STATUS_TOOLTIPS[currentStatus]}
@@ -1173,7 +1194,7 @@ function AdminOrders() {
                             </tr>
                             {isOrderExpanded && items.length > 0 && (
                               <tr key={`${orderId}-items`} className="order-items-tr">
-                                <td colSpan={9} className="order-items-td">
+                                <td colSpan={8} className="order-items-td">
                                   <div className="order-items-list">
                                     {items.map(item => {
                                       const itemId = item.id ?? item.Id
