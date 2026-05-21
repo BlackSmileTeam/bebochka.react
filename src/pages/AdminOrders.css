@@ -327,7 +327,8 @@
 .order-group-content {
   padding: 0;
   width: 100%;
-  overflow: visible;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Таблица заказов */
@@ -1215,6 +1216,42 @@
 }
 
 @media (max-width: 768px) {
+  .order-group-content {
+    overflow-x: auto;
+  }
+
+  .orders-table {
+    min-width: 520px;
+  }
+
+  .status-actions-cell,
+  .th-status-actions {
+    min-width: 0;
+    width: auto;
+  }
+
+  .status-actions-wrapper {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .order-item-card {
+    flex: 1 1 100%;
+    max-width: none;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .order-item-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .order-items-td {
+    padding: 0.75rem !important;
+  }
+
   .status-filters-toggle-btn {
     display: block;
   }
@@ -1249,11 +1286,6 @@
     font-size: 0.875rem;
     display: table;
     width: 100%;
-    overflow-x: visible;
-  }
-
-  .order-group-content {
-    overflow-x: visible;
   }
 
   .orders-table th,
