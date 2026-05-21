@@ -334,6 +334,7 @@ function Home() {
           <p>{products.length === 0 ? 'Товары пока не добавлены' : 'По фильтрам ничего не найдено'}</p>
         </div>
       ) : (
+        <div className="catalog-main">
         <div className="products-grid">
           {visibleProducts.map((product) => (
             <div 
@@ -495,15 +496,14 @@ function Home() {
             </div>
           ))}
         </div>
-      )}
-      {filteredProducts.length > 0 && (
+        {hasMoreProducts && <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />}
         <div className="catalog-pagination">
           <span>
             Показано {visibleProducts.length} из {filteredProducts.length} товаров
           </span>
         </div>
+        </div>
       )}
-      {hasMoreProducts && <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />}
       
       {selectedProduct && (
         <ProductDetail 

@@ -573,6 +573,15 @@
   flex-shrink: 0;
 }
 
+/* ⋯ под крестиком */
+.order-details-header-actions .btn-close-modal {
+  order: 1;
+}
+
+.order-details-header-actions .order-details-header-dropdown {
+  order: 2;
+}
+
 .order-details-header-dropdown {
   position: relative;
 }
@@ -1308,6 +1317,16 @@
 }
 
 @media (max-width: 768px) {
+  .admin-orders-page,
+  .orders-groups,
+  .order-group,
+  .order-group-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   .order-group-content {
     overflow-x: visible;
   }
@@ -1315,7 +1334,8 @@
   .orders-table {
     display: block;
     width: 100%;
-    min-width: 0;
+    min-width: 100%;
+    max-width: 100%;
     table-layout: auto;
   }
 
@@ -1323,6 +1343,7 @@
   .orders-table tbody {
     display: block;
     width: 100%;
+    min-width: 100%;
   }
 
   .orders-table-head-row,
@@ -1331,6 +1352,8 @@
     flex-direction: row;
     align-items: center;
     width: 100%;
+    min-width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
   }
 
@@ -1374,10 +1397,10 @@
 
   .orders-table-head-row > .th-amount,
   .order-data-row > .td-amount {
-    flex: 0 1 auto;
-    min-width: 76px;
-    max-width: 38%;
-    padding: 0.5rem 0.25rem !important;
+    flex: 0 0 34%;
+    min-width: 96px;
+    max-width: none;
+    padding: 0.5rem 0.35rem !important;
     align-self: center;
   }
 
@@ -1462,10 +1485,10 @@
     gap: 0.4rem;
     width: 100%;
     margin: 0 0 0.5rem;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #f7fafc;
+    padding: 0.35rem 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
     color: #2d3748;
     font-size: 0.9rem;
     font-weight: 600;
@@ -1479,17 +1502,6 @@
 
   .order-details-status-history:not(.order-details-status-history--open) .order-status-history-list {
     display: none;
-  }
-
-  .order-details-header-dropdown .order-row-dropdown-menu {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    top: auto !important;
-    margin: 0 !important;
-    border-radius: 12px 12px 0 0 !important;
-    max-height: 40vh;
   }
 
   .order-item-card {
@@ -1585,22 +1597,22 @@
     box-sizing: border-box;
   }
 
-  /* Выпадающее меню — как action sheet внизу экрана */
-  .order-row-dropdown-menu {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    top: auto !important;
-    margin: 0 !important;
-    border-radius: 12px 12px 0 0 !important;
-    max-height: 40vh;
-    overflow-y: auto;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+  .order-row-dropdown-backdrop {
+    background: rgba(0, 0, 0, 0.45);
   }
 
-  .order-row-dropdown-backdrop {
-    background: rgba(0, 0, 0, 0.4);
+  .order-row-dropdown-menu--centered {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%);
+    margin: 0 !important;
+    min-width: 220px;
+    max-width: min(320px, 92vw);
+    border-radius: 12px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   }
 
   /* Карточки товаров в заказе — на всю ширину */
@@ -1668,8 +1680,9 @@
 
   .orders-table-head-row > .th-amount,
   .order-data-row > .td-amount {
-    min-width: 68px;
-    max-width: 42%;
+    flex: 0 0 36%;
+    min-width: 88px;
+    max-width: none;
   }
 
   .orders-table-head-row > .th-status-actions,

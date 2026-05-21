@@ -1185,7 +1185,7 @@ function AdminOrders() {
                                     {orderRowMenuOpen === orderId && (
                                       <>
                                         <div className="order-row-dropdown-backdrop" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null) }} />
-                                        <div className="order-row-dropdown-menu">
+                                        <div className="order-row-dropdown-menu order-row-dropdown-menu--centered">
                                           <button type="button" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null); setOrderDiscountModal(orderId) }}>
                                             🏷️ Скидка
                                           </button>
@@ -1403,6 +1403,7 @@ function AdminOrders() {
               <div className="order-details-header">
                 <h3>Заказ {getOrderNumber(order)}</h3>
                 <div className="order-details-header-actions">
+                  <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
                   <div className={`order-row-dropdown order-details-header-dropdown${orderDetailsMenuOpen ? ' order-details-header-dropdown--open' : ''}`}>
                     <button
                       type="button"
@@ -1416,7 +1417,7 @@ function AdminOrders() {
                     {orderDetailsMenuOpen && (
                       <>
                         <div className="order-row-dropdown-backdrop" onClick={(e) => { e.stopPropagation(); setOrderDetailsMenuOpen(false) }} />
-                        <div className="order-row-dropdown-menu">
+                        <div className="order-row-dropdown-menu order-row-dropdown-menu--centered">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1443,7 +1444,6 @@ function AdminOrders() {
                       </>
                     )}
                   </div>
-                  <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
                 </div>
               </div>
               <div className="order-details-body">
