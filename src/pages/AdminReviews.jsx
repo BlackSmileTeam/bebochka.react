@@ -104,6 +104,12 @@ function AdminReviews() {
       setToast({ message: 'Оценка должна быть от 1 до 5', type: 'warning' })
       return
     }
+    const hasComment = String(form.comment || '').trim().length > 0
+    const hasPhotos = Array.isArray(form.files) && form.files.length > 0
+    if (!hasComment && !hasPhotos) {
+      setToast({ message: 'Добавьте текст отзыва или хотя бы одно фото', type: 'warning' })
+      return
+    }
     try {
       setSubmitting(true)
       const { files, reviewDateLocal, ...formRest } = form
@@ -208,11 +214,10 @@ function AdminReviews() {
             <label className="admin-review-field admin-review-field--full">
               <span className="admin-review-field-label">Комментарий</span>
               <textarea
-                placeholder="Текст отзыва"
+                placeholder={form.files.length > 0 ? 'Необязательно, если добавлено фото' : 'Текст отзыва'}
                 value={form.comment}
                 onChange={(e) => onFormChange('comment', e.target.value)}
                 rows={3}
-                required
               />
             </label>
             <label className="admin-reviews-upload">
