@@ -449,6 +449,14 @@
   transition: background-color 0.2s;
 }
 
+.order-data-row--clickable {
+  cursor: pointer;
+}
+
+.order-data-row--clickable:hover {
+  background-color: #f7fafc;
+}
+
 .orders-table tbody tr:hover {
   background-color: #f7fafc;
 }

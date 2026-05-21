@@ -397,25 +397,31 @@ function Home() {
                     stockLabel = '❌ Нет в наличии'
                   }
                   return (
-                    <div className="product-meta-line">
-                      {product.brand && (
-                        <span className="product-meta-chip product-meta-brand">🏷️ {product.brand}</span>
-                      )}
-                      <span className={`product-meta-chip product-meta-stock product-meta-stock--${stockClass}`}>
-                        {stockLabel}
-                      </span>
-                      {product.size && (
-                        <span className="product-meta-chip">📏 {product.size}</span>
-                      )}
-                      {product.color && (
-                        <span className="product-meta-chip">🎨 {product.color}</span>
-                      )}
-                      {product.gender && (
-                        <span className="product-meta-chip">👤 {formatGender(product.gender)}</span>
-                      )}
-                      {product.condition && (
-                        <span className="product-meta-chip">✨ {formatCondition(product.condition)}</span>
-                      )}
+                    <div className="product-meta-grid">
+                      <div className="product-meta-col product-meta-col--primary">
+                        {product.brand && (
+                          <span className="product-meta-item product-meta-brand">🏷️ {product.brand}</span>
+                        )}
+                        <span className={`product-meta-item product-meta-stock product-meta-stock--${stockClass}`}>
+                          {stockLabel}
+                        </span>
+                      </div>
+                      <div className="product-meta-col">
+                        {product.size && (
+                          <span className="product-meta-item">📏 {product.size}</span>
+                        )}
+                        {product.color && (
+                          <span className="product-meta-item">🎨 {product.color}</span>
+                        )}
+                      </div>
+                      <div className="product-meta-col">
+                        {product.gender && (
+                          <span className="product-meta-item">👤 {formatGender(product.gender)}</span>
+                        )}
+                        {product.condition && (
+                          <span className="product-meta-item">✨ {formatCondition(product.condition)}</span>
+                        )}
+                      </div>
                     </div>
                   )
                 })()}

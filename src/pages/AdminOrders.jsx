@@ -636,6 +636,13 @@ function AdminOrders() {
     })
   }
 
+  const handleOrderRowClick = (e, orderId) => {
+    if (e.target.closest('a, button, input, select, textarea, label, .order-row-dropdown, .order-row-dropdown-menu')) {
+      return
+    }
+    setOrderDetailsOrderId(orderId)
+  }
+
   const handleDeleteOrderItem = async (orderId, itemId) => {
     setConfirmDialog({
       title: 'Подтвердите действие',
@@ -1041,7 +1048,8 @@ function AdminOrders() {
                         return (
                           <Fragment key={orderId}>
                             <tr
-                              className={`order-data-row ${isSelected ? 'row-selected' : ''} ${orderRowMenuOpen === orderId ? 'row-menu-open' : ''}`.trim()}
+                              className={`order-data-row order-data-row--clickable ${isSelected ? 'row-selected' : ''} ${orderRowMenuOpen === orderId ? 'row-menu-open' : ''}`.trim()}
+                              onClick={(e) => handleOrderRowClick(e, orderId)}
                             >
                               <td className="expand-column">
                                 {items.length > 0 && (
@@ -1123,13 +1131,6 @@ function AdminOrders() {
                                       getCustomerName(order)
                                     )}
                                   </div>
-                                  <button
-                                    type="button"
-                                    className="btn-open-order-details btn-open-order-details--stacked"
-                                    onClick={(e) => { e.stopPropagation(); setOrderDetailsOrderId(orderId) }}
-                                  >
-                                    Подробнее
-                                  </button>
                                 </div>
                               </td>
                               <td className="td-phone">{getCustomerPhone(order)}</td>
@@ -1186,6 +1187,9 @@ function AdminOrders() {
                                       <>
                                         <div className="order-row-dropdown-backdrop" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null) }} />
                                         <div className="order-row-dropdown-menu order-row-dropdown-menu--centered">
+                                          <button type="button" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null); setOrderDetailsOrderId(orderId) }}>
+                                            Подробнее
+                                          </button>
                                           <button type="button" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null); setOrderDiscountModal(orderId) }}>
                                             🏷️ Скидка
                                           </button>
