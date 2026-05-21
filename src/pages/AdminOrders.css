@@ -1346,15 +1346,19 @@
     min-width: 100%;
   }
 
+  .orders-table colgroup {
+    display: none;
+  }
+
   .orders-table-head-row,
   .orders-table tbody tr.order-data-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    min-width: 100%;
-    max-width: 100%;
+    display: grid !important;
+    width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box;
+    grid-template-columns: 26px 30px minmax(0, 1fr) minmax(0, 1fr) 38px;
+    column-gap: 0.35rem;
+    align-items: center;
   }
 
   .orders-table thead tr.orders-table-head-row > th,
@@ -1362,17 +1366,26 @@
     display: block;
     box-sizing: border-box;
     border-bottom: none;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0;
   }
 
   .orders-table tbody tr.order-data-row {
     border-bottom: 1px solid #e2e8f0;
+    padding: 0.35rem 0.25rem;
+  }
+
+  .orders-table-head-row {
+    padding: 0.35rem 0.25rem;
+    background: #f7fafc;
   }
 
   .orders-table-head-row > .expand-column,
   .order-data-row > .expand-column {
-    flex: 0 0 28px;
-    padding: 0.5rem 0.2rem !important;
-    align-self: center;
+    grid-column: 1;
+    grid-row: 1;
+    padding: 0.25rem 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1380,9 +1393,9 @@
 
   .orders-table-head-row > .checkbox-column,
   .order-data-row > .checkbox-column {
-    flex: 0 0 34px;
-    padding: 0.5rem 0.2rem !important;
-    align-self: center;
+    grid-column: 2;
+    grid-row: 1;
+    padding: 0.25rem 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1390,27 +1403,27 @@
 
   .orders-table-head-row > .th-client,
   .order-data-row > .td-client {
-    flex: 1 1 0;
+    grid-column: 3;
+    grid-row: 1;
     min-width: 0;
-    padding: 0.5rem 0.35rem !important;
+    padding: 0.35rem 0 !important;
   }
 
   .orders-table-head-row > .th-amount,
   .order-data-row > .td-amount {
-    flex: 0 0 34%;
-    min-width: 96px;
-    max-width: none;
-    padding: 0.5rem 0.35rem !important;
-    align-self: center;
+    grid-column: 4;
+    grid-row: 1;
+    min-width: 0;
+    padding: 0.35rem 0 !important;
   }
 
   .orders-table-head-row > .th-status-actions,
   .order-data-row > .status-actions-cell {
-    flex: 0 0 40px;
-    width: 40px;
-    min-width: 40px;
-    padding: 0.5rem 0.2rem !important;
-    align-self: center;
+    grid-column: 5;
+    grid-row: 1;
+    min-width: 0;
+    width: auto !important;
+    padding: 0.25rem 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1430,7 +1443,15 @@
     line-height: 0;
     color: transparent;
     overflow: hidden;
-    flex: 0 0 40px;
+  }
+
+  .order-row-amount-stack {
+    width: 100%;
+    align-items: flex-end;
+  }
+
+  .order-row-client-stack {
+    width: 100%;
   }
 
   .status-select--desktop {
@@ -1668,28 +1689,10 @@
     min-width: 120px;
   }
 
-  .orders-table-head-row > .expand-column,
-  .order-data-row > .expand-column {
-    flex: 0 0 26px;
-  }
-
-  .orders-table-head-row > .checkbox-column,
-  .order-data-row > .checkbox-column {
-    flex: 0 0 30px;
-  }
-
-  .orders-table-head-row > .th-amount,
-  .order-data-row > .td-amount {
-    flex: 0 0 36%;
-    min-width: 88px;
-    max-width: none;
-  }
-
-  .orders-table-head-row > .th-status-actions,
-  .order-data-row > .status-actions-cell {
-    flex: 0 0 36px;
-    width: 36px;
-    min-width: 36px;
+  .orders-table-head-row,
+  .orders-table tbody tr.order-data-row {
+    grid-template-columns: 24px 28px minmax(0, 1fr) minmax(0, 1fr) 34px;
+    column-gap: 0.25rem;
   }
 }
 

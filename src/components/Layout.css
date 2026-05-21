@@ -116,6 +116,15 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 768px) {
+  .main > .page-shell--catalog {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
 .footer {
   background-color: #2d3748;
   color: white;
