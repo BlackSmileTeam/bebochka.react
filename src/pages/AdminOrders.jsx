@@ -113,6 +113,8 @@ function AdminOrders() {
   const [orderRowMenuOpen, setOrderRowMenuOpen] = useState(null)
   const [filtersExpanded, setFiltersExpanded] = useState(false)
   const [orderDetailsOrderId, setOrderDetailsOrderId] = useState(null)
+  const [orderDetailsHistoryOpen, setOrderDetailsHistoryOpen] = useState(false)
+  const [orderDetailsMenuOpen, setOrderDetailsMenuOpen] = useState(false)
   const [imageCarousel, setImageCarousel] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [adminCartItems, setAdminCartItems] = useState([])
@@ -130,6 +132,11 @@ function AdminOrders() {
     loadOrders()
     loadAdminCartItems()
   }, [])
+
+  useEffect(() => {
+    setOrderDetailsHistoryOpen(false)
+    setOrderDetailsMenuOpen(false)
+  }, [orderDetailsOrderId])
 
   const loadOrders = async () => {
     try {
@@ -1395,7 +1402,49 @@ function AdminOrders() {
             <div className="modal-content order-details-modal" onClick={e => e.stopPropagation()}>
               <div className="order-details-header">
                 <h3>Заказ {getOrderNumber(order)}</h3>
-                <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
+                <div className="order-details-header-actions">
+                  <div className={`order-row-dropdown order-details-header-dropdown${orderDetailsMenuOpen ? ' order-details-header-dropdown--open' : ''}`}>
+                    <button
+                      type="button"
+                      className="btn-order-menu-trigger"
+                      onClick={(e) => { e.stopPropagation(); setOrderDetailsMenuOpen((v) => !v) }}
+                      title="Действия"
+                      aria-expanded={orderDetailsMenuOpen}
+                    >
+                      ⋯
+                    </button>
+                    {orderDetailsMenuOpen && (
+                      <>
+                        <div className="order-row-dropdown-backdrop" onClick={(e) => { e.stopPropagation(); setOrderDetailsMenuOpen(false) }} />
+                        <div className="order-row-dropdown-menu">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOrderDetailsMenuOpen(false)
+                              setOrderDiscountModal(orderDetailsOrderId)
+                            }}
+                          >
+                            🏷️ Скидка
+                          </button>
+                          <button
+                            type="button"
+                            className="order-row-dropdown-delete"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOrderDetailsMenuOpen(false)
+                              handleDeleteOrder(orderDetailsOrderId)
+                            }}
+                            disabled={deletingOrderId === orderDetailsOrderId}
+                          >
+                            {deletingOrderId === orderDetailsOrderId ? '…' : '🗑️ Удалить'}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
+                </div>
               </div>
               <div className="order-details-body">
                 <p><strong>Номер:</strong> {getOrderNumber(order)}</p>
@@ -1433,24 +1482,34 @@ function AdminOrders() {
                 <p><strong>Дата:</strong> {formatDate(order.createdAt || order.CreatedAt)}</p>
                 <p><strong>Сумма:</strong> {formatPrice(getFinalAmount(order))}{hasOrderDiscount(order) && getFinalAmount(order) !== getTotalAmount(order) && ` (${formatPrice(getTotalAmount(order))})`}</p>
                 <div className="order-details-actions">
-                  <label>Статус:</label>
+                  <label className="order-details-status-label" htmlFor={`order-details-status-${orderDetailsOrderId}`}>Статус</label>
                   <select
+                    id={`order-details-status-${orderDetailsOrderId}`}
                     value={currentStatus}
                     onChange={(e) => handleStatusChange(orderDetailsOrderId, e.target.value)}
                     disabled={isUpdating || statusLocked}
-                    className="status-select status-select--colored"
+                    className="status-select status-select--colored status-select--details-full"
                     style={getOrderStatusSelectSurfaceStyle(currentStatus)}
                   >
                     {getAdminStatusSelectOptions(currentStatus).map(s => (
                       <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
                     ))}
                   </select>
-                  <button type="button" className="btn btn-secondary" onClick={() => { setOrderDetailsOrderId(null); setOrderDiscountModal(orderDetailsOrderId) }}>🏷️ Скидка</button>
-                  <button type="button" className="btn btn-secondary" onClick={() => { setOrderDetailsOrderId(null); handleDeleteOrder(orderDetailsOrderId) }} disabled={deletingOrderId === orderDetailsOrderId}>🗑️ Удалить</button>
                 </div>
                 {Array.isArray(statusHistory) && statusHistory.length > 0 && (
-                  <div className="order-details-status-history">
-                    <h4>История статусов</h4>
+                  <div className={`order-details-status-history${orderDetailsHistoryOpen ? ' order-details-status-history--open' : ''}`}>
+                    <button
+                      type="button"
+                      className="order-details-history-toggle"
+                      onClick={() => setOrderDetailsHistoryOpen((v) => !v)}
+                      aria-expanded={orderDetailsHistoryOpen}
+                    >
+                      <span className="order-details-history-chevron" aria-hidden="true">
+                        {orderDetailsHistoryOpen ? '▼' : '▶'}
+                      </span>
+                      История статусов ({statusHistory.length})
+                    </button>
+                    <h4 className="order-details-history-title">История статусов</h4>
                     <ul className="order-status-history-list">
                       {statusHistory.map((row, idx) => {
                         const st = row.status || row.Status || '—'

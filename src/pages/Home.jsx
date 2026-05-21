@@ -374,9 +374,6 @@ function Home() {
                 >
                   {product.name}
                 </h3>
-                {product.brand && (
-                  <p className="product-brand">🏷️ {product.brand}</p>
-                )}
                 {product.description && (
                   <p className="product-description">{product.description}</p>
                 )}
@@ -386,31 +383,41 @@ function Home() {
                   const inCart = getCartQuantity(product.id)
                   const isInMyCart = inCart > 0
                   const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
+                  let stockClass = 'available'
+                  let stockLabel = '✓ В наличии'
+                  if (isInMyCart) {
+                    stockClass = 'cart'
+                    stockLabel = '🛒 В корзине'
+                  } else if (isReservedByAnotherUser) {
+                    stockClass = 'reserved'
+                    stockLabel = '⏳ Забронирован'
+                  } else if (available <= 0) {
+                    stockClass = 'out'
+                    stockLabel = '❌ Нет в наличии'
+                  }
                   return (
-                    <div className="product-stock" style={{
-                      fontSize: '0.85rem',
-                      color: (isReservedByAnotherUser || isInMyCart) ? '#dd6b20' : (available > 0 ? '#48bb78' : '#e53e3e'),
-                      fontWeight: '600',
-                      marginBottom: '0.5rem'
-                    }}>
-                      {isInMyCart ? '🛒 В корзине' : (isReservedByAnotherUser ? '⏳ Забронирован' : (available > 0 ? '✓ В наличии' : '❌ Нет в наличии'))}
+                    <div className="product-meta-line">
+                      {product.brand && (
+                        <span className="product-meta-chip product-meta-brand">🏷️ {product.brand}</span>
+                      )}
+                      <span className={`product-meta-chip product-meta-stock product-meta-stock--${stockClass}`}>
+                        {stockLabel}
+                      </span>
+                      {product.size && (
+                        <span className="product-meta-chip">📏 {product.size}</span>
+                      )}
+                      {product.color && (
+                        <span className="product-meta-chip">🎨 {product.color}</span>
+                      )}
+                      {product.gender && (
+                        <span className="product-meta-chip">👤 {formatGender(product.gender)}</span>
+                      )}
+                      {product.condition && (
+                        <span className="product-meta-chip">✨ {formatCondition(product.condition)}</span>
+                      )}
                     </div>
                   )
                 })()}
-                <div className="product-details">
-                  {product.size && (
-                    <span className="product-size">📏 {product.size}</span>
-                  )}
-                  {product.color && (
-                    <span className="product-color">🎨 {product.color}</span>
-                  )}
-                  {product.gender && (
-                    <span className="product-gender">👤 {formatGender(product.gender)}</span>
-                  )}
-                  {product.condition && (
-                    <span className="product-condition">✨ {formatCondition(product.condition)}</span>
-                  )}
-                </div>
                 <div className="product-footer">
                   <div className="product-price">
                     {(product.price ?? 0).toLocaleString('ru-RU')} ₽

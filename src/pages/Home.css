@@ -202,11 +202,55 @@
   overflow: hidden;
 }
 
-.product-brand {
-  font-size: 0.9rem;
+.product-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.45rem;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.product-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.5rem;
+  background-color: #edf2f7;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #4a5568;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.product-meta-brand {
   color: #667eea;
   font-weight: 500;
-  margin-bottom: 0.5rem;
+  background-color: #ebf4ff;
+}
+
+.product-meta-stock {
+  font-weight: 600;
+  background: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.product-meta-stock--available {
+  color: #48bb78;
+}
+
+.product-meta-stock--cart,
+.product-meta-stock--reserved {
+  color: #dd6b20;
+}
+
+.product-meta-stock--out {
+  color: #e53e3e;
 }
 
 .product-description {
@@ -222,30 +266,6 @@
   -webkit-box-orient: vertical;
   word-wrap: break-word;
   overflow-wrap: break-word;
-}
-
-.product-details {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.45rem;
-  font-size: 0.85rem;
-  color: #4a5568;
-  min-width: 0;
-}
-
-.product-size,
-.product-color,
-.product-gender,
-.product-condition {
-  padding: 0.25rem 0.75rem;
-  background-color: #edf2f7;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 0;
-  max-width: 100%;
 }
 
 .product-footer {
@@ -325,13 +345,21 @@
 }
 
 .catalog-pagination {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  justify-content: center;
+  gap: 0.5rem;
   color: #4a5568;
   font-size: 0.9rem;
+  line-height: 1.2;
+  min-height: 0;
+  padding: 0;
+}
+
+.catalog-pagination span {
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .catalog-load-sentinel {
@@ -375,37 +403,33 @@
     line-height: 1.3;
   }
 
-  .product-brand {
-    font-size: 0.8rem;
-    margin-bottom: 0.25rem;
-  }
-
   .product-description {
     display: none; /* Скрываем описание на мобильных для компактности */
   }
 
-  .product-stock {
-    font-size: 0.75rem !important;
-    margin-bottom: 0.5rem !important;
+  .product-meta-line {
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    margin-bottom: 0.35rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
 
-  .product-details {
-    font-size: 0.7rem;
-    gap: 0.4rem;
-    margin-bottom: 0.5rem;
-    flex-wrap: wrap;
+  .product-meta-line::-webkit-scrollbar {
+    display: none;
   }
 
-  .product-size,
-  .product-color,
-  .product-gender,
-  .product-condition {
-    padding: 0.15rem 0.4rem;
-    font-size: 0.7rem;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
+  .product-meta-chip {
+    padding: 0.1rem 0.35rem;
+    font-size: 0.65rem;
+    background-color: #edf2f7;
+  }
+
+  .product-meta-stock {
+    padding-left: 0;
+    padding-right: 0;
+    background: transparent;
   }
 
   .product-price {
@@ -435,8 +459,16 @@
   }
 
   .catalog-pagination {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.5rem;
+    padding: 0.15rem 0;
+  }
+
+  .catalog-pagination span {
+    font-size: 0.78rem;
+    line-height: 1.15;
   }
 }
 
@@ -469,37 +501,18 @@
     min-height: 2.4em;
   }
 
-  .product-brand {
-    font-size: 0.65rem;
+  .product-meta-line {
     margin-bottom: 0.3rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .product-stock {
-    font-size: 0.65rem !important;
-    margin-bottom: 0.3rem !important;
-  }
-
-  .product-details {
-    font-size: 0.6rem;
     gap: 0.25rem;
-    margin-bottom: 0.3rem;
-    line-height: 1.3;
   }
 
-  .product-size,
-  .product-color,
-  .product-gender,
-  .product-condition {
-    padding: 0.1rem 0.25rem;
+  .product-meta-chip {
     font-size: 0.6rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.1rem;
-    line-height: 1.2;
+    padding: 0.08rem 0.28rem;
+  }
+
+  .catalog-pagination span {
+    font-size: 0.72rem;
   }
 
   .product-footer {
