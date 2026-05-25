@@ -1406,9 +1406,12 @@ function AdminOrders() {
             <div className="modal-content order-details-modal" onClick={e => e.stopPropagation()}>
               <div className="order-details-header">
                 <h3>Заказ {getOrderNumber(order)}</h3>
-                <div className="order-details-header-actions">
-                  <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
-                  <div className={`order-row-dropdown order-details-header-dropdown${orderDetailsMenuOpen ? ' order-details-header-dropdown--open' : ''}`}>
+                <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
+              </div>
+              <div className="order-details-body">
+                <div className="order-details-number-row">
+                  <p className="order-details-number-line"><strong>Номер:</strong> {getOrderNumber(order)}</p>
+                  <div className={`order-row-dropdown order-details-number-dropdown${orderDetailsMenuOpen ? ' order-details-number-dropdown--open' : ''}`}>
                     <button
                       type="button"
                       className="btn-order-menu-trigger"
@@ -1449,9 +1452,6 @@ function AdminOrders() {
                     )}
                   </div>
                 </div>
-              </div>
-              <div className="order-details-body">
-                <p><strong>Номер:</strong> {getOrderNumber(order)}</p>
                 <p><strong>Телефон:</strong> {getCustomerPhone(order)}</p>
                 <p><strong>Клиент:</strong>{' '}
                   {getPositiveWebUserId(order) != null ? (

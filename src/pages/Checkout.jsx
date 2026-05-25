@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { useNavigate, Link } from 'react-router-dom'
+import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import './Checkout.css'
 
@@ -44,6 +45,44 @@ function Checkout() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const applyContactFields = (fullName, email, phoneE164) => {
+      if (cancelled) return
+      setFormData((prev) => ({
+        ...prev,
+        name: prev.name || String(fullName || '').trim(),
+        email: prev.email || String(email || '').trim(),
+        phone: prev.phone || (phoneE164 ? formatPhoneRu(phoneE164) : ''),
+      }))
+    }
+
+    try {
+      const cached = JSON.parse(localStorage.getItem('user') || '{}')
+      applyContactFields(cached.fullName, cached.email, null)
+    } catch (_) {}
+
+    const token = localStorage.getItem('authToken')
+    if (!token) return () => { cancelled = true }
+
+    ;(async () => {
+      try {
+        const user = await api.getCurrentUser()
+        if (cancelled) return
+        applyContactFields(
+          user.fullName ?? user.FullName,
+          user.email ?? user.Email,
+          user.phone ?? user.Phone
+        )
+      } catch (_) {
+        /* оставляем данные из localStorage */
+      }
+    })()
+
+    return () => { cancelled = true }
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target

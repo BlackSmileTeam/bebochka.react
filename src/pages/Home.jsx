@@ -503,11 +503,6 @@ function Home() {
           ))}
         </div>
         {hasMoreProducts && <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />}
-        <div className="catalog-pagination">
-          <span>
-            Показано {visibleProducts.length} из {filteredProducts.length} товаров
-          </span>
-        </div>
         </div>
       )}
       

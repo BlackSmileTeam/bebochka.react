@@ -37,9 +37,8 @@ export function buildTelegramPaymentHref(telegramBaseUrl, orderLabel) {
 
 /**
  * VK: открыть диалог с предзаполненным текстом.
- * — vk.com/id123 → im?sel=123&text=
- * — vk.com/i791… (типичный ник) → im?sel=791…&text=
- * — только цифры в последнем сегменте → sel
+ * — vk.com/id123 → im?sel=123&text= (числовой id)
+ * — vk.com/i7911729911 и другие короткие имена → write/{screen}?text=
  * — иначе vk.com/write/{screen}?text=
  */
 export function buildVkPaymentHref(vkBaseUrl, orderLabel) {
@@ -71,11 +70,7 @@ export function buildVkPaymentHref(vkBaseUrl, orderLabel) {
   const idMatch = seg.match(/^id(\d+)$/i)
   if (idMatch) return `https://vk.com/im?sel=${idMatch[1]}&text=${encodedText}`
 
-  const iMatch = seg.match(/^i(\d+)$/i)
-  if (iMatch) return `https://vk.com/im?sel=${iMatch[1]}&text=${encodedText}`
-
-  if (/^\d+$/.test(seg)) return `https://vk.com/im?sel=${seg}&text=${encodedText}`
-
   const screen = seg || pathname
+  if (!screen) return base
   return `https://vk.com/write/${encodeURIComponent(screen)}?text=${encodedText}`
 }

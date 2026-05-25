@@ -5,15 +5,14 @@ import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
 import PageShell from '../components/PageShell'
 import { buildTelegramPaymentHref, buildVkPaymentHref } from '../utils/paymentMessengerLinks'
+import {
+  PAYMENT_AVITO_URL,
+  PAYMENT_TELEGRAM_URL,
+  PAYMENT_VK_URL
+} from '../constants/paymentContacts'
 import './Profile.css'
 
-/** Реквизиты оплаты: модалка «К оплате». Авито: VITE_PAYMENT_AVITO_URL или запасная ссылка на сайт. */
-const PAYMENT_TELEGRAM_URL = 'https://t.me/mamka_vseya_russi'
-const PAYMENT_VK_URL = 'https://vk.com/i7911729911'
-const PAYMENT_AVITO_PROFILE_URL = (import.meta.env.VITE_PAYMENT_AVITO_URL || '').trim()
-/** Пока нет ссылки на профиль — ведёт на главную Авито (всё строка кликабельна). Задайте VITE_PAYMENT_AVITO_URL для своего профиля. */
-const PAYMENT_AVITO_FALLBACK_URL = 'https://www.avito.ru/'
-const payAvitoHref = PAYMENT_AVITO_PROFILE_URL || PAYMENT_AVITO_FALLBACK_URL
+const payAvitoHref = PAYMENT_AVITO_URL
 
 function getOrderItems(o) {
   return o.orderItems || o.OrderItems || []
