@@ -58,6 +58,7 @@ const ORDER_STATUSES_ADMIN = ORDER_STATUSES_ALL.filter(s => s !== 'Получе�
 
 function getAdminStatusSelectOptions(currentStatus) {
   if (currentStatus === 'Получен') return ['Получен']
+  if (currentStatus === 'Отменен') return ['Отменен']
   return [...ORDER_STATUSES_ADMIN]
 }
 
@@ -463,7 +464,10 @@ function AdminOrders() {
     const s = order.status || order.Status || ORDER_STATUSES_ALL[0]
     return LEGACY_ORDER_STATUS_MAP[s] || s
   }
-  const isOrderStatusLocked = (order) => getOrderStatus(order) === 'Получен'
+  const isOrderStatusLocked = (order) => {
+    const s = getOrderStatus(order)
+    return s === 'Получен' || s === 'Отменен'
+  }
   const isItemAddedToParcel = (item) => !!(item.addedToParcel ?? item.AddedToParcel)
   const hasUnmarkedParcelItems = (order) => getOrderItems(order).some(item => !isItemAddedToParcel(item))
   const isMoveToPastStatus = (oldStatus, nextStatus) => {

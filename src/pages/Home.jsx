@@ -502,7 +502,9 @@ function Home() {
             </div>
           ))}
         </div>
-        {hasMoreProducts && <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />}
+        {hasMoreProducts && (
+          <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />
+        )}
         </div>
       )}
       
