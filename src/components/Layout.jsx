@@ -67,7 +67,7 @@ function Layout() {
   return (
     <div className="layout">
       <header className="header">
-        <div className="container header-shell">
+        <div className={`container header-shell${isAdminRoute ? '' : ' header-shell--shop'}`}>
           <div className="header-top">
             <Link to={logoTo} className="logo">
               <img src="/logo.jpg" alt="bebochka" className="logo-img" />
@@ -76,20 +76,6 @@ function Layout() {
 
             {isLoggedIn && !isAdminRoute && (
               <div className="header-actions">
-                <Link
-                  to="/profile"
-                  className={`header-icon-btn header-profile-icon${
-                    location.pathname === '/profile' ? ' header-icon-btn--active' : ''
-                  }`}
-                  aria-label="Профиль"
-                >
-                  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                    <path
-                      fill="currentColor"
-                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                    />
-                  </svg>
-                </Link>
                 <Link
                   to="/cart"
                   className="header-icon-btn header-cart-icon"
@@ -104,6 +90,20 @@ function Layout() {
                   {totalItems > 0 && (
                     <span className="cart-badge header-cart-icon__badge">{totalItems}</span>
                   )}
+                </Link>
+                <Link
+                  to="/profile"
+                  className={`header-icon-btn header-profile-icon${
+                    location.pathname === '/profile' ? ' header-icon-btn--active' : ''
+                  }`}
+                  aria-label="Профиль"
+                >
+                  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                    />
+                  </svg>
                 </Link>
                 <button
                   type="button"
@@ -219,15 +219,38 @@ function Layout() {
           {!isAdminRoute && (
             <nav
               id="header-mobile-menu"
-              className={`nav nav--mobile-extra${mobileMenuOpen ? ' nav--mobile-extra--open' : ''}`}
-              aria-label="Дополнительное меню"
+              className={`nav nav--mobile-menu${mobileMenuOpen ? ' nav--mobile-menu--open' : ''}`}
+              aria-label="Меню"
             >
-              {isLoggedIn && isAdminUser && (
-                <Link to="/admin" className="admin-link">
-                  Админка
-                </Link>
+              {isLoggedIn && (
+                <>
+                  <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+                    Каталог
+                  </Link>
+                  <Link
+                    to="/reviews"
+                    className={location.pathname === '/reviews' ? 'active' : ''}
+                  >
+                    Отзывы
+                  </Link>
+                  {isAdminUser && (
+                    <Link to="/admin" className="admin-link">
+                      Админка
+                    </Link>
+                  )}
+                </>
               )}
-              {showShopLoginLink && <Link to="/account">Войти</Link>}
+              {!isLoggedIn && (
+                <>
+                  <Link
+                    to="/reviews"
+                    className={location.pathname === '/reviews' ? 'active' : ''}
+                  >
+                    Отзывы
+                  </Link>
+                  {showShopLoginLink && <Link to="/account">Войти</Link>}
+                </>
+              )}
             </nav>
           )}
         </div>
