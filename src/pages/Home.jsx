@@ -248,7 +248,7 @@ function Home() {
 
   if (loading) {
     return (
-      <PageShell className="page-shell--catalog" title="Каталог товаров">
+      <PageShell className="page-shell--catalog page-shell--catalog-fill" title="Каталог товаров">
         <div className="loading">Загрузка...</div>
       </PageShell>
     )
@@ -256,14 +256,14 @@ function Home() {
 
   if (error) {
     return (
-      <PageShell className="page-shell--catalog" title="Каталог товаров">
+      <PageShell className="page-shell--catalog page-shell--catalog-fill" title="Каталог товаров">
         <div className="error">{error}</div>
       </PageShell>
     )
   }
 
   return (
-    <PageShell className="page-shell--catalog" title="Каталог товаров">
+    <PageShell className="page-shell--catalog page-shell--catalog-fill" title="Каталог товаров">
       <div className="catalog-filters-wrap">
         <div className="catalog-filters-mobile-bar">
           <button

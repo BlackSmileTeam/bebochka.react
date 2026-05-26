@@ -366,6 +366,42 @@
 }
 
 @media (max-width: 768px) {
+  /* Контент каталога на всю высоту main до футера (мобильная версия) */
+  .main > .page-shell--catalog-fill {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .page-shell--catalog-fill .page-shell__inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .page-shell--catalog-fill .page-shell__body {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .page-shell--catalog-fill .catalog-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .page-shell--catalog-fill .page-shell__body > .empty-state,
+  .page-shell--catalog-fill .page-shell__body > .loading,
+  .page-shell--catalog-fill .page-shell__body > .error {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
   .page-shell--catalog .page-shell__header {
     margin-bottom: 0.75rem;
   }

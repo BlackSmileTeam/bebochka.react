@@ -64,11 +64,9 @@ export function extractVkScreenName(vkBaseUrl) {
 }
 
 /**
- * Диалог VK с черновиком: vk.com/write/{screen}?text=…
- * Для i7911729911 не используем im?sel= — на мобильном открывается список чатов.
+ * Профиль VK: vk.com/{screen}
  */
-export function buildVkPaymentHref(vkBaseUrl, orderLabel) {
+export function buildVkPaymentHref(vkBaseUrl) {
   const screen = extractVkScreenName(vkBaseUrl) || 'i7911729911'
-  const text = pickInvoiceRequestMessage(orderLabel)
-  return `https://vk.com/write/${encodeURIComponent(screen)}?text=${encodeURIComponent(text)}`
+  return `https://vk.com/${encodeURIComponent(screen)}`
 }

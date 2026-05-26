@@ -1,6 +1,6 @@
 /** Контакты для оплаты в модалке «К оплате» (профиль). */
 export const PAYMENT_TELEGRAM_URL = 'https://t.me/mamka_vseya_russi'
-/** Профиль администратора; диалог: vk.com/write/i7911729911 */
+/** Профиль администратора: vk.com/i7911729911 */
 export const PAYMENT_VK_URL = 'https://vk.com/i7911729911'
 
 
