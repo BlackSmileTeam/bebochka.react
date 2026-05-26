@@ -87,6 +87,8 @@ function Layout() {
     setMobileMenuOpen(false)
   }, [location.pathname])
 
+  const closeMobileMenu = () => setMobileMenuOpen(false)
+
   useEffect(() => {
     const onToast = (event) => {
       const message = event?.detail?.message
@@ -212,12 +214,17 @@ function Layout() {
             >
               {isLoggedIn ? (
                 <>
-                  <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+                  <Link
+                    to="/"
+                    className={location.pathname === '/' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
                     Каталог
                   </Link>
                   <Link
                     to="/reviews"
                     className={location.pathname === '/reviews' ? 'active' : ''}
+                    onClick={closeMobileMenu}
                   >
                     Отзывы
                   </Link>
@@ -225,6 +232,7 @@ function Layout() {
                     <Link
                       to="/admin"
                       className={location.pathname === '/admin' ? 'active' : ''}
+                      onClick={closeMobileMenu}
                     >
                       Админка
                     </Link>
@@ -235,16 +243,22 @@ function Layout() {
                   <Link
                     to="/"
                     className={location.pathname === '/' ? 'active' : ''}
+                    onClick={closeMobileMenu}
                   >
                     Каталог
                   </Link>
                   <Link
                     to="/reviews"
                     className={location.pathname === '/reviews' ? 'active' : ''}
+                    onClick={closeMobileMenu}
                   >
                     Отзывы
                   </Link>
-                  {showShopLoginLink && <Link to="/account">Войти</Link>}
+                  {showShopLoginLink && (
+                    <Link to="/account" onClick={closeMobileMenu}>
+                      Войти
+                    </Link>
+                  )}
                 </>
               )}
             </nav>

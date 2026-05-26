@@ -74,7 +74,7 @@ function Cart() {
 
   if (cartItems.length === 0 && queueItems.length === 0) {
     return (
-      <PageShell>
+      <PageShell title="Корзина">
         <div className="cart-empty">
           <h2>Корзина пуста</h2>
           <p>Добавьте товары из каталога</p>
@@ -88,6 +88,7 @@ function Cart() {
 
   return (
     <PageShell
+      title="Корзина"
       actions={(
         <button type="button" className="btn-clear-cart" onClick={clearCart} title="Очистить корзину">
           Очистить

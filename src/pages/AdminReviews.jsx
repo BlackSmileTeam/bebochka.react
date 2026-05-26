@@ -150,6 +150,7 @@ function AdminReviews() {
 
   return (
     <PageShell
+      title="Отзывы"
       subtitle={isAdmin ? 'Полный список отзывов и ручное добавление' : 'Оценки, комментарии и фото покупателей'}
     >
       <div className="admin-reviews-page">

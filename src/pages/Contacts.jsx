@@ -3,7 +3,10 @@ import './Contacts.css'
 
 export default function Contacts() {
   return (
-    <PageShell subtitle="Вопросы по заказам, размерам и наличию — пишите в Telegram, мы отвечаем как можно быстрее.">
+    <PageShell
+      title="Контакты"
+      subtitle="Вопросы по заказам, размерам и наличию — пишите в Telegram, мы отвечаем как можно быстрее."
+    >
       <section className="contacts-block">
         <h2>Telegram</h2>
         <p>

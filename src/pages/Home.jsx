@@ -20,6 +20,17 @@ const CONDITION_PRIORITY = {
 }
 const ITEMS_PER_PAGE = 24
 
+function CartButtonIcon() {
+  return (
+    <svg className="btn-buy__icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7 4h-2l-1 2h2l3.6 7.59-1.35 2.45a1 1 0 0 0 .9 1.46h9.72v-2H9.42l1.1-2h7.45a1 1 0 0 0 .95-.68L21.64 6H7.21l-.94-2zm-1 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 .001 3.999A2 2 0 0 0 16 20z"
+      />
+    </svg>
+  )
+}
+
 const catalogIntro = (
   <div className="catalog-intro">
     <p>Недорогая и качественная одежда европейских брендов для всей семьи</p>
@@ -255,7 +266,11 @@ function Home() {
 
   if (loading) {
     return (
-      <PageShell className="page-shell--catalog page-shell--catalog-fill" subtitle={catalogIntro}>
+      <PageShell
+        title="Каталог товаров"
+        className="page-shell--catalog page-shell--catalog-fill"
+        subtitle={catalogIntro}
+      >
         <div className="loading">Загрузка...</div>
       </PageShell>
     )
@@ -263,14 +278,22 @@ function Home() {
 
   if (error) {
     return (
-      <PageShell className="page-shell--catalog page-shell--catalog-fill" subtitle={catalogIntro}>
+      <PageShell
+        title="Каталог товаров"
+        className="page-shell--catalog page-shell--catalog-fill"
+        subtitle={catalogIntro}
+      >
         <div className="error">{error}</div>
       </PageShell>
     )
   }
 
   return (
-    <PageShell className="page-shell--catalog page-shell--catalog-fill" subtitle={catalogIntro}>
+    <PageShell
+      title="Каталог товаров"
+      className="page-shell--catalog page-shell--catalog-fill"
+      subtitle={catalogIntro}
+    >
       <div className="catalog-filters-wrap">
         <div className="catalog-filters-mobile-bar">
           <button
@@ -284,8 +307,8 @@ function Home() {
             <svg
               className="catalog-filters-toggle__icon"
               viewBox="0 0 24 24"
-              width="20"
-              height="20"
+              width="18"
+              height="18"
               aria-hidden="true"
               focusable="false"
             >
@@ -505,14 +528,18 @@ function Home() {
                             : (isAdding ? 'Добавление...' : 'Добавить в корзину')
                         }
                       >
-                        {isAdding 
-                          ? 'Добавление...' 
-                          : (!cartUnlocked
-                            ? 'Скоро'
-                            : (!canAdd 
-                            ? (isInMyCart ? 'В корзине' : (available <= 0 ? 'Нет в наличии' : 'В корзине'))
-                            : 'В корзину'))
-                        }
+                        {isAdding ? (
+                          'Добавление...'
+                        ) : !cartUnlocked ? (
+                          'Скоро'
+                        ) : !canAdd ? (
+                          isInMyCart ? 'В корзине' : (available <= 0 ? 'Нет в наличии' : 'В корзине')
+                        ) : (
+                          <>
+                            <CartButtonIcon />
+                            В корзину
+                          </>
+                        )}
                       </button>
                     )
                   )

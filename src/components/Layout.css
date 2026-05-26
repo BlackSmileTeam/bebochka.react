@@ -111,8 +111,12 @@
 
 .header-cart-icon__badge {
   position: absolute;
-  top: 3px;
-  right: 3px;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  font-size: 0.55rem;
 }
 
 .header-menu-toggle {
@@ -185,14 +189,16 @@
   background: #fed7d7;
   color: #c53030;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  min-width: 24px;
+  min-width: 16px;
+  line-height: 1;
+  padding: 0;
 }
 
 .main {

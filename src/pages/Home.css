@@ -318,10 +318,14 @@
 }
 
 .btn-buy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   background: #667eea;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1.8rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -334,8 +338,12 @@
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
   max-width: 100%;
-  flex: 1 1 140px;
+  flex: 1 1 168px;
   margin-left: auto;
+}
+
+.btn-buy__icon {
+  flex-shrink: 0;
 }
 
 .btn-buy:hover {
@@ -433,14 +441,16 @@
 
   .catalog-filters-mobile-bar {
     display: flex;
+    justify-content: flex-end;
+    align-items: center;
   }
 
   .catalog-filters-toggle {
-    /* Кнопка выглядит как иконка, текст не показываем (он убран из JSX) */
     position: relative;
     flex: 0 0 auto;
-    width: 44px;
-    min-width: 44px;
+    width: 38px;
+    min-width: 38px;
+    min-height: 38px;
     padding: 0;
     gap: 0;
     justify-content: center;
@@ -449,15 +459,23 @@
   .catalog-filters-toggle__icon {
     display: block;
     flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+  }
+
+  .catalog-filters-reset {
+    min-height: 38px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.85rem;
   }
 
   .catalog-filters-badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 1.15rem;
-    height: 1.15rem;
-    font-size: 0.68rem;
+    top: -3px;
+    right: -3px;
+    min-width: 1rem;
+    height: 1rem;
+    font-size: 0.62rem;
   }
 
   .catalog-filters {
