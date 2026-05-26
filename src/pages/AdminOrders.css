@@ -3,12 +3,12 @@
   width: 100%;
 }
 
-.header-actions {
+.page-shell__actions .header-actions {
   display: flex;
   gap: 1rem;
 }
 
-.header-actions--row {
+.page-shell__actions .header-actions--row {
   flex-wrap: nowrap;
   align-items: center;
 }

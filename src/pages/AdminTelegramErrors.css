@@ -2,7 +2,7 @@
   width: 100%;
 }
 
-.header-actions {
+.page-shell__actions .header-actions {
   display: flex;
   gap: 1rem;
 }
@@ -175,13 +175,13 @@
 }
 
 @media (max-width: 768px) {
-  .header-actions {
+  .page-shell__actions .header-actions {
     width: 100%;
     flex-direction: column;
   }
 
-  .header-actions .btn,
-  .header-actions .btn-refresh-unified {
+  .page-shell__actions .header-actions .btn,
+  .page-shell__actions .header-actions .btn-refresh-unified {
     width: 100%;
   }
 

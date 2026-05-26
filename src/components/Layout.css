@@ -69,12 +69,13 @@
   flex: 1 1 auto;
 }
 
-.header-actions {
+.header .header-actions {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 0.1rem;
   flex-shrink: 0;
+  width: auto;
 }
 
 .header-icon-btn {
@@ -256,11 +257,12 @@
     align-items: center;
   }
 
-  .header-actions {
+  .header .header-actions {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
+    width: auto;
   }
 
   .header-shell--shop .nav--shop-text {
@@ -347,9 +349,13 @@
   }
 
   .header-end,
-  .header-actions {
+  .header .header-actions {
     flex-direction: row;
     flex-wrap: nowrap;
+  }
+
+  .header .header-actions {
+    width: auto;
   }
 
   .logo {

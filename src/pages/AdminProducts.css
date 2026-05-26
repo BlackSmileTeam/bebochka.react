@@ -24,7 +24,7 @@
   }
 }
 
-.header-actions {
+.page-shell__actions .header-actions {
   display: flex;
   flex-direction: row;
   gap: 0.5rem;
@@ -33,11 +33,11 @@
   justify-content: flex-end;
 }
 
-.header-actions.header-actions--with-send {
+.page-shell__actions .header-actions.page-shell__actions .header-actions--with-send {
   flex-wrap: wrap;
 }
 
-.header-actions .btn.btn-filters {
+.page-shell__actions .header-actions .btn.btn-filters {
   min-width: 9rem;
   display: flex;
   align-items: center;
@@ -64,7 +64,7 @@
   align-items: stretch;
 }
 
-.header-actions .btn.btn-send-channel {
+.page-shell__actions .header-actions .btn.btn-send-channel {
   flex: 1;
   min-width: 0;
   padding: 0.5rem 0.75rem;
@@ -176,7 +176,7 @@
   font-weight: 600;
 }
 
-.header-actions .btn.btn-add {
+.page-shell__actions .header-actions .btn.btn-add {
   white-space: nowrap;
   flex-shrink: 0;
   padding: 0.5rem 1rem;
@@ -1090,25 +1090,25 @@
     width: 100%;
   }
   
-  .header-actions {
+  .page-shell__actions .header-actions {
     width: 100%;
     flex-wrap: wrap;
   }
 
-  .header-actions {
+  .page-shell__actions .header-actions {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: stretch;
     width: 100%;
   }
 
-  .header-actions .btn.btn-filters {
+  .page-shell__actions .header-actions .btn.btn-filters {
     order: 1;
     flex: 1 1 0;
     min-width: 0;
   }
 
-  .header-actions .btn.btn-add {
+  .page-shell__actions .header-actions .btn.btn-add {
     order: 1;
     flex: 1 1 0;
     min-width: 0;
@@ -1197,11 +1197,11 @@
 }
 
 @media (max-width: 480px) {
-  .header-actions {
+  .page-shell__actions .header-actions {
     gap: 0.5rem;
   }
 
-  .header-actions .btn {
+  .page-shell__actions .header-actions .btn {
     font-size: 0.875rem;
     padding: 0.5rem 0.75rem;
   }
