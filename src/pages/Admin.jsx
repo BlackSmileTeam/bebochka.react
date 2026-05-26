@@ -18,11 +18,13 @@ function Admin() {
             <h2>Управление пользователями</h2>
             <p>Создавайте администраторов и управляйте паролями</p>
           </Link>
-          <Link to="/admin/announcements" className="admin-card">
-            <div className="admin-card-icon">📢</div>
-            <h2>Анонсы</h2>
-            <p>Создавайте и планируйте отправку анонсов пользователям</p>
-          </Link>
+          {TELEGRAM_UI_ENABLED && (
+            <Link to="/admin/announcements" className="admin-card">
+              <div className="admin-card-icon">📢</div>
+              <h2>Анонсы</h2>
+              <p>Создавайте и планируйте отправку анонсов пользователям</p>
+            </Link>
+          )}
           <Link to="/admin/orders" className="admin-card">
             <div className="admin-card-icon">🧾</div>
             <h2>Заказы</h2>

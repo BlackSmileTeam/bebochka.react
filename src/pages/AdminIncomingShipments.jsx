@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PageShell from '../components/PageShell'
 import { api } from '../services/api'
 import './AdminIncomingShipments.css'
@@ -35,8 +35,7 @@ function AdminIncomingShipments() {
   const [savingExpense, setSavingExpense] = useState(false)
   const [shipmentError, setShipmentError] = useState('')
   const [expenseError, setExpenseError] = useState('')
-  const [openShipmentActions, setOpenShipmentActions] = useState(null)
-  const [openExpenseActions, setOpenExpenseActions] = useState(null)
+  const [actionMenu, setActionMenu] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -55,6 +54,48 @@ function AdminIncomingShipments() {
   }
 
   useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    if (!actionMenu) return undefined
+
+    const closeMenu = () => setActionMenu(null)
+    const onDocClick = (event) => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      if (target.closest('.incoming-floating-menu') || target.closest('.btn-icon-dots')) return
+      setActionMenu(null)
+    }
+    const onEsc = (event) => {
+      if (event.key === 'Escape') setActionMenu(null)
+    }
+
+    document.addEventListener('mousedown', onDocClick)
+    window.addEventListener('scroll', closeMenu, true)
+    window.addEventListener('resize', closeMenu)
+    window.addEventListener('keydown', onEsc)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      window.removeEventListener('scroll', closeMenu, true)
+      window.removeEventListener('resize', closeMenu)
+      window.removeEventListener('keydown', onEsc)
+    }
+  }, [actionMenu])
+
+  const openActionMenu = (event, type, id) => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (actionMenu?.type === type && actionMenu.id === id) {
+      setActionMenu(null)
+      return
+    }
+    const rect = event.currentTarget.getBoundingClientRect()
+    const menuWidth = 180
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const left = Math.max(8, Math.min(rect.right - menuWidth, viewportWidth - menuWidth - 8))
+    const top = Math.max(8, Math.min(rect.bottom + 6, viewportHeight - 110))
+    setActionMenu({ type, id, left, top })
+  }
 
   const onShipmentChange = (e) => {
     const { name, value } = e.target
@@ -76,7 +117,7 @@ function AdminIncomingShipments() {
       notes: row.notes || ''
     })
     setShipmentError('')
-    setOpenShipmentActions(null)
+    setActionMenu(null)
   }
 
   const resetShipment = () => {
@@ -111,7 +152,7 @@ function AdminIncomingShipments() {
 
   const removeShipment = async (id) => {
     if (!window.confirm('Удалить поступление?')) return
-    setOpenShipmentActions(null)
+    setActionMenu(null)
     try {
       await api.deleteIncomingShipment(id)
       if (editingId === id) resetShipment()
@@ -128,7 +169,7 @@ function AdminIncomingShipments() {
       amount: row.amount ?? ''
     })
     setExpenseError('')
-    setOpenExpenseActions(null)
+    setActionMenu(null)
   }
 
   const resetExpense = () => {
@@ -161,7 +202,7 @@ function AdminIncomingShipments() {
 
   const removeExpense = async (id) => {
     if (!window.confirm('Удалить расход?')) return
-    setOpenExpenseActions(null)
+    setActionMenu(null)
     try {
       await api.deleteMiscExpense(id)
       if (editingExpenseId === id) resetExpense()
@@ -172,6 +213,14 @@ function AdminIncomingShipments() {
   }
 
   const miscTotal = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0)
+  const activeShipment = useMemo(
+    () => (actionMenu?.type === 'shipment' ? rows.find((r) => r.id === actionMenu.id) : null),
+    [actionMenu, rows]
+  )
+  const activeExpense = useMemo(
+    () => (actionMenu?.type === 'expense' ? expenses.find((e) => e.id === actionMenu.id) : null),
+    [actionMenu, expenses]
+  )
 
   return (
     <PageShell title="Поступления">
@@ -208,75 +257,59 @@ function AdminIncomingShipments() {
         </form>
 
         <div className="incoming-table-wrap">
-          {loading ? <div className="incoming-loading">Загрузка...</div> : (
-            <table className="incoming-table">
-              <thead>
-                <tr>
-                  <th>Посылка</th>
-                  <th>Вес</th>
-                  <th>Кол-во позиций</th>
-                  <th>Закупка</th>
-                  <th>Себестоимость позиции</th>
-                  <th>Продано</th>
-                  <th>Итог</th>
-                  <th className="incoming-actions-col" />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id}>
-                    <td>{r.name}</td>
-                    <td>{Number(r.weightKg || 0).toFixed(3)} кг</td>
-                    <td>{r.itemCount || 0}</td>
-                    <td>{Number(r.orderedAmount || 0).toLocaleString('ru-RU')} ₽</td>
-                    <td>
-                      {(() => {
-                        const cnt = Number(r.itemCount || 0)
-                        const ordered = Number(r.orderedAmount || 0)
-                        if (!Number.isFinite(cnt) || cnt <= 0) return '—'
-                        const v = ordered / cnt
-                        return `${v.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`
-                      })()}
-                    </td>
-                    <td>{r.revenue == null ? '—' : `${Number(r.revenue).toLocaleString('ru-RU')} ₽`}</td>
-                    <td title="Формула: Продано − закупка">
-                      {r.actualMargin == null ? '—' : `${Number(r.actualMargin).toLocaleString('ru-RU')} ₽`}
-                    </td>
-                    <td className="incoming-actions-cell">
-                      <div className="actions-menu-desktop">
-                        <button
-                          type="button"
-                          className="btn btn-icon-dots"
-                          aria-label="Действия"
-                          onClick={() => setOpenShipmentActions(openShipmentActions === r.id ? null : r.id)}
-                        >
-                          ⋯
-                        </button>
-                        {openShipmentActions === r.id && (
-                          <div className="actions-dropdown">
-                            <button
-                              type="button"
-                              className="actions-dropdown-item"
-                              onClick={() => editShipment(r)}
-                            >
-                              Изменить
-                            </button>
-                            <button
-                              type="button"
-                              className="actions-dropdown-item actions-dropdown-item--danger"
-                              onClick={() => removeShipment(r.id)}
-                            >
-                              Удалить
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
+          <div className="incoming-table-scroll">
+            {loading ? <div className="incoming-loading">Загрузка...</div> : (
+              <table className="incoming-table">
+                <thead>
+                  <tr>
+                    <th>Посылка</th>
+                    <th>Вес</th>
+                    <th>Кол-во позиций</th>
+                    <th>Закупка</th>
+                    <th>Себестоимость позиции</th>
+                    <th>Продано</th>
+                    <th>Итог</th>
+                    <th className="incoming-actions-col" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id}>
+                      <td>{r.name}</td>
+                      <td>{Number(r.weightKg || 0).toFixed(3)} кг</td>
+                      <td>{r.itemCount || 0}</td>
+                      <td>{Number(r.orderedAmount || 0).toLocaleString('ru-RU')} ₽</td>
+                      <td>
+                        {(() => {
+                          const cnt = Number(r.itemCount || 0)
+                          const ordered = Number(r.orderedAmount || 0)
+                          if (!Number.isFinite(cnt) || cnt <= 0) return '—'
+                          const v = ordered / cnt
+                          return `${v.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`
+                        })()}
+                      </td>
+                      <td>{r.revenue == null ? '—' : `${Number(r.revenue).toLocaleString('ru-RU')} ₽`}</td>
+                      <td title="Формула: Продано − закупка">
+                        {r.actualMargin == null ? '—' : `${Number(r.actualMargin).toLocaleString('ru-RU')} ₽`}
+                      </td>
+                      <td className="incoming-actions-cell">
+                        <div className="actions-menu-desktop">
+                          <button
+                            type="button"
+                            className="btn btn-icon-dots"
+                            aria-label="Действия"
+                            onClick={(e) => openActionMenu(e, 'shipment', r.id)}
+                          >
+                            ⋯
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
 
         <form className="incoming-form card-surface" onSubmit={submitExpense}>
@@ -323,63 +356,102 @@ function AdminIncomingShipments() {
               <p className="incoming-misc-summary">
                 Всего: {miscTotal.toLocaleString('ru-RU')} ₽ · {expenses.length} {expenses.length === 1 ? 'запись' : expenses.length < 5 ? 'записи' : 'записей'}
               </p>
-              <table className="incoming-table incoming-table--misc">
-                <thead>
-                  <tr>
-                    <th>Название</th>
-                    <th>Сумма</th>
-                    <th>Дата</th>
-                    <th className="incoming-actions-col" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.length === 0 ? (
+              <div className="incoming-table-scroll">
+                <table className="incoming-table incoming-table--misc">
+                  <thead>
                     <tr>
-                      <td colSpan={4} className="incoming-empty">Нет мелких расходов</td>
+                      <th>Название</th>
+                      <th>Сумма</th>
+                      <th>Дата</th>
+                      <th className="incoming-actions-col" />
                     </tr>
-                  ) : expenses.map((ex) => (
-                    <tr key={ex.id}>
-                      <td>{ex.name}</td>
-                      <td>{Number(ex.amount || 0).toLocaleString('ru-RU')} ₽</td>
-                      <td>{formatDate(ex.createdAt)}</td>
-                      <td className="incoming-actions-cell">
-                        <div className="actions-menu-desktop">
-                          <button
-                            type="button"
-                            className="btn btn-icon-dots"
-                            aria-label="Действия"
-                            onClick={() => setOpenExpenseActions(openExpenseActions === ex.id ? null : ex.id)}
-                          >
-                            ⋯
-                          </button>
-                          {openExpenseActions === ex.id && (
-                            <div className="actions-dropdown">
-                              <button
-                                type="button"
-                                className="actions-dropdown-item"
-                                onClick={() => editExpense(ex)}
-                              >
-                                Изменить
-                              </button>
-                              <button
-                                type="button"
-                                className="actions-dropdown-item actions-dropdown-item--danger"
-                                onClick={() => removeExpense(ex.id)}
-                              >
-                                Удалить
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {expenses.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="incoming-empty">Нет мелких расходов</td>
+                      </tr>
+                    ) : expenses.map((ex) => (
+                      <tr key={ex.id}>
+                        <td>{ex.name}</td>
+                        <td>{Number(ex.amount || 0).toLocaleString('ru-RU')} ₽</td>
+                        <td>{formatDate(ex.createdAt)}</td>
+                        <td className="incoming-actions-cell">
+                          <div className="actions-menu-desktop">
+                            <button
+                              type="button"
+                              className="btn btn-icon-dots"
+                              aria-label="Действия"
+                              onClick={(e) => openActionMenu(e, 'expense', ex.id)}
+                            >
+                              ⋯
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
         </div>
       </div>
+      {actionMenu && (
+        <div
+          className="incoming-floating-menu"
+          style={{ top: `${actionMenu.top}px`, left: `${actionMenu.left}px` }}
+        >
+          {actionMenu.type === 'shipment' && activeShipment && (
+            <>
+              <button
+                type="button"
+                className="incoming-floating-menu-item"
+                onClick={() => {
+                  editShipment(activeShipment)
+                  setActionMenu(null)
+                }}
+              >
+                Изменить
+              </button>
+              <button
+                type="button"
+                className="incoming-floating-menu-item incoming-floating-menu-item--danger"
+                onClick={() => {
+                  removeShipment(activeShipment.id)
+                  setActionMenu(null)
+                }}
+              >
+                Удалить
+              </button>
+            </>
+          )}
+          {actionMenu.type === 'expense' && activeExpense && (
+            <>
+              <button
+                type="button"
+                className="incoming-floating-menu-item"
+                onClick={() => {
+                  editExpense(activeExpense)
+                  setActionMenu(null)
+                }}
+              >
+                Изменить
+              </button>
+              <button
+                type="button"
+                className="incoming-floating-menu-item incoming-floating-menu-item--danger"
+                onClick={() => {
+                  removeExpense(activeExpense.id)
+                  setActionMenu(null)
+                }}
+              >
+                Удалить
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </PageShell>
   )
 }

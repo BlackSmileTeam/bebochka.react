@@ -16,7 +16,8 @@
 .incoming-actions { display: flex; gap: .6rem; justify-content: flex-end; }
 .incoming-error { color: #c53030; font-size: .9rem; }
 .incoming-loading { padding: 1rem; }
-.incoming-table-wrap { overflow: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,.08); }
+.incoming-table-wrap { overflow: visible; background: #fff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,.08); }
+.incoming-table-scroll { overflow: auto; border-radius: 12px; }
 .incoming-table { width: 100%; border-collapse: collapse; }
 .incoming-table thead { background: #667eea; color: #fff; }
 .incoming-table th,
@@ -51,7 +52,7 @@
   border-radius: 10px;
   background: #fff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  z-index: 5;
+  z-index: 50;
   padding: 0.4rem;
 }
 .incoming-page .actions-dropdown-item {
@@ -67,6 +68,30 @@
 .incoming-page .actions-dropdown-item:hover { background: #f7fafc; }
 .incoming-page .actions-dropdown-item--danger { color: #c53030; }
 .btn-small { padding: .5rem .75rem; font-size: .85rem; min-height: 36px; }
+.incoming-floating-menu {
+  position: fixed;
+  z-index: 2000;
+  min-width: 180px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  padding: 0.4rem;
+  display: grid;
+  gap: 0.15rem;
+}
+.incoming-floating-menu-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  color: #2d3748;
+}
+.incoming-floating-menu-item:hover { background: #f7fafc; }
+.incoming-floating-menu-item--danger { color: #c53030; }
 
 @media (max-width: 640px) {
   .incoming-grid,
