@@ -22,12 +22,6 @@
 }
 
 .header-shell {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
   position: relative;
 }
 
@@ -36,8 +30,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  flex: 1 1 auto;
+  gap: 0.75rem;
   min-width: 0;
 }
 
@@ -50,6 +43,7 @@
   font-weight: 600;
   font-size: 1.2rem;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .logo-img {
@@ -64,10 +58,22 @@
   white-space: nowrap;
 }
 
-.header-actions {
-  display: none;
+.header-end {
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.15rem;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  margin-left: auto;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.1rem;
   flex-shrink: 0;
 }
 
@@ -109,6 +115,7 @@
 }
 
 .header-menu-toggle {
+  display: none;
   flex-direction: column;
   gap: 4px;
 }
@@ -139,9 +146,16 @@
   flex-wrap: wrap;
   gap: 0.2rem 0.35rem;
   align-items: center;
-  justify-content: flex-end;
+}
+
+.nav--shop-text {
+  flex-wrap: nowrap;
+  gap: 0.15rem;
+}
+
+.nav--admin {
   margin-left: auto;
-  max-width: 100%;
+  justify-content: flex-end;
 }
 
 .nav--mobile-menu {
@@ -155,6 +169,7 @@
   border-radius: 6px;
   transition: background-color 0.2s;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .nav a:hover {
@@ -163,13 +178,6 @@
 
 .nav a.active {
   background-color: rgba(255, 255, 255, 0.3);
-}
-
-.cart-link {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .cart-badge {
@@ -228,6 +236,7 @@
   text-decoration: underline;
 }
 
+/* Мобильная версия магазина */
 @media (max-width: 768px) {
   .header {
     padding: 0.5rem 0;
@@ -237,64 +246,16 @@
     padding: 0 1rem;
   }
 
-  .header-shell {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-  }
-
-  .header-shell--shop .nav--primary {
-    display: none !important;
-  }
-
   .header-top {
-    width: 100%;
     flex-wrap: nowrap;
   }
 
-  .header-actions {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 0.1rem;
-    flex-shrink: 0;
+  .header-shell--shop .nav--shop-text {
+    display: none;
   }
 
-  .header-menu-toggle--guest {
+  .header-menu-toggle {
     display: inline-flex;
-    margin-left: auto;
-    flex-shrink: 0;
-  }
-
-  .logo {
-    font-size: 1rem;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .logo-img {
-    width: 40px;
-    height: 40px;
-  }
-
-  .logo-text {
-    font-size: 1rem;
-  }
-
-  .nav--primary {
-    width: 100%;
-    margin-left: 0;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 0.3rem;
-    padding: 0.35rem 0 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .nav .cart-link--nav,
-  .nav--primary .nav-link-extra,
-  .nav--primary .nav-link-profile {
-    display: none !important;
   }
 
   .nav--mobile-menu {
@@ -318,19 +279,44 @@
     min-height: 40px;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
   }
 
-  .header-cart-icon__badge,
-  .nav .cart-badge {
+  .logo {
+    font-size: 1rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .logo-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .logo-text {
+    font-size: 1rem;
+  }
+
+  .header-cart-icon__badge {
     width: 15px;
     height: 15px;
     min-width: 15px;
     font-size: 0.58rem;
-    font-weight: 700;
-    line-height: 1;
     top: 2px;
     right: 2px;
+  }
+
+  .header-shell--admin .nav--admin {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .header-shell--admin .header-top {
+    flex-wrap: wrap;
   }
 
   .main {
@@ -363,12 +349,6 @@
   .header-icon-btn {
     width: 38px;
     height: 38px;
-  }
-
-  .nav--primary > a {
-    font-size: 0.78rem;
-    padding: 0.4rem 0.15rem;
-    min-height: 36px;
   }
 
   .header-cart-icon__badge {

@@ -27,6 +27,45 @@ function useAuthNav() {
   return !!token
 }
 
+function CartIcon() {
+  return (
+    <svg className="header-cart-icon__svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7 4h-2l-1 2h2l3.6 7.59-1.35 2.45a1 1 0 0 0 .9 1.46h9.72v-2H9.42l1.1-2h7.45a1 1 0 0 0 .95-.68L21.64 6H7.21l-.94-2zm-1 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 .001 3.999A2 2 0 0 0 16 20z"
+      />
+    </svg>
+  )
+}
+
+function ProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+      />
+    </svg>
+  )
+}
+
+function BurgerButton({ open, onClick, controlsId }) {
+  return (
+    <button
+      type="button"
+      className={`header-icon-btn header-menu-toggle${open ? ' header-menu-toggle--open' : ''}`}
+      aria-label={open ? 'Закрыть меню' : 'Меню'}
+      aria-expanded={open}
+      aria-controls={controlsId}
+      onClick={onClick}
+    >
+      <span className="header-menu-toggle__bar" />
+      <span className="header-menu-toggle__bar" />
+      <span className="header-menu-toggle__bar" />
+    </button>
+  )
+}
+
 function Layout() {
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
@@ -67,82 +106,15 @@ function Layout() {
   return (
     <div className="layout">
       <header className="header">
-        <div className={`container header-shell${isAdminRoute ? '' : ' header-shell--shop'}`}>
+        <div className={`container header-shell${isAdminRoute ? ' header-shell--admin' : ' header-shell--shop'}`}>
           <div className="header-top">
             <Link to={logoTo} className="logo">
               <img src="/logo.jpg" alt="bebochka" className="logo-img" />
               <span className="logo-text">bebochka</span>
             </Link>
 
-            {isLoggedIn && !isAdminRoute && (
-              <div className="header-actions">
-                <Link
-                  to="/cart"
-                  className="header-icon-btn header-cart-icon"
-                  aria-label={cartAriaLabel}
-                >
-                  <svg className="header-cart-icon__svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                    <path
-                      fill="currentColor"
-                      d="M7 4h-2l-1 2h2l3.6 7.59-1.35 2.45a1 1 0 0 0 .9 1.46h9.72v-2H9.42l1.1-2h7.45a1 1 0 0 0 .95-.68L21.64 6H7.21l-.94-2zm-1 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 .001 3.999A2 2 0 0 0 16 20z"
-                    />
-                  </svg>
-                  {totalItems > 0 && (
-                    <span className="cart-badge header-cart-icon__badge">{totalItems}</span>
-                  )}
-                </Link>
-                <Link
-                  to="/profile"
-                  className={`header-icon-btn header-profile-icon${
-                    location.pathname === '/profile' ? ' header-icon-btn--active' : ''
-                  }`}
-                  aria-label="Профиль"
-                >
-                  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                    <path
-                      fill="currentColor"
-                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                    />
-                  </svg>
-                </Link>
-                <button
-                  type="button"
-                  className={`header-icon-btn header-menu-toggle${
-                    mobileMenuOpen ? ' header-menu-toggle--open' : ''
-                  }`}
-                  aria-label={mobileMenuOpen ? 'Закрыть меню' : 'Ещё'}
-                  aria-expanded={mobileMenuOpen}
-                  aria-controls="header-mobile-menu"
-                  onClick={() => setMobileMenuOpen((v) => !v)}
-                >
-                  <span className="header-menu-toggle__bar" />
-                  <span className="header-menu-toggle__bar" />
-                  <span className="header-menu-toggle__bar" />
-                </button>
-              </div>
-            )}
-
-            {!isLoggedIn && !isAdminRoute && (
-              <button
-                type="button"
-                className={`header-icon-btn header-menu-toggle header-menu-toggle--guest${
-                  mobileMenuOpen ? ' header-menu-toggle--open' : ''
-                }`}
-                aria-label={mobileMenuOpen ? 'Закрыть меню' : 'Меню'}
-                aria-expanded={mobileMenuOpen}
-                aria-controls="header-mobile-menu"
-                onClick={() => setMobileMenuOpen((v) => !v)}
-              >
-                <span className="header-menu-toggle__bar" />
-                <span className="header-menu-toggle__bar" />
-                <span className="header-menu-toggle__bar" />
-              </button>
-            )}
-          </div>
-
-          <nav className="nav nav--primary" aria-label="Основное меню">
             {isAdminRoute ? (
-              <>
+              <nav className="nav nav--admin" aria-label="Админ-меню">
                 <Link to="/admin" className={location.pathname === '/admin' ? 'active' : ''}>
                   Обзор
                 </Link>
@@ -164,66 +136,10 @@ function Layout() {
                 >
                   Заказы
                 </Link>
-              </>
-            ) : (
-              <>
-                {isLoggedIn && (
-                  <>
-                    <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
-                      Каталог
-                    </Link>
-                    <Link
-                      to="/profile"
-                      className={`nav-link-profile${
-                        location.pathname === '/profile' ? ' active' : ''
-                      }`}
-                    >
-                      Профиль
-                    </Link>
-                    <Link
-                      to="/reviews"
-                      className={location.pathname === '/reviews' ? 'active' : ''}
-                    >
-                      Отзывы
-                    </Link>
-                    <Link to="/cart" className="cart-link cart-link--nav">
-                      Корзина
-                      {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-                    </Link>
-                    {isAdminUser && (
-                      <Link to="/admin" className="admin-link nav-link-extra">
-                        Админка
-                      </Link>
-                    )}
-                  </>
-                )}
-                {!isLoggedIn && (
-                  <>
-                    <Link
-                      to="/reviews"
-                      className={location.pathname === '/reviews' ? 'active' : ''}
-                    >
-                      Отзывы
-                    </Link>
-                    {showShopLoginLink && (
-                      <Link to="/account" className="nav-link-extra">
-                        Войти
-                      </Link>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </nav>
-
-          {!isAdminRoute && (
-            <nav
-              id="header-mobile-menu"
-              className={`nav nav--mobile-menu${mobileMenuOpen ? ' nav--mobile-menu--open' : ''}`}
-              aria-label="Меню"
-            >
-              {isLoggedIn && (
-                <>
+              </nav>
+            ) : isLoggedIn ? (
+              <div className="header-end">
+                <nav className="nav nav--shop-text" aria-label="Основное меню">
                   <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
                     Каталог
                   </Link>
@@ -234,13 +150,79 @@ function Layout() {
                     Отзывы
                   </Link>
                   {isAdminUser && (
-                    <Link to="/admin" className="admin-link">
+                    <Link to="/admin" className="nav-link-admin">
                       Админка
                     </Link>
                   )}
+                </nav>
+                <div className="header-actions">
+                  <Link
+                    to="/cart"
+                    className="header-icon-btn header-cart-icon"
+                    aria-label={cartAriaLabel}
+                  >
+                    <CartIcon />
+                    {totalItems > 0 && (
+                      <span className="cart-badge header-cart-icon__badge">{totalItems}</span>
+                    )}
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className={`header-icon-btn${
+                      location.pathname === '/profile' ? ' header-icon-btn--active' : ''
+                    }`}
+                    aria-label="Профиль"
+                  >
+                    <ProfileIcon />
+                  </Link>
+                  <BurgerButton
+                    open={mobileMenuOpen}
+                    onClick={() => setMobileMenuOpen((v) => !v)}
+                    controlsId="header-mobile-menu"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="header-end">
+                <nav className="nav nav--shop-text" aria-label="Основное меню">
+                  <Link
+                    to="/reviews"
+                    className={location.pathname === '/reviews' ? 'active' : ''}
+                  >
+                    Отзывы
+                  </Link>
+                  {showShopLoginLink && <Link to="/account">Войти</Link>}
+                </nav>
+                <div className="header-actions header-actions--guest">
+                  <BurgerButton
+                    open={mobileMenuOpen}
+                    onClick={() => setMobileMenuOpen((v) => !v)}
+                    controlsId="header-mobile-menu"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {!isAdminRoute && (
+            <nav
+              id="header-mobile-menu"
+              className={`nav nav--mobile-menu${mobileMenuOpen ? ' nav--mobile-menu--open' : ''}`}
+              aria-label="Меню"
+            >
+              {isLoggedIn ? (
+                <>
+                  <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+                    Каталог
+                  </Link>
+                  <Link
+                    to="/reviews"
+                    className={location.pathname === '/reviews' ? 'active' : ''}
+                  >
+                    Отзывы
+                  </Link>
                 </>
-              )}
-              {!isLoggedIn && (
+              ) : (
                 <>
                   <Link
                     to="/reviews"
