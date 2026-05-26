@@ -51,3 +51,73 @@
   color: #c53030;
 }
 
+.admin-backup-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-backup-dates .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-backup-dates label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.admin-backup-dates input[type='date'] {
+  min-height: 42px;
+  padding: 0.55rem 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.admin-backup-progress {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-backup-progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.admin-backup-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #667eea, #5a67d8);
+  transition: width 0.35s ease;
+}
+
+.admin-backup-progress-label {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.admin-backup-progress-pct {
+  font-weight: 700;
+  color: #2d3748;
+  min-width: 3ch;
+}
+
+.admin-backup-progress-stage {
+  color: #718096;
+}
+
+@media (max-width: 480px) {
+  .admin-backup-dates {
+    grid-template-columns: 1fr;
+  }
+}
+

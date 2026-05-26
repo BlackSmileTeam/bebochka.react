@@ -1633,21 +1633,37 @@ export const api = {
       itemCount: r.itemCount ?? r.ItemCount ?? 0,
       orderedAmount: r.orderedAmount ?? r.OrderedAmount ?? 0,
       revenue: r.revenue ?? r.Revenue ?? null,
-      miscExpensesTotal: r.miscExpensesTotal ?? r.MiscExpensesTotal ?? 0,
-      totalExpenses: r.totalExpenses ?? r.TotalExpenses ?? 0,
       actualMargin: r.actualMargin ?? r.ActualMargin ?? null,
-      expenses: Array.isArray(r.expenses ?? r.Expenses)
-        ? (r.expenses ?? r.Expenses).map((e) => ({
-            id: e.id ?? e.Id,
-            name: e.name ?? e.Name ?? '',
-            amount: e.amount ?? e.Amount ?? 0,
-            createdAt: e.createdAt ?? e.CreatedAt ?? null
-          }))
-        : [],
       notes: r.notes ?? r.Notes ?? null,
       createdAt: r.createdAt ?? r.CreatedAt ?? null,
       updatedAt: r.updatedAt ?? r.UpdatedAt ?? null
     }))
+  },
+
+  async getMiscExpenses() {
+    const response = await apiClient.get('/misc-expenses')
+    const rows = Array.isArray(response.data) ? response.data : []
+    return rows.map((r) => ({
+      id: r.id ?? r.Id,
+      name: r.name ?? r.Name ?? '',
+      amount: r.amount ?? r.Amount ?? 0,
+      incomingShipmentId: r.incomingShipmentId ?? r.IncomingShipmentId ?? null,
+      createdAt: r.createdAt ?? r.CreatedAt ?? null
+    }))
+  },
+
+  async createMiscExpense(payload) {
+    const response = await apiClient.post('/misc-expenses', payload)
+    return response.data
+  },
+
+  async updateMiscExpense(id, payload) {
+    const response = await apiClient.put(`/misc-expenses/${id}`, payload)
+    return response.data
+  },
+
+  async deleteMiscExpense(id) {
+    await apiClient.delete(`/misc-expenses/${id}`)
   },
 
   async createIncomingShipment(payload) {
