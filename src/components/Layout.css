@@ -312,12 +312,13 @@
   }
 
   .header-cart-icon__badge {
-    width: 15px;
-    height: 15px;
-    min-width: 15px;
-    font-size: 0.58rem;
-    top: 2px;
-    right: 2px;
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    font-size: 0.52rem;
+    top: 1px;
+    right: 1px;
+    z-index: 2;
   }
 
   .header-shell--admin .nav--admin {
@@ -377,10 +378,13 @@
   }
 
   .header-cart-icon__badge {
-    width: 14px;
-    height: 14px;
-    min-width: 14px;
-    font-size: 0.55rem;
+    width: 11px;
+    height: 11px;
+    min-width: 11px;
+    font-size: 0.48rem;
+    top: 1px;
+    right: 1px;
+    z-index: 2;
   }
 
   .main {

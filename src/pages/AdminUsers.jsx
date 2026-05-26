@@ -263,6 +263,7 @@ function AdminUsers() {
                 <th>ID</th>
                 <th>Имя пользователя</th>
                 <th>Email</th>
+                <th>Телефон</th>
                 <th>Полное имя</th>
                 <th>Админ</th>
                 <th>Создан</th>
@@ -285,7 +286,7 @@ function AdminUsers() {
                                 onClick={() => setOpenActionsFor(null)}
                                 title="Заказы пользователя"
                               >
-                                {user.username || user.Username || '-'}
+                                {user.fullName || user.FullName || user.username || user.Username || '-'}
                               </Link>
                             </span>
                           </div>
@@ -297,6 +298,7 @@ function AdminUsers() {
                         </div>
                       </td>
                       <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
+                      <td data-label="Телефон" className="phone-cell">{user.phone || user.Phone || '-'}</td>
                       <td data-label="Полное имя" className="fullname-cell">
                         <Link
                           className="admin-users-orders-link"

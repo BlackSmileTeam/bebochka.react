@@ -880,6 +880,7 @@ export const api = {
             id: user.id || user.Id,
             username: user.username || user.Username || '',
             email: user.email || user.Email || null,
+            phone: user.phone || user.Phone || null,
             fullName: user.fullName || user.FullName || null,
             createdAt: user.createdAt || user.CreatedAt || null,
             lastLoginAt: user.lastLoginAt || user.LastLoginAt || null,
@@ -907,6 +908,7 @@ export const api = {
       id: u.id ?? u.Id,
       username: u.username ?? u.Username ?? '',
       email: u.email ?? u.Email ?? null,
+      phone: u.phone ?? u.Phone ?? null,
       fullName: u.fullName ?? u.FullName ?? null,
       isAdmin: !!(u.isAdmin ?? u.IsAdmin)
     }

@@ -221,9 +221,23 @@ function Layout() {
                   >
                     Отзывы
                   </Link>
+                  {isAdminUser && (
+                    <Link
+                      to="/admin"
+                      className={location.pathname === '/admin' ? 'active' : ''}
+                    >
+                      Админка
+                    </Link>
+                  )}
                 </>
               ) : (
                 <>
+                  <Link
+                    to="/"
+                    className={location.pathname === '/' ? 'active' : ''}
+                  >
+                    Каталог
+                  </Link>
                   <Link
                     to="/reviews"
                     className={location.pathname === '/reviews' ? 'active' : ''}

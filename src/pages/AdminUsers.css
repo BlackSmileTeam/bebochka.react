@@ -456,6 +456,18 @@
     flex-shrink: 0;
   }
 
+  /* Телефон */
+  .users-table .phone-cell {
+    color: #4a5568;
+    padding-top: 0.15rem;
+  }
+
+  .users-table .phone-cell:before {
+    content: "📱";
+    margin-right: 0.2rem;
+    flex-shrink: 0;
+  }
+
   /* Действия */
   .users-table .actions-cell {
     justify-content: flex-end;

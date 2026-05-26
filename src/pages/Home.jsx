@@ -22,8 +22,8 @@ const ITEMS_PER_PAGE = 24
 
 const catalogIntro = (
   <div className="catalog-intro">
-    <p>Недорогая и качественная одежда европейских брендов для всей семьи.</p>
-    <p>Бережём ваш бюджет без ущерба для стиля.</p>
+    <p>Недорогая и качественная одежда европейских брендов для всей семьи</p>
+    <p>Бережём ваш бюджет без ущерба для стиля</p>
   </div>
 )
 
@@ -275,12 +275,25 @@ function Home() {
         <div className="catalog-filters-mobile-bar">
           <button
             type="button"
-            className="catalog-filters-toggle"
+            className={`catalog-filters-toggle${filtersOpen ? ' catalog-filters-toggle--open' : ''}`}
             onClick={() => setFiltersOpen((v) => !v)}
             aria-expanded={filtersOpen}
             aria-controls="catalog-filters-panel"
+            aria-label={filtersOpen ? 'Свернуть фильтры' : 'Фильтры'}
           >
-            {filtersOpen ? 'Свернуть' : 'Фильтры'}
+            <svg
+              className="catalog-filters-toggle__icon"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                fill="currentColor"
+                d="M4 5h16l-6 7v7l-4-2v-5L4 5z"
+              />
+            </svg>
             {activeFilterCount > 0 && (
               <span className="catalog-filters-badge" aria-hidden="true">
                 {activeFilterCount}

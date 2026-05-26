@@ -332,6 +332,13 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     }
   }
 
+  const cartAvailableAtRaw = product?.cartAvailableAt ?? product?.CartAvailableAt
+  const cartAvailableAtDate = cartAvailableAtRaw ? new Date(cartAvailableAtRaw) : null
+  const isCartUnlockScheduledInFuture =
+    cartAvailableAtDate &&
+    !Number.isNaN(cartAvailableAtDate.getTime()) &&
+    cartAvailableAtDate.getTime() > Date.now()
+
   return (
     <div className="modal-overlay" onClick={loading ? undefined : onClose}>
       <div className="modal-content product-form-modal" onClick={(e) => e.stopPropagation()}>
@@ -793,7 +800,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             )}
           </div>
 
-          {product && !isProductPublishedToCatalog(product) && (
+          {product && !isProductPublishedToCatalog(product) && isCartUnlockScheduledInFuture && (
             <div className="form-group">
               <button
                 type="button"
