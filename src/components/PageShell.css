@@ -85,6 +85,10 @@
   margin-top: 0;
 }
 
+.page-shell--catalog .page-shell__header:has(.catalog-intro) {
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 768px) {
   .page-shell {
     padding: 0 1rem;

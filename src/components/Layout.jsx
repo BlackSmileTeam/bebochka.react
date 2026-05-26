@@ -62,8 +62,24 @@ function Layout() {
         <div className="container header-inner">
           <Link to={logoTo} className="logo">
             <img src="/logo.jpg" alt="bebochka" className="logo-img" />
-            <span className="logo-text">bebochka | детский секонд-хенд</span>
+            <span className="logo-text">bebochka</span>
           </Link>
+
+          {isLoggedIn && !isAdminRoute && (
+            <Link
+              to="/cart"
+              className="header-cart-icon"
+              aria-label={totalItems > 0 ? `Корзина, ${totalItems} товаров` : 'Корзина'}
+            >
+              <svg className="header-cart-icon__svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M7 4h-2l-1 2h2l3.6 7.59-1.35 2.45a1 1 0 0 0 .9 1.46h9.72v-2H9.42l1.1-2h7.45a1 1 0 0 0 .95-.68L21.64 6H7.21l-.94-2zm-1 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 .001 3.999A2 2 0 0 0 16 20z"
+                />
+              </svg>
+              {totalItems > 0 && <span className="cart-badge header-cart-icon__badge">{totalItems}</span>}
+            </Link>
+          )}
 
           <nav className="nav" aria-label="Основное меню">
             {isAdminRoute ? (
@@ -100,7 +116,7 @@ function Layout() {
                     <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
                       Каталог
                     </Link>
-                    <Link to="/cart" className="cart-link">
+                    <Link to="/cart" className="cart-link cart-link--nav">
                       Корзина
                       {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
                     </Link>
@@ -151,12 +167,9 @@ function Layout() {
       <footer className="footer">
         <div className="container">
           <p className="footer-text">
-            Недорогая и качественная одежда для мальчиков и девочек от 62 до 152 размера 🧸
-          </p>
-          <p className="footer-text">
             По всем вопросам{' '}
             <a href="https://t.me/mamka_vseya_russi" target="_blank" rel="noopener noreferrer">
-              bebochkaa
+              bebochka
             </a>
           </p>
         </div>

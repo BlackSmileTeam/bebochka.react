@@ -172,7 +172,7 @@ function Checkout() {
 
   if (success) {
     return (
-      <PageShell className="page-shell--checkout" title="Заказ оформлен!">
+      <PageShell className="page-shell--checkout">
         <div className="checkout-success">
           <div className="success-icon">✓</div>
           <p>Спасибо за ваш заказ. Мы свяжемся с вами в ближайшее время.</p>
@@ -183,7 +183,7 @@ function Checkout() {
   }
   if (cartItems.length === 0) {
     return (
-      <PageShell className="page-shell--checkout" title="Оформление заказа">
+      <PageShell className="page-shell--checkout">
         <div className="checkout-empty">
           <h2>Корзина пуста</h2>
           <p>Добавьте товары в корзину для оформления заказа</p>
@@ -196,7 +196,7 @@ function Checkout() {
   }
 
   return (
-    <PageShell className="page-shell--checkout" title="Оформление заказа">
+    <PageShell className="page-shell--checkout">
       <div className="checkout-content">
         <div className="checkout-form-container">
           <form onSubmit={handleSubmit} className="checkout-form">

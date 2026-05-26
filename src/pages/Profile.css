@@ -1,5 +1,27 @@
 /* Те же классы оболочки, что у каталога: page-shell page-shell--catalog */
 
+.profile-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profile-user-name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #2d3748;
+  line-height: 1.3;
+}
+
+.profile-user-email,
+.profile-user-phone {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #718096;
+}
+
 .page-shell--catalog .profile-section-title,
 .page-shell--catalog .profile-orders,
 .page-shell--catalog .profile-actions {

@@ -20,6 +20,13 @@ const CONDITION_PRIORITY = {
 }
 const ITEMS_PER_PAGE = 24
 
+const catalogIntro = (
+  <div className="catalog-intro">
+    <p>Недорогая и качественная одежда европейских брендов для всей семьи.</p>
+    <p>Бережём ваш бюджет без ущерба для стиля.</p>
+  </div>
+)
+
 function Home() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -248,7 +255,7 @@ function Home() {
 
   if (loading) {
     return (
-      <PageShell className="page-shell--catalog page-shell--catalog-fill" title="Каталог товаров">
+      <PageShell className="page-shell--catalog page-shell--catalog-fill" subtitle={catalogIntro}>
         <div className="loading">Загрузка...</div>
       </PageShell>
     )
@@ -256,14 +263,14 @@ function Home() {
 
   if (error) {
     return (
-      <PageShell className="page-shell--catalog page-shell--catalog-fill" title="Каталог товаров">
+      <PageShell className="page-shell--catalog page-shell--catalog-fill" subtitle={catalogIntro}>
         <div className="error">{error}</div>
       </PageShell>
     )
   }
 
   return (
-    <PageShell className="page-shell--catalog page-shell--catalog-fill" title="Каталог товаров">
+    <PageShell className="page-shell--catalog page-shell--catalog-fill" subtitle={catalogIntro}>
       <div className="catalog-filters-wrap">
         <div className="catalog-filters-mobile-bar">
           <button

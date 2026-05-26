@@ -137,6 +137,24 @@
   min-width: 0;
 }
 
+.catalog-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.catalog-intro p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #4a5568;
+}
+
+.catalog-intro p:first-child {
+  color: #2d3748;
+  font-weight: 500;
+}
+
 .product-card {
   background: white;
   border-radius: 12px;
@@ -491,7 +509,9 @@
 
 @media (max-width: 480px) {
   .products-grid {
-    grid-template-columns: repeat(2, calc((100% - 1 * 0.6rem) / 2));
+    grid-template-columns: 1fr;
+    max-height: 580px;
+    overflow-y: auto;
     gap: 0.6rem;
   }
 

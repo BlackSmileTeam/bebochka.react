@@ -23,6 +23,24 @@ function getStatusHistory(o) {
   return Array.isArray(h) ? h : []
 }
 
+function formatPhoneDisplay(phone) {
+  const digits = String(phone || '').replace(/\D/g, '')
+  if (digits.length === 11 && digits.startsWith('7')) {
+    return `+7 ${digits.slice(1, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 9)} ${digits.slice(9, 11)}`
+  }
+  const trimmed = String(phone || '').trim()
+  return trimmed || ''
+}
+
+function getUserPhone(user) {
+  const fromField = formatPhoneDisplay(user.phone || user.Phone || '')
+  if (fromField) return fromField
+  const username = String(user.username || user.Username || '').trim()
+  const m = username.match(/^u_(\d{11})$/)
+  if (m?.[1]?.startsWith('7')) return formatPhoneDisplay(`+${m[1]}`)
+  return ''
+}
+
 function Profile() {
   const { sessionId } = useCart()
   const [orders, setOrders] = useState([])
@@ -152,12 +170,12 @@ function Profile() {
       return {}
     }
   })()
-  const visibleName = (() => {
-    const fullName = (user.fullName || '').trim()
+  const displayName = (() => {
+    const fullName = (user.fullName || user.FullName || '').trim()
     if (fullName) return fullName
-    const username = (user.username || '').trim()
+    const username = (user.username || user.Username || '').trim()
     if (username && !username.startsWith('u_')) return username
-    return 'Пользователь'
+    return ''
   })()
   const handleLogout = () => {
     localStorage.removeItem('authToken')
@@ -166,7 +184,15 @@ function Profile() {
     window.location.href = '/'
   }
 
-  const profileSubtitle = `${visibleName}${user.email ? ` · ${user.email}` : ''}`
+  const profileEmail = String(user.email || user.Email || '').trim()
+  const profilePhone = getUserPhone(user)
+  const profileUserInfo = (
+    <div className="profile-user-info">
+      {displayName && <p className="profile-user-name">{displayName}</p>}
+      {profileEmail && <p className="profile-user-email">{profileEmail}</p>}
+      {profilePhone && <p className="profile-user-phone">{profilePhone}</p>}
+    </div>
+  )
 
   const paymentHintOrder =
     paymentHintOrderId == null
@@ -216,7 +242,7 @@ function Profile() {
 
   return (
     <>
-      <PageShell className="page-shell--catalog" title="Профиль" subtitle={profileSubtitle}>
+      <PageShell className="page-shell--catalog" subtitle={profileUserInfo}>
         <h2 className="profile-section-title">История заказов</h2>
         {loading && <p>Загрузка…</p>}
         {error && <p className="profile-error">{error}</p>}

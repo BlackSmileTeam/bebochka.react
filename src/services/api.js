@@ -657,7 +657,8 @@ export const api = {
       fullName: d.fullName || d.FullName || '',
       userId: d.userId ?? d.UserId,
       isAdmin: !!(d.isAdmin ?? d.IsAdmin),
-      email: d.email ?? d.Email ?? null
+      email: d.email ?? d.Email ?? null,
+      phone: d.phone ?? d.Phone ?? null
     }
     if (!normalized.token) return normalized
     localStorage.setItem('authToken', normalized.token)
@@ -666,7 +667,8 @@ export const api = {
       fullName: normalized.fullName,
       userId: normalized.userId,
       isAdmin: normalized.isAdmin,
-      email: normalized.email
+      email: normalized.email,
+      phone: normalized.phone
     }))
     if (typeof window !== 'undefined') window.dispatchEvent(new Event('bebochka-auth'))
     return normalized
