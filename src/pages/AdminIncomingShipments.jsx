@@ -135,7 +135,7 @@ function AdminIncomingShipments() {
               <input id="shipment-weight" name="weightKg" type="number" step="0.001" value={form.weightKg} onChange={onChange} placeholder="0.000" />
             </div>
             <div className="form-group">
-              <label htmlFor="shipment-count">Количество вещей</label>
+              <label htmlFor="shipment-count">Количество позиций</label>
               <input id="shipment-count" name="itemCount" type="number" value={form.itemCount} onChange={onChange} placeholder="0" />
             </div>
             <div className="form-group">
@@ -184,7 +184,7 @@ function AdminIncomingShipments() {
             <table className="incoming-table">
               <thead>
                 <tr>
-                  <th>Посылка</th><th>Вес</th><th>Кол-во</th><th>Закупка</th><th>Мелкие</th><th>Расходы</th><th>Продано</th><th>Итог</th><th />
+                  <th>Посылка</th><th>Вес</th><th>Кол-во позиций</th><th>Закупка</th><th>Себестоимость позиции</th><th>Мелкие</th><th>Продано</th><th>Итог</th><th />
                 </tr>
               </thead>
               <tbody>
@@ -194,10 +194,18 @@ function AdminIncomingShipments() {
                     <td>{Number(r.weightKg || 0).toFixed(3)} кг</td>
                     <td>{r.itemCount || 0}</td>
                     <td>{Number(r.orderedAmount || 0).toLocaleString('ru-RU')} ₽</td>
+                    <td>
+                      {(() => {
+                        const cnt = Number(r.itemCount || 0)
+                        const ordered = Number(r.orderedAmount || 0)
+                        if (!Number.isFinite(cnt) || cnt <= 0) return '—'
+                        const v = ordered / cnt
+                        return `${v.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`
+                      })()}
+                    </td>
                     <td>{Number(r.miscExpensesTotal || 0).toLocaleString('ru-RU')} ₽</td>
-                    <td>{Number(r.totalExpenses || 0).toLocaleString('ru-RU')} ₽</td>
                     <td>{r.revenue == null ? '-' : `${Number(r.revenue).toLocaleString('ru-RU')} ₽`}</td>
-                    <td title="Формула: закупка - продано + мелкие">
+                    <td title="Формула: Продано - закупка - мелкие">
                       {r.actualMargin == null ? '-' : `${Number(r.actualMargin).toLocaleString('ru-RU')} ₽`}
                     </td>
                     <td>
