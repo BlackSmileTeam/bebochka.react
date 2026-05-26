@@ -250,6 +250,19 @@
     flex-wrap: nowrap;
   }
 
+  .header-end {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
   .header-shell--shop .nav--shop-text {
     display: none;
   }
@@ -331,6 +344,12 @@
 @media (max-width: 480px) {
   .header .container {
     padding: 0 0.75rem;
+  }
+
+  .header-end,
+  .header-actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
 
   .logo {
