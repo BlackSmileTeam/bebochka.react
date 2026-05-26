@@ -510,8 +510,7 @@
 @media (max-width: 480px) {
   .products-grid {
     grid-template-columns: 1fr;
-    max-height: 580px;
-    overflow-y: auto;
+    min-height: 580px;
     gap: 0.6rem;
   }
 
