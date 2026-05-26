@@ -11,6 +11,7 @@ import AdminUserOrders from './pages/AdminUserOrders'
 import AdminTelegramErrors from './pages/AdminTelegramErrors'
 import AdminReviews from './pages/AdminReviews'
 import AdminIncomingShipments from './pages/AdminIncomingShipments'
+import AdminBackup from './pages/AdminBackup'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import PrivateRoute from './components/PrivateRoute'
@@ -42,6 +43,7 @@ function App() {
             <Route path="admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="admin/incoming-shipments" element={<AdminRoute><AdminIncomingShipments /></AdminRoute>} />
+            <Route path="admin/backup" element={<AdminRoute><AdminBackup /></AdminRoute>} />
             <Route path="admin/telegram-errors" element={<AdminRoute><AdminTelegramErrors /></AdminRoute>} />
           </Route>
         </Routes>

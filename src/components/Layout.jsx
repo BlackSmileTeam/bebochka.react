@@ -138,6 +138,12 @@ function Layout() {
                 >
                   Заказы
                 </Link>
+                <Link
+                  to="/admin/backup"
+                  className={location.pathname === '/admin/backup' ? 'active' : ''}
+                >
+                  Бэкап
+                </Link>
               </nav>
             ) : isLoggedIn ? (
               <div className="header-end">

@@ -38,6 +38,11 @@ function Admin() {
             <h2>Поступления</h2>
             <p>Учитывайте вес, количество, закупку и прибыль по посылкам</p>
           </Link>
+          <Link to="/admin/backup" className="admin-card">
+            <div className="admin-card-icon">💾</div>
+            <h2>Бэкап</h2>
+            <p>Скачать архив БД и фотографий или восстановить из архива</p>
+          </Link>
           {TELEGRAM_UI_ENABLED && (
             <Link to="/admin/telegram-errors" className="admin-card">
               <div className="admin-card-icon">⚠️</div>
