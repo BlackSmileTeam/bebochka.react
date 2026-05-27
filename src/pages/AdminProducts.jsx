@@ -62,7 +62,7 @@ function AdminProducts() {
     priceMin: '',
     priceMax: '',
     publishedStatus: 'all', // all, published, scheduled
-    stockState: 'availableRegular', // availableRegular, all, purchased
+    stockState: 'availableRegular', // availableRegular, reserved, all, purchased
     sortByBox: 'none' // none, asc, desc
   })
 
@@ -358,6 +358,10 @@ function AdminProducts() {
           return quantityInStock <= 0
         }
 
+        if (filters.stockState === 'reserved') {
+          return quantityInStock > 0 && availableQuantity < quantityInStock
+        }
+
         // Обычный статус: есть остаток и он не зарезервирован.
         return quantityInStock > 0 && availableQuantity === quantityInStock
       })
@@ -575,6 +579,8 @@ function AdminProducts() {
       publishedStatus: value === 'published' ? 'Опубликованные' : value === 'scheduled' ? 'Запланированные' : '',
       stockState: value === 'availableRegular'
         ? 'Не купленные / не забронированные'
+        : value === 'reserved'
+          ? 'Забронированные'
         : value === 'purchased'
           ? 'Купленные'
           : '',
@@ -594,6 +600,8 @@ function AdminProducts() {
     if (field === 'stockState') {
       return value === 'availableRegular'
         ? 'Не купленные / не забронированные'
+        : value === 'reserved'
+          ? 'Забронированные'
         : value === 'purchased'
           ? 'Купленные'
           : ''
@@ -1052,6 +1060,7 @@ function AdminProducts() {
                 onChange={(e) => handleFilterChange('stockState', e.target.value)}
               >
                 <option value="availableRegular">Не купленные / не забронированные</option>
+                <option value="reserved">Забронированные</option>
                 <option value="all">Все</option>
                 <option value="purchased">Купленные</option>
               </select>

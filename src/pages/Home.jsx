@@ -35,6 +35,7 @@ const catalogIntro = (
   <div className="catalog-intro">
     <p>Недорогая и качественная одежда европейских брендов для всей семьи</p>
     <p>Бережём ваш бюджет без ущерба для стиля</p>
+    <h1 className="catalog-intro-title">Каталог товаров</h1>
   </div>
 )
 
@@ -267,7 +268,7 @@ function Home() {
   if (loading) {
     return (
       <PageShell
-        title="Каталог товаров"
+        title={null}
         className="page-shell--catalog page-shell--catalog-fill"
         subtitle={catalogIntro}
       >
@@ -279,7 +280,7 @@ function Home() {
   if (error) {
     return (
       <PageShell
-        title="Каталог товаров"
+        title={null}
         className="page-shell--catalog page-shell--catalog-fill"
         subtitle={catalogIntro}
       >
@@ -290,7 +291,7 @@ function Home() {
 
   return (
     <PageShell
-      title="Каталог товаров"
+      title={null}
       className="page-shell--catalog page-shell--catalog-fill"
       subtitle={catalogIntro}
     >
