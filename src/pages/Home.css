@@ -230,11 +230,21 @@
   min-width: 0;
 }
 
+.product-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
 .product-name {
+  flex: 1;
+  min-width: 0;
   font-size: 1.05rem;
   font-weight: 600;
   color: #2d3748;
-  margin-bottom: 0.5rem;
+  margin: 0;
   line-height: 1.4;
   min-height: calc(1.4em * 2);
   word-wrap: break-word;
@@ -244,17 +254,29 @@
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.product-title-row .product-meta-stock {
   flex-shrink: 0;
+  max-width: 46%;
+  text-align: right;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  white-space: normal;
 }
 
 .product-meta-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1fr);
-  gap: 0.35rem 0.4rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.2rem 0.75rem;
   margin-bottom: 0.4rem;
   align-items: start;
   flex: 1 1 auto;
-  min-height: 2.75rem;
+}
+
+.product-meta-brand-row {
+  grid-column: 1 / -1;
+  margin-bottom: 0.15rem;
 }
 
 .product-meta-col {
@@ -515,11 +537,20 @@
     min-height: auto;
   }
 
+  .product-title-row {
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+  }
+
   .product-name {
     font-size: 0.95rem;
-    margin-bottom: 0.35rem;
     line-height: 1.3;
     min-height: calc(1.3em * 2);
+  }
+
+  .product-title-row .product-meta-stock {
+    font-size: 0.68rem;
+    max-width: 48%;
   }
 
   .product-description {
@@ -527,25 +558,16 @@
   }
 
   .product-meta-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.2rem 0.5rem;
     margin-bottom: 0.5rem;
     flex: none;
-    min-height: auto;
   }
 
   .product-meta-col {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem 0.5rem;
-    min-width: 0;
-  }
-
-  .product-meta-col--primary {
-    width: 100%;
+    flex-direction: column;
+    gap: 0.2rem;
   }
 
   .product-meta-item {
@@ -623,9 +645,16 @@
 
   .product-name {
     font-size: 1rem;
-    margin-bottom: 0.35rem;
     line-height: 1.25;
     min-height: calc(1.25em * 2);
+  }
+
+  .product-title-row .product-meta-stock {
+    font-size: 0.72rem;
+  }
+
+  .product-meta-col {
+    gap: 0.2rem;
   }
 
   .product-meta-item {

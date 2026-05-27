@@ -372,7 +372,26 @@ function Home() {
       ) : (
         <div className="catalog-main">
         <div className="products-grid">
-          {visibleProducts.map((product) => (
+          {visibleProducts.map((product) => {
+            const available = getAvailableQuantity(product)
+            const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
+            const inCart = getCartQuantity(product.id)
+            const isInMyCart = inCart > 0
+            const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
+            let stockClass = 'available'
+            let stockLabel = '✓ В наличии'
+            if (isInMyCart) {
+              stockClass = 'cart'
+              stockLabel = '🛒 В корзине'
+            } else if (isReservedByAnotherUser) {
+              stockClass = 'reserved'
+              stockLabel = '⏳ Забронирован'
+            } else if (available <= 0) {
+              stockClass = 'out'
+              stockLabel = '❌ Нет в наличии'
+            }
+
+            return (
             <div 
               key={product.id} 
               className="product-card"
@@ -404,63 +423,44 @@ function Home() {
                 )}
               </div>
               <div className="product-info">
-                <h3 
-                  className="product-name"
-                  onClick={() => setSelectedProduct(product)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {product.name}
-                </h3>
+                <div className="product-title-row">
+                  <h3
+                    className="product-name"
+                    onClick={() => setSelectedProduct(product)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {product.name}
+                  </h3>
+                  <span className={`product-meta-item product-meta-stock product-meta-stock--${stockClass}`}>
+                    {stockLabel}
+                  </span>
+                </div>
                 {product.description && (
                   <p className="product-description">{product.description}</p>
                 )}
-                {(() => {
-                  const available = getAvailableQuantity(product)
-                  const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
-                  const inCart = getCartQuantity(product.id)
-                  const isInMyCart = inCart > 0
-                  const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
-                  let stockClass = 'available'
-                  let stockLabel = '✓ В наличии'
-                  if (isInMyCart) {
-                    stockClass = 'cart'
-                    stockLabel = '🛒 В корзине'
-                  } else if (isReservedByAnotherUser) {
-                    stockClass = 'reserved'
-                    stockLabel = '⏳ Забронирован'
-                  } else if (available <= 0) {
-                    stockClass = 'out'
-                    stockLabel = '❌ Нет в наличии'
-                  }
-                  return (
-                    <div className="product-meta-grid">
-                      <div className="product-meta-col product-meta-col--primary">
-                        {product.brand && (
-                          <span className="product-meta-item product-meta-brand">🏷️ {product.brand}</span>
-                        )}
-                        <span className={`product-meta-item product-meta-stock product-meta-stock--${stockClass}`}>
-                          {stockLabel}
-                        </span>
-                      </div>
-                      <div className="product-meta-col">
-                        {product.size && (
-                          <span className="product-meta-item">📏 {product.size}</span>
-                        )}
-                        {product.color && (
-                          <span className="product-meta-item">🎨 {product.color}</span>
-                        )}
-                      </div>
-                      <div className="product-meta-col">
-                        {product.gender && (
-                          <span className="product-meta-item">👤 {formatGender(product.gender)}</span>
-                        )}
-                        {product.condition && (
-                          <span className="product-meta-item">✨ {formatCondition(product.condition)}</span>
-                        )}
-                      </div>
+                <div className="product-meta-grid">
+                  {product.brand && (
+                    <div className="product-meta-brand-row">
+                      <span className="product-meta-item product-meta-brand">🏷️ {product.brand}</span>
                     </div>
-                  )
-                })()}
+                  )}
+                  <div className="product-meta-col">
+                    {product.size && (
+                      <span className="product-meta-item">📏 {product.size}</span>
+                    )}
+                    {product.condition && (
+                      <span className="product-meta-item">✨ {formatCondition(product.condition)}</span>
+                    )}
+                  </div>
+                  <div className="product-meta-col">
+                    {product.gender && (
+                      <span className="product-meta-item">👤 {formatGender(product.gender)}</span>
+                    )}
+                    {product.color && (
+                      <span className="product-meta-item">🎨 {product.color}</span>
+                    )}
+                  </div>
+                </div>
                 <div className="product-footer">
                   <div className="product-price">
                     {(product.price ?? 0).toLocaleString('ru-RU')} ₽
@@ -478,7 +478,8 @@ function Home() {
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
         {hasMoreProducts && (
           <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />
