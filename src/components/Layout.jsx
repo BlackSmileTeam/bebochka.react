@@ -146,6 +146,24 @@ function Layout() {
                     Каталог
                   </Link>
                   <Link
+                    to="/about"
+                    className={location.pathname === '/about' ? 'active' : ''}
+                  >
+                    О нас
+                  </Link>
+                  <Link
+                    to="/delivery"
+                    className={location.pathname === '/delivery' ? 'active' : ''}
+                  >
+                    Доставка
+                  </Link>
+                  <Link
+                    to="/faq"
+                    className={location.pathname === '/faq' ? 'active' : ''}
+                  >
+                    FAQ
+                  </Link>
+                  <Link
                     to="/reviews"
                     className={location.pathname === '/reviews' ? 'active' : ''}
                   >
@@ -188,6 +206,24 @@ function Layout() {
               <div className="header-end">
                 <nav className="nav nav--shop-text" aria-label="Основное меню">
                   <Link
+                    to="/about"
+                    className={location.pathname === '/about' ? 'active' : ''}
+                  >
+                    О нас
+                  </Link>
+                  <Link
+                    to="/delivery"
+                    className={location.pathname === '/delivery' ? 'active' : ''}
+                  >
+                    Доставка
+                  </Link>
+                  <Link
+                    to="/faq"
+                    className={location.pathname === '/faq' ? 'active' : ''}
+                  >
+                    FAQ
+                  </Link>
+                  <Link
                     to="/reviews"
                     className={location.pathname === '/reviews' ? 'active' : ''}
                   >
@@ -228,6 +264,27 @@ function Layout() {
                   >
                     Отзывы
                   </Link>
+                  <Link
+                    to="/about"
+                    className={location.pathname === '/about' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
+                    О нас
+                  </Link>
+                  <Link
+                    to="/delivery"
+                    className={location.pathname === '/delivery' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
+                    Доставка
+                  </Link>
+                  <Link
+                    to="/faq"
+                    className={location.pathname === '/faq' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
+                    FAQ
+                  </Link>
                   {isAdminUser && (
                     <Link
                       to="/admin"
@@ -253,6 +310,27 @@ function Layout() {
                     onClick={closeMobileMenu}
                   >
                     Отзывы
+                  </Link>
+                  <Link
+                    to="/about"
+                    className={location.pathname === '/about' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
+                    О нас
+                  </Link>
+                  <Link
+                    to="/delivery"
+                    className={location.pathname === '/delivery' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
+                    Доставка
+                  </Link>
+                  <Link
+                    to="/faq"
+                    className={location.pathname === '/faq' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
+                    FAQ
                   </Link>
                   {showShopLoginLink && (
                     <Link to="/account" onClick={closeMobileMenu}>

@@ -1,0 +1,32 @@
+.info-block {
+  margin-bottom: 1.25rem;
+}
+
+.info-block h2 {
+  font-size: 1.1rem;
+  color: #2d3748;
+  margin-bottom: 0.55rem;
+}
+
+.info-block p {
+  margin: 0;
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.info-block ul,
+.info-block ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: #4a5568;
+  line-height: 1.55;
+}
+
+.info-block a {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.info-block a:hover {
+  text-decoration: underline;
+}

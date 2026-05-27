@@ -19,6 +19,9 @@ import AdminRoute from './components/AdminRoute'
 import ShopAuth from './pages/ShopAuth'
 import Profile from './pages/Profile'
 import Contacts from './pages/Contacts'
+import About from './pages/About'
+import Delivery from './pages/Delivery'
+import Faq from './pages/Faq'
 import './App.css'
 
 function App() {
@@ -30,6 +33,9 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<PrivateRoute><Home /></PrivateRoute>} />
             <Route path="contacts" element={<Contacts />} />
+            <Route path="about" element={<About />} />
+            <Route path="delivery" element={<Delivery />} />
+            <Route path="faq" element={<Faq />} />
             <Route path="account" element={<ShopAuth />} />
             <Route path="cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
             <Route path="checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />

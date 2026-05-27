@@ -21,7 +21,7 @@
 }
 
 .catalog-filters-mobile-bar {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 0.5rem;
   margin: 0;
