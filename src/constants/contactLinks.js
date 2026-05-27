@@ -1,10 +1,14 @@
 /** Глобальные ссылки на каналы связи (сайт, оплата, футер). */
 export const CONTACT_TELEGRAM_URL = 'https://t.me/mamka_vseya_russi'
-export const CONTACT_VK_URL = 'https://vk.com/i7911729911'
+/** Сообщество / связь ВКонтакте — менять только здесь (или VITE_VK_URL в .env). */
+export const CONTACT_VK_URL = (
+  import.meta.env.VITE_VK_URL || 'https://vk.com/bebochkaclub'
+).trim()
 export const CONTACT_TELEGRAM_CHANNEL_URL =
   import.meta.env.VITE_TELEGRAM_CHANNEL_URL || 'https://t.me/bebochkasekond'
-export const CONTACT_VK_GROUP_URL =
-  import.meta.env.VITE_VK_GROUP_URL || 'https://vk.com/club239131332'
+export const CONTACT_VK_GROUP_URL = (
+  import.meta.env.VITE_VK_GROUP_URL || CONTACT_VK_URL
+).trim()
 
 const DEFAULT_CONTACT_AVITO_URL =
   'https://www.avito.ru/brands/8c3ad254fdd4134ab5f2e26821f8cba0'

@@ -67,6 +67,6 @@ export function extractVkScreenName(vkBaseUrl) {
  * Профиль VK: vk.com/{screen}
  */
 export function buildVkPaymentHref(vkBaseUrl) {
-  const screen = extractVkScreenName(vkBaseUrl) || 'i7911729911'
+  const screen = extractVkScreenName(vkBaseUrl) || 'bebochkaclub'
   return `https://vk.com/${encodeURIComponent(screen)}`
 }
