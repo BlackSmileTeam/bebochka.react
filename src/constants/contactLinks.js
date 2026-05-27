@@ -4,7 +4,7 @@ export const CONTACT_VK_URL = 'https://vk.com/i7911729911'
 export const CONTACT_TELEGRAM_CHANNEL_URL =
   import.meta.env.VITE_TELEGRAM_CHANNEL_URL || 'https://t.me/bebochkasekond'
 export const CONTACT_VK_GROUP_URL =
-  import.meta.env.VITE_VK_GROUP_URL || CONTACT_VK_URL
+  import.meta.env.VITE_VK_GROUP_URL || 'https://vk.com/club239131332'
 
 const DEFAULT_CONTACT_AVITO_URL =
   'https://www.avito.ru/brands/8c3ad254fdd4134ab5f2e26821f8cba0'
