@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import PageShell from '../components/PageShell'
 import ContactChannelsLinks from '../components/ContactChannelsLinks'
 import { SITE_NAME, SITE_URL } from '../constants/site'
-import { CONTACT_VK_URL } from '../constants/contactLinks'
+import { CONTACT_TELEGRAM_CHANNEL_URL, CONTACT_VK_GROUP_URL, CONTACT_VK_URL } from '../constants/contactLinks'
 import './InfoPages.css'
 import './UserAgreement.css'
 
@@ -66,7 +66,15 @@ export default function UserAgreement() {
           <p>
             3.3. Отдельные товары могут быть доступны для заказа не сразу: кнопка «В корзину» активируется в
             указанное время (обратный отсчёт на карточке). Анонсы новинок публикуются в сообществах Продавца
-            во «ВКонтакте» и Telegram-канале.
+            во{' '}
+            <a href={CONTACT_VK_GROUP_URL} target="_blank" rel="noopener noreferrer">
+              «ВКонтакте»
+            </a>{' '}
+            и{' '}
+            <a href={CONTACT_TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer">
+              Telegram-канале
+            </a>
+            .
           </p>
           <p>
             3.4. При временной брони товара другим покупателем доступна функция «В очередь»: при освобождении

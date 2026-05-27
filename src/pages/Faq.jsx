@@ -124,7 +124,7 @@ export default function Faq() {
       <section className="info-block">
         <h2>Где смотреть анонсы новинок?</h2>
         <p>
-          Накануне выкладки — анонс в{' '}
+          Важные объявления публикуем в{' '}
           <a href={CONTACT_VK_GROUP_URL} target="_blank" rel="noopener noreferrer">
             сообществе ВКонтакте
           </a>{' '}
@@ -132,7 +132,8 @@ export default function Faq() {
           <a href={CONTACT_TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer">
             Telegram-канале
           </a>
-          . Затем на сайте появляются карточки с таймером до открытия кнопки заказа.
+          . Накануне выкладки делаем анонсы в этих каналах, затем на сайте появляются карточки товаров с
+          таймером: кнопка «В корзину» откроется в указанное время.
         </p>
       </section>
 
