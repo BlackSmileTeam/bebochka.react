@@ -299,7 +299,7 @@
 
   .products-grid {
     grid-template-columns: 1fr;
-    max-height: 400px;
+    max-height: 600px;
   }
 
   .announcements-list {

@@ -103,6 +103,9 @@ function Cart() {
         }
       >
         <div className="cart-main">
+          <div className="cart-retention-note">
+            Товары в корзине и в очереди хранятся до 24 часов. Если за это время не поступила оплата, бронь снимается автоматически.
+          </div>
           <div className="cart-items">
             {cartItems.length > 0 ? cartItems.map((item) => (
               <div key={`cart-${item.id}`} className="cart-item">

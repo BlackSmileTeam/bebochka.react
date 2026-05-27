@@ -266,7 +266,7 @@ function AdminReviews() {
                     <td>{row.customerName || 'Отсутствует'}</td>
                     <td>{row.customerPhone || '—'}</td>
                     <td title={row.rating ? `Оценка: ${row.rating}/5` : 'Без оценки'}>{renderStars(row.rating)}</td>
-                    <td>{row.comment || 'Комментарий не оставлен.'}</td>
+                    <td>{row.comment || ''}</td>
                     <td>
                       <div className="reviews-images-grid">
                         {(Array.isArray(row.imageUrls) ? row.imageUrls : []).map((img, idx) => (
@@ -305,7 +305,7 @@ function AdminReviews() {
                   <strong>{renderStars(row.rating)}</strong>
                   <span>{formatReviewDate(row.createdAtUtc)}</span>
                 </div>
-                <p>{row.comment || 'Комментарий не оставлен.'}</p>
+                {row.comment && <p>{row.comment}</p>}
                 {Array.isArray(row.imageUrls) && row.imageUrls.length > 0 && (
                   <div className="reviews-images-grid">
                     {row.imageUrls.map((img, idx) => (
