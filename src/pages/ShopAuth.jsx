@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import { getSessionId } from '../utils/sessionId'
-import AuthConsentCheckbox from '../components/AuthConsentCheckbox'
 import './Login.css'
 
 function safeReturnPath(raw) {
@@ -21,7 +20,6 @@ const VK_ERROR_MESSAGES = {
   denied: 'Вход через ВКонтакте отменён.',
   incomplete: 'Ответ от ВКонтакте неполный — попробуйте войти ещё раз.',
   state: 'Сессия входа устарела — начните вход через ВКонтакте заново.',
-  consent: 'Отметьте согласие с пользовательским соглашением и обработкой персональных данных перед входом через ВКонтакте.',
   email_conflict: 'Этот email в ВК уже занят другим аккаунтом на сайте. Войдите другим способом или напишите в поддержку.',
   config: 'Вход через ВКонтакте на сайте пока не настроен. Используйте телефон и пароль.',
   failed: 'Не удалось завершить вход через ВКонтакте. Попробуйте позже.',
@@ -63,7 +61,6 @@ function ShopAuth() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [loginForm, setLoginForm] = useState({ loginOrPhone: '', password: '' })
-  const [acceptTerms, setAcceptTerms] = useState(false)
   const [regForm, setRegForm] = useState({
     phone: '',
     password: '',
@@ -103,10 +100,6 @@ function ShopAuth() {
 
   const startVkOAuth = () => {
     setError('')
-    if (!acceptTerms) {
-      setError('Отметьте согласие с пользовательским соглашением и обработкой персональных данных.')
-      return
-    }
     const origin =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
@@ -139,10 +132,6 @@ function ShopAuth() {
   const handleRegister = async (e) => {
     e.preventDefault()
     setError('')
-    if (!acceptTerms) {
-      setError('Отметьте согласие с пользовательским соглашением и обработкой персональных данных.')
-      return
-    }
     setLoading(true)
     try {
       const res = await api.register({ ...regForm, acceptPersonalDataProcessing: true }, sessionId)
@@ -203,13 +192,6 @@ function ShopAuth() {
             <div className="auth-alt-divider" aria-hidden="true">
               <span>или</span>
             </div>
-
-            <AuthConsentCheckbox
-              id="auth-consent-login"
-              variant="vk"
-              checked={acceptTerms}
-              onChange={setAcceptTerms}
-            />
 
             <div className="auth-vk-block">
               <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading} aria-label="Войти через ВКонтакте">
@@ -278,24 +260,12 @@ function ShopAuth() {
                   onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
                 />
               </div>
-              <AuthConsentCheckbox
-                id="auth-consent-register-form"
-                checked={acceptTerms}
-                onChange={setAcceptTerms}
-              />
               <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? '…' : 'Зарегистрироваться'}</button>
             </form>
 
             <div className="auth-alt-divider" aria-hidden="true">
               <span>или</span>
             </div>
-
-            <AuthConsentCheckbox
-              id="auth-consent-register-vk"
-              variant="vk"
-              checked={acceptTerms}
-              onChange={setAcceptTerms}
-            />
 
             <div className="auth-vk-block">
               <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading} aria-label="Войти через ВКонтакте">
