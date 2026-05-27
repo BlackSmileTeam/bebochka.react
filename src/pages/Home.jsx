@@ -258,7 +258,7 @@ function Home() {
     return (
       <PageShell
         title={null}
-        className="page-shell--catalog page-shell--catalog-fill"
+        className="page-shell--catalog"
         subtitle={catalogIntro}
       >
         <div className="loading">Загрузка...</div>
@@ -270,7 +270,7 @@ function Home() {
     return (
       <PageShell
         title={null}
-        className="page-shell--catalog page-shell--catalog-fill"
+        className="page-shell--catalog"
         subtitle={catalogIntro}
       >
         <div className="error">{error}</div>
@@ -281,7 +281,7 @@ function Home() {
   return (
     <PageShell
       title={null}
-      className="page-shell--catalog page-shell--catalog-fill"
+      className="page-shell--catalog"
       subtitle={catalogIntro}
     >
       <div className="catalog-filters-wrap">
