@@ -1,4 +1,5 @@
 import PageShell from '../components/PageShell'
+import ContactChannelsLinks from '../components/ContactChannelsLinks'
 import './InfoPages.css'
 
 export default function Delivery() {
@@ -12,8 +13,8 @@ export default function Delivery() {
         <ol>
           <li>Оформите заказ на сайте и оплатите его (см. раздел FAQ).</li>
           <li>
-            После подтверждения оплаты напишите нам в удобном вам канале связи (Telegram, VK или Avito) —
-            обсудим способ отправки.
+            После подтверждения оплаты напишите нам в удобном вам канале связи: <ContactChannelsLinks />.
+            Обсудим способ отправки.
           </li>
           <li>Мы упакуем заказ, отправим и передадим трек для отслеживания.</li>
           <li>После получения подтвердите заказ на сайте кнопкой «Получен» в профиле.</li>
