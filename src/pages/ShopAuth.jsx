@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import { getSessionId } from '../utils/sessionId'
@@ -25,11 +25,6 @@ const VK_ERROR_MESSAGES = {
   config: 'Вход через ВКонтакте на сайте пока не настроен. Используйте телефон и пароль.',
   failed: 'Не удалось завершить вход через ВКонтакте. Попробуйте позже.',
 }
-
-const CONSENT_DETAILS = `Нажимая «Зарегистрироваться», вы подтверждаете, что:
-- даете согласие на обработку персональных данных для оформления и сопровождения заказов;
-- принимаете пользовательское соглашение интернет-магазина;
-- ознакомлены с тем, что данные используются только для работы сервиса (заказы, доставка, связь по заказу).`
 
 function decodeBase64UrlJson(b64) {
   const pad = '='.repeat((4 - (b64.length % 4)) % 4)
@@ -276,13 +271,13 @@ function ShopAuth() {
                     onChange={(e) => setRegForm({ ...regForm, acceptPersonalDataProcessing: e.target.checked })}
                   />
                   <span>
-                    Я принимаю пользовательское соглашение и даю согласие на обработку моих персональных данных *
+                    Я принимаю{' '}
+                    <Link to="/terms" target="_blank" rel="noopener noreferrer" className="consent-link">
+                      пользовательское соглашение
+                    </Link>{' '}
+                    и даю согласие на обработку моих персональных данных *
                   </span>
                 </label>
-                <details className="consent-details">
-                  <summary>Текст соглашения</summary>
-                  <p>{CONSENT_DETAILS}</p>
-                </details>
               </div>
               <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? '…' : 'Зарегистрироваться'}</button>
             </form>

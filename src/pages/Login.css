@@ -214,6 +214,16 @@
   flex-shrink: 0;
 }
 
+.consent-block .consent-link {
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.consent-block .consent-link:hover {
+  color: #5568d3;
+}
+
 .consent-details {
   margin-top: 0.5rem;
   font-size: 0.8rem;

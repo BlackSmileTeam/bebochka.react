@@ -3,7 +3,6 @@ import PageShell from '../components/PageShell'
 import ContactChannelsLinks from '../components/ContactChannelsLinks'
 import {
   CONTACT_TELEGRAM_CHANNEL_URL,
-  CONTACT_TELEGRAM_URL,
   CONTACT_VK_GROUP_URL,
   CONTACT_VK_URL
 } from '../constants/contactLinks'
@@ -30,12 +29,9 @@ export default function About() {
           Войти и зарегистрироваться на сайте можно через{' '}
           <a href={CONTACT_VK_URL} target="_blank" rel="noopener noreferrer">
             ВКонтакте
-          </a>
-          ,{' '}
-          <a href={CONTACT_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
-            Telegram
           </a>{' '}
-          или по email — выберите удобный способ при входе в профиль.
+          или по номеру телефона с паролем — на странице{' '}
+          <Link to="/account">входа и регистрации</Link>.
         </p>
       </section>
 

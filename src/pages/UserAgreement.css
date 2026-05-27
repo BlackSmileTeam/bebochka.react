@@ -1,0 +1,13 @@
+.legal-doc .info-block p {
+  margin-bottom: 0.65rem;
+}
+
+.legal-doc .info-block p:last-child {
+  margin-bottom: 0;
+}
+
+.legal-doc-version {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: #718096;
+}
