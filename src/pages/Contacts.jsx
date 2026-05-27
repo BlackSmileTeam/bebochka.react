@@ -1,4 +1,5 @@
 import PageShell from '../components/PageShell'
+import { CONTACT_TELEGRAM_URL } from '../constants/contactLinks'
 import './Contacts.css'
 
 export default function Contacts() {
@@ -10,7 +11,7 @@ export default function Contacts() {
       <section className="contacts-block">
         <h2>Telegram</h2>
         <p>
-          <a href="https://t.me/mamka_vseya_russi" target="_blank" rel="noopener noreferrer">
+          <a href={CONTACT_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
             bebochkaa
           </a>
         </p>

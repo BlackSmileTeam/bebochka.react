@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useCart } from '../contexts/CartContext'
+import { CONTACT_TELEGRAM_URL } from '../constants/contactLinks'
 import CookieNotice from './CookieNotice'
 import Toast from './Toast'
 import './Layout.css'
@@ -146,12 +147,6 @@ function Layout() {
                     Каталог
                   </Link>
                   <Link
-                    to="/about"
-                    className={location.pathname === '/about' ? 'active' : ''}
-                  >
-                    О нас
-                  </Link>
-                  <Link
                     to="/delivery"
                     className={location.pathname === '/delivery' ? 'active' : ''}
                   >
@@ -168,6 +163,12 @@ function Layout() {
                     className={location.pathname === '/reviews' ? 'active' : ''}
                   >
                     Отзывы
+                  </Link>
+                  <Link
+                    to="/about"
+                    className={location.pathname === '/about' ? 'active' : ''}
+                  >
+                    О нас
                   </Link>
                   {isAdminUser && (
                     <Link to="/admin" className="nav-link-admin">
@@ -206,12 +207,6 @@ function Layout() {
               <div className="header-end">
                 <nav className="nav nav--shop-text" aria-label="Основное меню">
                   <Link
-                    to="/about"
-                    className={location.pathname === '/about' ? 'active' : ''}
-                  >
-                    О нас
-                  </Link>
-                  <Link
                     to="/delivery"
                     className={location.pathname === '/delivery' ? 'active' : ''}
                   >
@@ -228,6 +223,12 @@ function Layout() {
                     className={location.pathname === '/reviews' ? 'active' : ''}
                   >
                     Отзывы
+                  </Link>
+                  <Link
+                    to="/about"
+                    className={location.pathname === '/about' ? 'active' : ''}
+                  >
+                    О нас
                   </Link>
                   {showShopLoginLink && <Link to="/account">Войти</Link>}
                 </nav>
@@ -265,13 +266,6 @@ function Layout() {
                     Отзывы
                   </Link>
                   <Link
-                    to="/about"
-                    className={location.pathname === '/about' ? 'active' : ''}
-                    onClick={closeMobileMenu}
-                  >
-                    О нас
-                  </Link>
-                  <Link
                     to="/delivery"
                     className={location.pathname === '/delivery' ? 'active' : ''}
                     onClick={closeMobileMenu}
@@ -284,6 +278,13 @@ function Layout() {
                     onClick={closeMobileMenu}
                   >
                     FAQ
+                  </Link>
+                  <Link
+                    to="/about"
+                    className={location.pathname === '/about' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
+                    О нас
                   </Link>
                   {isAdminUser && (
                     <Link
@@ -312,13 +313,6 @@ function Layout() {
                     Отзывы
                   </Link>
                   <Link
-                    to="/about"
-                    className={location.pathname === '/about' ? 'active' : ''}
-                    onClick={closeMobileMenu}
-                  >
-                    О нас
-                  </Link>
-                  <Link
                     to="/delivery"
                     className={location.pathname === '/delivery' ? 'active' : ''}
                     onClick={closeMobileMenu}
@@ -331,6 +325,13 @@ function Layout() {
                     onClick={closeMobileMenu}
                   >
                     FAQ
+                  </Link>
+                  <Link
+                    to="/about"
+                    className={location.pathname === '/about' ? 'active' : ''}
+                    onClick={closeMobileMenu}
+                  >
+                    О нас
                   </Link>
                   {showShopLoginLink && (
                     <Link to="/account" onClick={closeMobileMenu}>
@@ -355,7 +356,7 @@ function Layout() {
           <p className="footer-text">
             По всем вопросам
             <br />
-            <a href="https://t.me/mamka_vseya_russi" target="_blank" rel="noopener noreferrer">
+            <a href={CONTACT_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
               bebochka
             </a>
           </p>

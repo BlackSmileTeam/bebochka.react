@@ -556,6 +556,12 @@
     min-height: 40px;
   }
 
+  .btn-buy.btn-buy--locked {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.55rem;
+    letter-spacing: 0;
+  }
+
   .product-footer {
     gap: 0.5rem;
     flex-wrap: wrap;

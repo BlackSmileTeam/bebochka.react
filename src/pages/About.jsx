@@ -1,11 +1,12 @@
 import PageShell from '../components/PageShell'
+import ContactChannelsLinks from '../components/ContactChannelsLinks'
 import './InfoPages.css'
 
 export default function About() {
   return (
     <PageShell
       title="О нас"
-      subtitle="bebochka — аккуратно отобранная одежда европейских брендов для детей и всей семьи по доступным ценам."
+      subtitle="bebochka - аккуратно отобранная одежда европейских брендов для всей семьи по доступным ценам."
     >
       <section className="info-block">
         <h2>Что важно для нас</h2>
@@ -28,10 +29,8 @@ export default function About() {
       <section className="info-block">
         <h2>Контакты</h2>
         <p>
-          По любым вопросам пишите в удобном для вас канале связи (Telegram, VK или Avito):{' '}
-          <a href="https://t.me/mamka_vseya_russi" target="_blank" rel="noopener noreferrer">
-            @mamka_vseya_russi
-          </a>
+          По любым вопросам пишите в удобном для вас канале связи (<ContactChannelsLinks />
+          ).
         </p>
       </section>
     </PageShell>

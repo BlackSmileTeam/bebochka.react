@@ -1,4 +1,5 @@
 import PageShell from '../components/PageShell'
+import ContactChannelsLinks from '../components/ContactChannelsLinks'
 import './InfoPages.css'
 
 export default function Delivery() {
@@ -10,7 +11,10 @@ export default function Delivery() {
       <section className="info-block">
         <h2>5Post</h2>
         <ol>
-          <li>Напишите нам в удобном для вас канале связи, какие позиции хотите оформить.</li>
+          <li>
+            Напишите нам в удобном для вас канале связи (<ContactChannelsLinks />
+            ).
+          </li>
           <li>Мы подтвердим наличие, рассчитаем сумму и согласуем отправку.</li>
           <li>После оплаты оформим отправление через 5Post и передадим трек-данные.</li>
         </ol>

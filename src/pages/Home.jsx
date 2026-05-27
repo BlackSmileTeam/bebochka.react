@@ -6,6 +6,7 @@ import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
+import CatalogBuyButton from '../components/CatalogBuyButton'
 import './Home.css'
 
 const CONDITION_PRIORITY = {
@@ -19,17 +20,6 @@ const CONDITION_PRIORITY = {
   'недостаток': 4
 }
 const ITEMS_PER_PAGE = 24
-
-function CartButtonIcon() {
-  return (
-    <svg className="btn-buy__icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M7 4h-2l-1 2h2l3.6 7.59-1.35 2.45a1 1 0 0 0 .9 1.46h9.72v-2H9.42l1.1-2h7.45a1 1 0 0 0 .95-.68L21.64 6H7.21l-.94-2zm-1 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 .001 3.999A2 2 0 0 0 16 20z"
-      />
-    </svg>
-  )
-}
 
 const catalogIntro = (
   <div className="catalog-intro">
@@ -475,78 +465,16 @@ function Home() {
                   <div className="product-price">
                     {(product.price ?? 0).toLocaleString('ru-RU')} ₽
                   </div>
-                {(() => {
-                  const available = getAvailableQuantity(product)
-                  const inCart = getCartQuantity(product.id)
-                  const isInMyCart = inCart > 0
-                  const cartUnlocked = product.cartUnlocked !== false && product.CartUnlocked !== false
-                  const cartAvailableRaw = product.cartAvailableAt ?? product.CartAvailableAt
-                  const cartAvailableAt = cartAvailableRaw ? new Date(cartAvailableRaw) : null
-                  const cartAvailableLabel =
-                    cartAvailableAt && !Number.isNaN(cartAvailableAt.getTime())
-                      ? cartAvailableAt.toLocaleString('ru-RU')
-                      : null
-                  const canAdd = available > 0 && !isInMyCart && cartUnlocked
-                  const isAdding = addingToCart.has(product.id)
-                  const isJoiningQueue = joiningQueue.has(product.id)
-                  const isInQueue = myQueueProductIds.has(product.id)
-                  const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
-                  const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
-                  
-                  return (
-                    isReservedByAnotherUser ? (
-                      <button
-                        className="btn-buy"
-                        onClick={async (e) => {
-                          e.stopPropagation()
-                          if (!isJoiningQueue && !isInQueue) {
-                            await handleJoinQueue(product.id)
-                          }
-                        }}
-                        disabled={isJoiningQueue || isInQueue}
-                        title={isInQueue ? 'Вы уже стоите в очереди за этим товаром' : 'Встать в очередь за этим товаром'}
-                        style={isInQueue ? { background: '#a0aec0' } : undefined}
-                      >
-                        {isInQueue ? 'В очереди' : (isJoiningQueue ? '...' : 'В очередь')}
-                      </button>
-                    ) : (
-                      <button
-                        className="btn-buy"
-                        onClick={async (e) => {
-                          e.stopPropagation()
-                          if (canAdd && !isAdding) {
-                            await handleAddToCart(product)
-                          }
-                        }}
-                        disabled={!canAdd || isAdding}
-                        title={
-                          !cartUnlocked
-                            ? (cartAvailableLabel
-                              ? `В корзину с ${cartAvailableLabel}`
-                              : 'Корзина откроется позже')
-                            : !canAdd 
-                            ? (isInMyCart
-                              ? 'Товар уже в вашей корзине'
-                              : (available <= 0 ? 'Товар закончился' : 'Достигнуто максимальное количество'))
-                            : (isAdding ? 'Добавление...' : 'Добавить в корзину')
-                        }
-                      >
-                        {isAdding ? (
-                          'Добавление...'
-                        ) : !cartUnlocked ? (
-                          'Скоро'
-                        ) : !canAdd ? (
-                          isInMyCart ? 'В корзине' : (available <= 0 ? 'Нет в наличии' : 'В корзине')
-                        ) : (
-                          <>
-                            <CartButtonIcon />
-                            В корзину
-                          </>
-                        )}
-                      </button>
-                    )
-                  )
-                })()}
+                <CatalogBuyButton
+                  product={product}
+                  available={getAvailableQuantity(product)}
+                  inCart={getCartQuantity(product.id)}
+                  isAdding={addingToCart.has(product.id)}
+                  isJoiningQueue={joiningQueue.has(product.id)}
+                  isInQueue={myQueueProductIds.has(product.id)}
+                  onAddToCart={handleAddToCart}
+                  onJoinQueue={handleJoinQueue}
+                />
                 </div>
               </div>
             </div>

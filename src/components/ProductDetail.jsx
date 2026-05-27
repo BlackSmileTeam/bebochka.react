@@ -3,6 +3,7 @@ import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
+import CartCountdown, { useCartCountdown } from './CartCountdown'
 import Toast from './Toast'
 import './ProductDetail.css'
 
@@ -49,10 +50,12 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
   const isInMyCart = inCart > 0
   const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
   const isReserved = isReservedByAnotherUser || isInMyCart
-  const cartUnlocked = product.cartUnlocked !== false && product.CartUnlocked !== false
+  const cartUnlockedApi = product.cartUnlocked !== false && product.CartUnlocked !== false
+  const cartAvailableRaw = product.cartAvailableAt ?? product.CartAvailableAt
+  const { isExpired } = useCartCountdown(cartAvailableRaw)
+  const cartUnlocked = cartUnlockedApi || isExpired
   const canAdd = available > 0 && !isInMyCart && cartUnlocked
 
-  const cartAvailableRaw = product.cartAvailableAt ?? product.CartAvailableAt
   const cartAvailableAt = cartAvailableRaw ? new Date(cartAvailableRaw) : null
 
   const handleJoinQueue = async () => {
@@ -283,19 +286,16 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                 <span className="product-detail-price-value">{(product.price ?? 0).toLocaleString('ru-RU')}</span>
                 <span className="product-detail-price-currency">&nbsp;₽</span>
               </div>
-              {!cartUnlocked && cartAvailableAt && !Number.isNaN(cartAvailableAt.getTime()) && (
-                <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: 8 }}>
-                  «В корзину» с {cartAvailableAt.toLocaleString('ru-RU')}
-                </p>
-              )}
               {showPrimaryCartButton && (
                 <button
-                  className="btn-buy-detail"
+                  className={`btn-buy-detail${!cartUnlocked ? ' btn-buy--locked' : ''}`}
                   onClick={handleAddToCart}
                   disabled={!canAdd || isAdding}
                   title={
                     !cartUnlocked
-                      ? 'Корзина откроется позже'
+                      ? (cartAvailableAt && !Number.isNaN(cartAvailableAt.getTime())
+                        ? `В корзину с ${cartAvailableAt.toLocaleString('ru-RU')}`
+                        : 'Корзина откроется позже')
                       : !canAdd
                         ? (isInMyCart
                           ? 'Товар уже в вашей корзине'
@@ -306,7 +306,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                   {isAdding
                     ? 'Добавление...'
                     : (!cartUnlocked
-                      ? 'Скоро в продаже'
+                      ? <CartCountdown cartAvailableRaw={cartAvailableRaw} />
                       : (!canAdd
                         ? (isInMyCart ? 'В корзине' : 'Забронирован')
                         : 'В корзину'))

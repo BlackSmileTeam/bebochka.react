@@ -1,4 +1,6 @@
 import PageShell from '../components/PageShell'
+import ContactChannelsLinks from '../components/ContactChannelsLinks'
+import { CONTACT_TELEGRAM_URL } from '../constants/contactLinks'
 import './InfoPages.css'
 
 export default function Faq() {
@@ -11,7 +13,8 @@ export default function Faq() {
         <h2>Как оформить заказ?</h2>
         <p>
           Добавьте товары в корзину и оформите заказ на сайте. Если нужна помощь с размером, состоянием или подбором —
-          напишите нам в удобном для вас канале связи (Telegram, VK или Avito).
+          напишите нам в удобном для вас канале связи (<ContactChannelsLinks />
+          ).
         </p>
       </section>
 
@@ -41,8 +44,12 @@ export default function Faq() {
       <section className="info-block">
         <h2>Где быстрее всего получить ответ?</h2>
         <p>
-          Обычно быстрее всего отвечаем в Telegram, но вы также можете писать в VK или через Avito — мы всё равно
-          увидим и поможем.
+          Пишите в удобном канале связи (<ContactChannelsLinks />
+          ). Чаще всего отвечаем в{' '}
+          <a href={CONTACT_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
+            Telegram
+          </a>
+          .
         </p>
       </section>
     </PageShell>

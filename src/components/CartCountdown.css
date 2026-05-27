@@ -1,0 +1,25 @@
+.cart-countdown {
+  color: #e53e3e;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+
+.btn-buy.btn-buy--locked,
+.btn-buy-detail.btn-buy--locked {
+  background: #fff5f5;
+  border: 1.5px solid #fc8181;
+  color: #e53e3e;
+  opacity: 1;
+  cursor: default;
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+}
+
+.btn-buy.btn-buy--locked:disabled:hover,
+.btn-buy-detail.btn-buy--locked:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  background: #fff5f5;
+}

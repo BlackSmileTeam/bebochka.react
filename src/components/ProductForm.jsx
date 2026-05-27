@@ -775,13 +775,19 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           )}
 
           <div className="form-group">
-            <label className="form-checkbox-inline">
+            <label
+              className="form-checkbox-inline form-checkbox-inline--cart-schedule"
+              title="Открыть «В корзину» позже (МСК)"
+            >
               <input
                 type="checkbox"
                 checked={scheduleCartUnlock}
                 onChange={(e) => setScheduleCartUnlock(e.target.checked)}
               />
-              Открыть «В корзину» позже (МСК)
+              <span className="form-checkbox-inline__text">
+                <span className="form-checkbox-inline__text-full">Открыть «В корзину» позже (МСК)</span>
+                <span className="form-checkbox-inline__text-short">В корзину позже (МСК)</span>
+              </span>
             </label>
             {scheduleCartUnlock && (
               <>

@@ -180,10 +180,28 @@
 
 .form-checkbox-inline {
   display: inline-flex !important;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.55rem;
   cursor: pointer;
-  white-space: nowrap;
+  max-width: 100%;
+}
+
+.form-checkbox-inline--cart-schedule {
+  align-items: center;
+}
+
+.form-checkbox-inline__text-short {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .form-checkbox-inline--cart-schedule .form-checkbox-inline__text-full {
+    display: none;
+  }
+
+  .form-checkbox-inline--cart-schedule .form-checkbox-inline__text-short {
+    display: inline;
+  }
 }
 
 .form-checkbox-inline input[type='checkbox'] {
