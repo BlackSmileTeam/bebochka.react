@@ -1,6 +1,4 @@
 import PageShell from '../components/PageShell'
-import ContactChannelsLinks from '../components/ContactChannelsLinks'
-import { CONTACT_VK_URL } from '../constants/contactLinks'
 import './InfoPages.css'
 
 export default function Delivery() {
@@ -14,11 +12,8 @@ export default function Delivery() {
         <ol>
           <li>Оформите заказ на сайте и оплатите его (см. раздел FAQ).</li>
           <li>
-            После подтверждения оплаты напишите нам в{' '}
-            <a href={CONTACT_VK_URL} target="_blank" rel="noopener noreferrer">
-              ВКонтакте
-            </a>{' '}
-            или в другом удобном канале (<ContactChannelsLinks />) — обсудим способ отправки.
+            После подтверждения оплаты напишите нам в удобном вам канале связи (Telegram, VK или Avito) —
+            обсудим способ отправки.
           </li>
           <li>Мы упакуем заказ, отправим и передадим трек для отслеживания.</li>
           <li>После получения подтвердите заказ на сайте кнопкой «Получен» в профиле.</li>
@@ -45,7 +40,7 @@ export default function Delivery() {
         </ul>
         <ol>
           <li>После оплаты согласуем отправку и перевозчика в переписке.</li>
-          <li>При необходимости оформите заказ на Авито по нашей подсказке — мы сопоставим его с заказом на сайте.</li>
+          <li>После согласования выберите удобный вариант доставки в Авито и оформите его.</li>
           <li>Отправим посылку по правилам Авито Доставки и сообщим статус и данные для отслеживания.</li>
         </ol>
       </section>
@@ -54,7 +49,7 @@ export default function Delivery() {
         <h2>Ozon</h2>
         <ol>
           <li>После оплаты согласуем отправку через Ozon.</li>
-          <li>При необходимости оформите заказ в Ozon по нашей подсказке, чтобы привязать его к заказу с сайта.</li>
+          <li>После согласования выберите удобный вариант доставки в Ozon и оформите его.</li>
           <li>После отправки передадим вам данные для отслеживания.</li>
         </ol>
       </section>
