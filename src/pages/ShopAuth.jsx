@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import { getSessionId } from '../utils/sessionId'
+import AuthConsentCheckbox from '../components/AuthConsentCheckbox'
 import './Login.css'
 
 function safeReturnPath(raw) {
@@ -20,7 +21,7 @@ const VK_ERROR_MESSAGES = {
   denied: 'Вход через ВКонтакте отменён.',
   incomplete: 'Ответ от ВКонтакте неполный — попробуйте войти ещё раз.',
   state: 'Сессия входа устарела — начните вход через ВКонтакте заново.',
-  consent: 'Для первого входа через ВКонтакте нужно согласие на обработку персональных данных.',
+  consent: 'Отметьте согласие с пользовательским соглашением и обработкой персональных данных перед входом через ВКонтакте.',
   email_conflict: 'Этот email в ВК уже занят другим аккаунтом на сайте. Войдите другим способом или напишите в поддержку.',
   config: 'Вход через ВКонтакте на сайте пока не настроен. Используйте телефон и пароль.',
   failed: 'Не удалось завершить вход через ВКонтакте. Попробуйте позже.',
@@ -62,12 +63,12 @@ function ShopAuth() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [loginForm, setLoginForm] = useState({ loginOrPhone: '', password: '' })
+  const [acceptTerms, setAcceptTerms] = useState(false)
   const [regForm, setRegForm] = useState({
     phone: '',
     password: '',
     email: '',
-    fullName: '',
-    acceptPersonalDataProcessing: false
+    fullName: ''
   })
 
   const sessionId = getSessionId()
@@ -102,8 +103,10 @@ function ShopAuth() {
 
   const startVkOAuth = () => {
     setError('')
-    // Тот же origin, что в адресной строке (www / apex / https), чтобы не уводить на http://IP из VITE
-    // и не смешивать хосты — иначе Chrome может показывать предупреждение о «обманной» странице.
+    if (!acceptTerms) {
+      setError('Отметьте согласие с пользовательским соглашением и обработкой персональных данных.')
+      return
+    }
     const origin =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
@@ -111,8 +114,6 @@ function ShopAuth() {
     const u = new URL(`${origin}/api/auth/vk/start`)
     u.searchParams.set('returnUrl', returnAfterAuth)
     if (sessionId) u.searchParams.set('sessionId', sessionId)
-    // Нажатие кнопки "Войти через ВК" считается действием пользователя,
-    // поэтому для первичной регистрации передаём согласие автоматически.
     u.searchParams.set('acceptPersonalDataProcessing', 'true')
     window.location.href = u.toString()
   }
@@ -138,13 +139,13 @@ function ShopAuth() {
   const handleRegister = async (e) => {
     e.preventDefault()
     setError('')
-    if (!regForm.acceptPersonalDataProcessing) {
+    if (!acceptTerms) {
       setError('Отметьте согласие с пользовательским соглашением и обработкой персональных данных.')
       return
     }
     setLoading(true)
     try {
-      const res = await api.register(regForm, sessionId)
+      const res = await api.register({ ...regForm, acceptPersonalDataProcessing: true }, sessionId)
       if (res.isAdmin) {
         window.location.href = '/admin/products'
         return
@@ -202,6 +203,12 @@ function ShopAuth() {
             <div className="auth-alt-divider" aria-hidden="true">
               <span>или</span>
             </div>
+
+            <AuthConsentCheckbox
+              id="auth-consent-login"
+              checked={acceptTerms}
+              onChange={setAcceptTerms}
+            />
 
             <div className="auth-vk-block">
               <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading} aria-label="Войти через ВКонтакте">
@@ -263,22 +270,11 @@ function ShopAuth() {
                   onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
                 />
               </div>
-              <div className="consent-block">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={regForm.acceptPersonalDataProcessing}
-                    onChange={(e) => setRegForm({ ...regForm, acceptPersonalDataProcessing: e.target.checked })}
-                  />
-                  <span>
-                    Я принимаю{' '}
-                    <Link to="/terms" target="_blank" rel="noopener noreferrer" className="consent-link">
-                      пользовательское соглашение
-                    </Link>{' '}
-                    и даю согласие на обработку моих персональных данных *
-                  </span>
-                </label>
-              </div>
+              <AuthConsentCheckbox
+                id="auth-consent-register-form"
+                checked={acceptTerms}
+                onChange={setAcceptTerms}
+              />
               <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? '…' : 'Зарегистрироваться'}</button>
             </form>
 
