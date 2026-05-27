@@ -435,31 +435,47 @@ function Home() {
                     {stockLabel}
                   </span>
                 </div>
-                {product.description && (
-                  <p className="product-description">{product.description}</p>
-                )}
+                <p
+                  className={`product-description${product.description ? '' : ' product-description--empty'}`}
+                >
+                  {product.description || '\u00a0'}
+                </p>
                 <div className="product-meta-grid">
-                  {product.brand && (
-                    <div className="product-meta-brand-row">
-                      <span className="product-meta-item product-meta-brand">🏷️ {product.brand}</span>
-                    </div>
-                  )}
-                  <div className="product-meta-col">
-                    {product.size && (
-                      <span className="product-meta-item">📏 {product.size}</span>
-                    )}
-                    {product.condition && (
-                      <span className="product-meta-item">✨ {formatCondition(product.condition)}</span>
-                    )}
-                  </div>
-                  <div className="product-meta-col">
-                    {product.gender && (
-                      <span className="product-meta-item">👤 {formatGender(product.gender)}</span>
-                    )}
-                    {product.color && (
-                      <span className="product-meta-item">🎨 {product.color}</span>
-                    )}
-                  </div>
+                  <span
+                    className={`product-meta-item product-meta-brand product-meta-slot product-meta-slot--brand${
+                      product.brand ? '' : ' product-meta-item--empty'
+                    }`}
+                  >
+                    {product.brand ? `🏷️ ${product.brand}` : '\u00a0'}
+                  </span>
+                  <span
+                    className={`product-meta-item product-meta-slot product-meta-slot--size${
+                      product.size ? '' : ' product-meta-item--empty'
+                    }`}
+                  >
+                    {product.size ? `📏 ${product.size}` : '\u00a0'}
+                  </span>
+                  <span
+                    className={`product-meta-item product-meta-slot product-meta-slot--gender${
+                      product.gender ? '' : ' product-meta-item--empty'
+                    }`}
+                  >
+                    {product.gender ? `👤 ${formatGender(product.gender)}` : '\u00a0'}
+                  </span>
+                  <span
+                    className={`product-meta-item product-meta-slot product-meta-slot--condition${
+                      product.condition ? '' : ' product-meta-item--empty'
+                    }`}
+                  >
+                    {product.condition ? `✨ ${formatCondition(product.condition)}` : '\u00a0'}
+                  </span>
+                  <span
+                    className={`product-meta-item product-meta-slot product-meta-slot--color${
+                      product.color ? '' : ' product-meta-item--empty'
+                    }`}
+                  >
+                    {product.color ? `🎨 ${product.color}` : '\u00a0'}
+                  </span>
                 </div>
                 <div className="product-footer">
                   <div className="product-price">
