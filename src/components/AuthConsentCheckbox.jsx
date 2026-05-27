@@ -1,8 +1,13 @@
 import { Link } from 'react-router-dom'
 
-export default function AuthConsentCheckbox({ checked, onChange, id = 'auth-consent' }) {
+/**
+ * @param {'register' | 'vk'} variant — register: форма по телефону; vk: вход/регистрация через ВКонтакте
+ */
+export default function AuthConsentCheckbox({ checked, onChange, id = 'auth-consent', variant = 'register' }) {
+  const isVk = variant === 'vk'
+
   return (
-    <div className="consent-block">
+    <div className={`consent-block${isVk ? ' consent-block--vk' : ''}`}>
       <label htmlFor={id}>
         <input
           id={id}
@@ -11,13 +16,30 @@ export default function AuthConsentCheckbox({ checked, onChange, id = 'auth-cons
           onChange={(e) => onChange(e.target.checked)}
         />
         <span>
-          Я принимаю{' '}
-          <Link to="/terms" target="_blank" rel="noopener noreferrer" className="consent-link">
-            пользовательское соглашение
-          </Link>{' '}
-          и даю согласие на обработку моих персональных данных *
+          {isVk ? (
+            <>
+              Продолжая, я принимаю{' '}
+              <Link to="/terms" target="_blank" rel="noopener noreferrer" className="consent-link">
+                пользовательское соглашение
+              </Link>{' '}
+              и даю согласие на обработку моих персональных данных *
+            </>
+          ) : (
+            <>
+              Я принимаю{' '}
+              <Link to="/terms" target="_blank" rel="noopener noreferrer" className="consent-link">
+                пользовательское соглашение
+              </Link>{' '}
+              и даю согласие на обработку моих персональных данных *
+            </>
+          )}
         </span>
       </label>
+      {isVk && (
+        <p className="consent-vk-hint">
+          Относится к входу через ВКонтакте: и если аккаунт уже есть, и если он создаётся при первом входе.
+        </p>
+      )}
     </div>
   )
 }

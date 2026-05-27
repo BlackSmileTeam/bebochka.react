@@ -106,7 +106,10 @@
 
 .auth-vk-block {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.5rem;
 }
 
 .auth-vk-block .btn-vk {
@@ -222,6 +225,32 @@
 
 .consent-block .consent-link:hover {
   color: #5568d3;
+}
+
+.consent-block--vk {
+  margin-bottom: 0.35rem;
+}
+
+.consent-vk-hint {
+  margin: 0.45rem 0 0 1.65rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #718096;
+}
+
+.auth-vk-legal-note {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #718096;
+  text-align: center;
+}
+
+.auth-vk-legal-note .consent-link {
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .consent-details {

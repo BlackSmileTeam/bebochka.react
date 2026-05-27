@@ -206,6 +206,7 @@ function ShopAuth() {
 
             <AuthConsentCheckbox
               id="auth-consent-login"
+              variant="vk"
               checked={acceptTerms}
               onChange={setAcceptTerms}
             />
@@ -214,6 +215,13 @@ function ShopAuth() {
               <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading} aria-label="Войти через ВКонтакте">
                 <span className="vk-icon" aria-hidden="true">VK</span>
               </button>
+              <p className="auth-vk-legal-note">
+                Нажимая кнопку VK, вы подтверждаете, что ознакомились с{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="consent-link">
+                  пользовательским соглашением
+                </a>{' '}
+                и принимаете его условия.
+              </p>
             </div>
 
             <p className="auth-switch-row">
@@ -282,10 +290,24 @@ function ShopAuth() {
               <span>или</span>
             </div>
 
+            <AuthConsentCheckbox
+              id="auth-consent-register-vk"
+              variant="vk"
+              checked={acceptTerms}
+              onChange={setAcceptTerms}
+            />
+
             <div className="auth-vk-block">
               <button type="button" className="btn btn-vk" onClick={startVkOAuth} disabled={loading} aria-label="Войти через ВКонтакте">
                 <span className="vk-icon" aria-hidden="true">VK</span>
               </button>
+              <p className="auth-vk-legal-note">
+                Нажимая кнопку VK, вы подтверждаете, что ознакомились с{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="consent-link">
+                  пользовательским соглашением
+                </a>{' '}
+                и принимаете его условия.
+              </p>
             </div>
 
             <p className="auth-switch-row">
