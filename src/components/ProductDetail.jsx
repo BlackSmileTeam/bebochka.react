@@ -240,22 +240,26 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
             <div className="product-detail-specs">
               {product.size && (
                 <div className="product-detail-spec">
-                  <strong>Размер:</strong> {product.size}
+                  <span className="product-detail-spec-label">Размер:</span>
+                  <span className="product-detail-spec-value">{product.size}</span>
                 </div>
               )}
               {product.color && (
                 <div className="product-detail-spec">
-                  <strong>Цвет:</strong> {product.color}
+                  <span className="product-detail-spec-label">Цвет:</span>
+                  <span className="product-detail-spec-value">{product.color}</span>
                 </div>
               )}
               {product.gender && (
                 <div className="product-detail-spec">
-                  <strong>Пол:</strong> {formatGender(product.gender)}
+                  <span className="product-detail-spec-label">Пол:</span>
+                  <span className="product-detail-spec-value">{formatGender(product.gender)}</span>
                 </div>
               )}
               {product.condition && (
                 <div className="product-detail-spec">
-                  <strong>Состояние:</strong> {formatCondition(product.condition)}
+                  <span className="product-detail-spec-label">Состояние:</span>
+                  <span className="product-detail-spec-value">{formatCondition(product.condition)}</span>
                 </div>
               )}
             </div>

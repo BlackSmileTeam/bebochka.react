@@ -308,22 +308,31 @@
 }
 
 .product-detail-specs {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 0.75rem;
+  row-gap: 0.55rem;
   padding: 1rem;
   background-color: #f7fafc;
   border-radius: 8px;
+  align-items: baseline;
 }
 
 .product-detail-spec {
+  display: contents;
   font-size: 1rem;
   color: #2d3748;
 }
 
-.product-detail-spec strong {
+.product-detail-spec-label {
+  font-weight: 600;
   color: #4a5568;
-  margin-right: 0.5rem;
+  white-space: nowrap;
+}
+
+.product-detail-spec-value {
+  color: #2d3748;
+  word-break: break-word;
 }
 
 .product-detail-footer {
