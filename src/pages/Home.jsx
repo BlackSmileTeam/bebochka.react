@@ -35,7 +35,6 @@ const catalogIntro = (
   <div className="catalog-intro">
     <p>Недорогая и качественная одежда европейских брендов для всей семьи</p>
     <p>Бережём ваш бюджет без ущерба для стиля</p>
-    <h1 className="catalog-intro-title">Каталог товаров</h1>
   </div>
 )
 
@@ -296,43 +295,46 @@ function Home() {
       subtitle={catalogIntro}
     >
       <div className="catalog-filters-wrap">
-        <div className="catalog-filters-mobile-bar">
-          <button
-            type="button"
-            className={`catalog-filters-toggle${filtersOpen ? ' catalog-filters-toggle--open' : ''}`}
-            onClick={() => setFiltersOpen((v) => !v)}
-            aria-expanded={filtersOpen}
-            aria-controls="catalog-filters-panel"
-            aria-label={filtersOpen ? 'Свернуть фильтры' : 'Фильтры'}
-          >
-            <svg
-              className="catalog-filters-toggle__icon"
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path
-                fill="currentColor"
-                d="M4 5h16l-6 7v7l-4-2v-5L4 5z"
-              />
-            </svg>
-            {activeFilterCount > 0 && (
-              <span className="catalog-filters-badge" aria-hidden="true">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-          {activeFilterCount > 0 && (
+        <div className="catalog-toolbar">
+          <h2 className="catalog-toolbar-title">Каталог товаров</h2>
+          <div className="catalog-filters-mobile-bar">
             <button
               type="button"
-              className="catalog-filters-reset"
-              onClick={resetCatalogFilters}
+              className={`catalog-filters-toggle${filtersOpen ? ' catalog-filters-toggle--open' : ''}`}
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              aria-controls="catalog-filters-panel"
+              aria-label={filtersOpen ? 'Свернуть фильтры' : 'Фильтры'}
             >
-              Сбросить
+              <svg
+                className="catalog-filters-toggle__icon"
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  fill="currentColor"
+                  d="M4 5h16l-6 7v7l-4-2v-5L4 5z"
+                />
+              </svg>
+              {activeFilterCount > 0 && (
+                <span className="catalog-filters-badge" aria-hidden="true">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
-          )}
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                className="catalog-filters-reset"
+                onClick={resetCatalogFilters}
+              >
+                Сбросить
+              </button>
+            )}
+          </div>
         </div>
         <div
           id="catalog-filters-panel"
