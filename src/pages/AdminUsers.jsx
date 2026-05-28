@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import VkProfileLink from '../components/VkProfileLink'
 import { getVkProfileUrl } from '../utils/vkProfile'
 import './AdminUsers.css'
 
@@ -427,7 +426,6 @@ function AdminUsers() {
                 <th>{renderSortHeader('Админ', 'isAdmin')}</th>
                 <th>{renderSortHeader('Создан', 'createdAt')}</th>
                 <th>{renderSortHeader('Последний вход', 'lastLoginAt')}</th>
-                <th className="users-th-vk">ВК</th>
                 <th aria-label="Действия">&nbsp;</th>
               </tr>
             </thead>
@@ -451,7 +449,6 @@ function AdminUsers() {
                               >
                                 {user.fullName || user.FullName || user.username || user.Username || '-'}
                               </Link>
-                              <VkProfileLink user={user} iconOnly />
                             </span>
                           </div>
                           <div className="user-mobile-head__right">
@@ -464,24 +461,18 @@ function AdminUsers() {
                       <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
                       <td data-label="Телефон" className="phone-cell">{user.phone || user.Phone || '-'}</td>
                       <td data-label="Полное имя" className="fullname-cell">
-                        <div className="users-name-with-vk">
-                          <Link
-                            className="admin-users-orders-link"
-                            to={ordersPathForUser(user)}
-                            onClick={() => setOpenActionsFor(null)}
-                            title="Заказы пользователя"
-                          >
-                            {user.fullName || user.FullName || '-'}
-                          </Link>
-                          <VkProfileLink user={user} iconOnly />
-                        </div>
+                        <Link
+                          className="admin-users-orders-link"
+                          to={ordersPathForUser(user)}
+                          onClick={() => setOpenActionsFor(null)}
+                          title="Заказы пользователя"
+                        >
+                          {user.fullName || user.FullName || '-'}
+                        </Link>
                       </td>
                       <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
                       <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
                       <td data-label="Последний вход" className="last-login-cell">{formatDate(user.lastLoginAt || user.LastLoginAt)}</td>
-                      <td data-label="ВК" className="vk-cell">
-                        <VkProfileLink user={user} showLabel={false} iconOnly />
-                      </td>
                       <td data-label="Действия" className="actions-cell">
                         <div className="actions-menu-desktop">
                           <button
