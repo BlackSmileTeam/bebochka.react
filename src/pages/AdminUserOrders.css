@@ -1,3 +1,10 @@
+.admin-user-orders-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .admin-user-orders-back {
   display: inline-block;
   padding: 0.45rem 0.85rem;
@@ -29,34 +36,6 @@
   background: #f8fafc;
   color: #2d3748;
   font-size: 0.9rem;
-}
-
-.admin-user-orders-vk-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: #1f4fbf;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.admin-user-orders-vk-link:hover {
-  text-decoration: underline;
-}
-
-.admin-user-orders-vk-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.7rem;
-  height: 1.35rem;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  background: #1f4fbf;
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .admin-user-orders-muted {

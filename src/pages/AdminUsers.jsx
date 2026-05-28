@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import VkProfileLink from '../components/VkProfileLink'
+import { getVkProfileUrl } from '../utils/vkProfile'
 import './AdminUsers.css'
 
 function AdminUsers() {
@@ -300,16 +302,6 @@ function AdminUsers() {
 
   const ordersPathForUser = (user) => `/admin/users/${user.id ?? user.Id}/orders`
 
-  const getVkProfileUrl = (user) => {
-    const explicit = user?.vkProfileUrl ?? user?.VkProfileUrl
-    if (explicit && /^https?:\/\//i.test(String(explicit).trim())) return String(explicit).trim()
-    const raw = user?.vkUserId ?? user?.VkUserId ?? user?.vkId ?? user?.VkId
-    const normalized = String(raw ?? '').trim()
-    if (!normalized) return null
-    if (/^https?:\/\//i.test(normalized)) return normalized
-    return `https://vk.com/${normalized}`
-  }
-
   if (loading) {
     return (
       <PageShell title="Управление пользователями">
@@ -435,6 +427,7 @@ function AdminUsers() {
                 <th>{renderSortHeader('Админ', 'isAdmin')}</th>
                 <th>{renderSortHeader('Создан', 'createdAt')}</th>
                 <th>{renderSortHeader('Последний вход', 'lastLoginAt')}</th>
+                <th className="users-th-vk">ВК</th>
                 <th aria-label="Действия">&nbsp;</th>
               </tr>
             </thead>
@@ -443,7 +436,9 @@ function AdminUsers() {
                 const vkProfileUrl = getVkProfileUrl(user)
                 return (
                     <tr key={user.id || user.Id}>
-                      <td data-label="ID" className="id-cell">{user.id || user.Id}</td>
+                      <td data-label="ID" className="id-cell">
+                        <span>{user.id || user.Id}</span>
+                      </td>
                       <td data-label="Имя пользователя" className="username-cell">
                         <div className="user-mobile-head">
                           <div className="user-mobile-head__left">
@@ -456,6 +451,7 @@ function AdminUsers() {
                               >
                                 {user.fullName || user.FullName || user.username || user.Username || '-'}
                               </Link>
+                              <VkProfileLink user={user} iconOnly />
                             </span>
                           </div>
                           <div className="user-mobile-head__right">
@@ -468,18 +464,24 @@ function AdminUsers() {
                       <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
                       <td data-label="Телефон" className="phone-cell">{user.phone || user.Phone || '-'}</td>
                       <td data-label="Полное имя" className="fullname-cell">
-                        <Link
-                          className="admin-users-orders-link"
-                          to={ordersPathForUser(user)}
-                          onClick={() => setOpenActionsFor(null)}
-                          title="Заказы пользователя"
-                        >
-                          {user.fullName || user.FullName || '-'}
-                        </Link>
+                        <div className="users-name-with-vk">
+                          <Link
+                            className="admin-users-orders-link"
+                            to={ordersPathForUser(user)}
+                            onClick={() => setOpenActionsFor(null)}
+                            title="Заказы пользователя"
+                          >
+                            {user.fullName || user.FullName || '-'}
+                          </Link>
+                          <VkProfileLink user={user} iconOnly />
+                        </div>
                       </td>
                       <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
                       <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
                       <td data-label="Последний вход" className="last-login-cell">{formatDate(user.lastLoginAt || user.LastLoginAt)}</td>
+                      <td data-label="ВК" className="vk-cell">
+                        <VkProfileLink user={user} showLabel={false} iconOnly />
+                      </td>
                       <td data-label="Действия" className="actions-cell">
                         <div className="actions-menu-desktop">
                           <button

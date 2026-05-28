@@ -6,6 +6,7 @@ import ProductDetail from '../components/ProductDetail'
 import { useCart } from '../contexts/CartContext'
 import { getOrderStatusColor } from '../constants/orderStatusColors'
 import { getApiPublicOrigin } from '../utils/apiBase'
+import VkProfileLink from '../components/VkProfileLink'
 import './AdminUserOrders.css'
 
 function getOrderId(o) {
@@ -37,23 +38,6 @@ function formatWhen(d) {
     minute: '2-digit',
     timeZone: 'Europe/Moscow'
   })} МСК`
-}
-
-function getVkProfileUrl(user) {
-  if (!user) return null
-  const explicit = user.vkProfileUrl ?? user.VkProfileUrl
-  if (explicit && /^https?:\/\//i.test(String(explicit).trim())) return String(explicit).trim()
-  const raw = user.vkUserId ?? user.VkUserId ?? user.vkId ?? user.VkId
-  const normalized = String(raw ?? '').trim()
-  if (!normalized) return null
-  if (/^https?:\/\//i.test(normalized)) return normalized
-  return `https://vk.com/${normalized}`
-}
-
-function mergeVkProfile(user, fallbackUser) {
-  const primary = getVkProfileUrl(user)
-  if (primary) return primary
-  return getVkProfileUrl(fallbackUser)
 }
 
 function toImgUrl(path) {
@@ -191,7 +175,6 @@ export default function AdminUserOrders() {
 
   const [user, setUser] = useState(null)
   const [orders, setOrders] = useState([])
-  const [allUsers, setAllUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [detailProduct, setDetailProduct] = useState(null)
@@ -240,12 +223,6 @@ export default function AdminUserOrders() {
         if (cancelled) return
         setUser(u)
         setOrders(Array.isArray(list) ? list : [])
-        try {
-          const users = await api.getUsers()
-          if (!cancelled) setAllUsers(Array.isArray(users) ? users : [])
-        } catch {
-          if (!cancelled) setAllUsers([])
-        }
       } catch (e) {
         if (!cancelled) setError(e?.message || 'Не удалось загрузить данные')
       } finally {
@@ -289,9 +266,6 @@ export default function AdminUserOrders() {
   const userLabel = user
     ? (user.fullName || user.FullName || user.username || user.Username || user.email || user.Email || `id ${userId}`)
     : `id ${userId}`
-  const fallbackUser = allUsers.find((x) => Number(x.id ?? x.Id) === Number(userId))
-  const vkProfileUrl = mergeVkProfile(user, fallbackUser)
-
   const renderOrderCard = (o, defaultOpen) => {
     const st = getOrderStatus(o)
     const parcelAllowed = st === 'В сборке'
@@ -314,27 +288,19 @@ export default function AdminUserOrders() {
       title="Заказы пользователя"
       subtitle={userLabel}
       actions={(
-        <Link to="/admin/orders" className="admin-user-orders-back">
-          ← Все заказы
-        </Link>
+        <div className="admin-user-orders-header-actions">
+          {user && <VkProfileLink user={user} />}
+          <Link to="/admin/orders" className="admin-user-orders-back">
+            ← Все заказы
+          </Link>
+        </div>
       )}
     >
       <div className="admin-user-orders-page">
         {!loading && !error && (
           <div className="admin-user-orders-user-meta">
             <span><strong>ID пользователя:</strong> {userId}</span>
-            {vkProfileUrl && (
-              <a
-                href={vkProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="admin-user-orders-vk-link"
-                title="Открыть профиль ВКонтакте"
-              >
-                <span className="admin-user-orders-vk-icon" aria-hidden="true">VK</span>
-                Профиль в VK
-              </a>
-            )}
+            {user && <VkProfileLink user={user} />}
           </div>
         )}
         {loading && <p className="admin-user-orders-muted">Загрузка…</p>}
