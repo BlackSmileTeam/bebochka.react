@@ -27,6 +27,7 @@ function AdminUsers() {
   const [openActionsFor, setOpenActionsFor] = useState(null)
   const [deleteConfirmUserId, setDeleteConfirmUserId] = useState(null)
   const [deleteUserBusy, setDeleteUserBusy] = useState(false)
+  const [showStatsModal, setShowStatsModal] = useState(false)
 
   const formatDate = (value) => {
     if (!value) return '—'
@@ -40,6 +41,62 @@ function AdminUsers() {
       return String(value)
     }
   }
+
+  const parseUserDate = (value) => {
+    if (!value) return null
+    const d = new Date(value)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+
+  const formatDayLabel = (date) => date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
+  const formatMonthLabel = (date) => date.toLocaleDateString('ru-RU', { month: '2-digit', year: 'numeric' })
+
+  const buildStats = () => {
+    const now = new Date()
+    const usersByDay = new Map()
+    const usersByMonth = new Map()
+    const sevenDays = []
+    const sixMonths = []
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now)
+      d.setHours(0, 0, 0, 0)
+      d.setDate(d.getDate() - i)
+      const key = d.toISOString().slice(0, 10)
+      usersByDay.set(key, 0)
+      sevenDays.push({ key, label: formatDayLabel(d), count: 0 })
+    }
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      usersByMonth.set(key, 0)
+      sixMonths.push({ key, label: formatMonthLabel(d), count: 0 })
+    }
+
+    users.forEach((u) => {
+      const d = parseUserDate(u.createdAt || u.CreatedAt)
+      if (!d) return
+      const dayKey = d.toISOString().slice(0, 10)
+      if (usersByDay.has(dayKey)) usersByDay.set(dayKey, (usersByDay.get(dayKey) || 0) + 1)
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      if (usersByMonth.has(monthKey)) usersByMonth.set(monthKey, (usersByMonth.get(monthKey) || 0) + 1)
+    })
+
+    const daily = sevenDays.map((x) => ({ ...x, count: usersByDay.get(x.key) || 0 }))
+    const monthly = sixMonths.map((x) => ({ ...x, count: usersByMonth.get(x.key) || 0 }))
+
+    return {
+      todayCount: daily[daily.length - 1]?.count || 0,
+      currentMonthCount: monthly[monthly.length - 1]?.count || 0,
+      daily,
+      monthly,
+      maxDay: Math.max(1, ...daily.map((x) => x.count)),
+      maxMonth: Math.max(1, ...monthly.map((x) => x.count))
+    }
+  }
+
+  const stats = buildStats()
 
   useEffect(() => {
     loadUsers()
@@ -162,9 +219,14 @@ function AdminUsers() {
     <PageShell
       title="Управление пользователями"
       actions={(
-        <button type="button" className="btn btn-primary" onClick={() => setShowCreateForm(true)}>
-          + Создать пользователя
-        </button>
+        <div className="admin-users-actions">
+          <button type="button" className="btn btn-secondary" onClick={() => setShowStatsModal(true)}>
+            Статистика
+          </button>
+          <button type="button" className="btn btn-primary" onClick={() => setShowCreateForm(true)}>
+            + Создать пользователя
+          </button>
+        </div>
       )}
     >
       <div className="admin-users-page">
@@ -268,7 +330,7 @@ function AdminUsers() {
                 <th>Админ</th>
                 <th>Создан</th>
                 <th>Последний вход</th>
-                <th>Действия</th>
+                <th aria-label="Действия">&nbsp;</th>
               </tr>
             </thead>
             <tbody>
@@ -430,6 +492,63 @@ function AdminUsers() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showStatsModal && (
+        <div className="modal-overlay" onClick={() => setShowStatsModal(false)}>
+          <div className="modal-content modal-content--stats" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Статистика пользователей</h2>
+              <button className="modal-close" onClick={() => setShowStatsModal(false)}>×</button>
+            </div>
+            <div className="stats-body">
+              <div className="stats-cards">
+                <div className="stats-card">
+                  <div className="stats-card__label">Новых за сегодня</div>
+                  <div className="stats-card__value">{stats.todayCount}</div>
+                </div>
+                <div className="stats-card">
+                  <div className="stats-card__label">Новых за текущий месяц</div>
+                  <div className="stats-card__value">{stats.currentMonthCount}</div>
+                </div>
+              </div>
+
+              <section className="stats-section">
+                <h3>Новые пользователи по дням (7 дней)</h3>
+                <div className="stats-chart">
+                  {stats.daily.map((item) => (
+                    <div key={item.key} className="stats-bar-item">
+                      <div
+                        className="stats-bar"
+                        style={{ height: `${Math.max(8, Math.round((item.count / stats.maxDay) * 100))}%` }}
+                        title={`${item.label}: ${item.count}`}
+                      />
+                      <div className="stats-bar-value">{item.count}</div>
+                      <div className="stats-bar-label">{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="stats-section">
+                <h3>Новые пользователи по месяцам (6 месяцев)</h3>
+                <div className="stats-chart">
+                  {stats.monthly.map((item) => (
+                    <div key={item.key} className="stats-bar-item">
+                      <div
+                        className="stats-bar stats-bar--month"
+                        style={{ height: `${Math.max(8, Math.round((item.count / stats.maxMonth) * 100))}%` }}
+                        title={`${item.label}: ${item.count}`}
+                      />
+                      <div className="stats-bar-value">{item.count}</div>
+                      <div className="stats-bar-label">{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       )}
