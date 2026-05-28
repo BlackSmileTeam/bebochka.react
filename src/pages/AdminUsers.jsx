@@ -45,11 +45,29 @@ function AdminUsers() {
   const parseUserDate = (value) => {
     if (!value) return null
     const d = new Date(value)
-    return Number.isNaN(d.getTime()) ? null : d
+    if (!Number.isNaN(d.getTime())) return d
+
+    // Fallback for values like "28.05.2026" or "28.05.2026 13:45:00"
+    const m = String(value).match(/^(\d{2})\.(\d{2})\.(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/)
+    if (!m) return null
+    const [, dd, mm, yyyy, hh = '00', min = '00', ss = '00'] = m
+    const parsed = new Date(
+      Number(yyyy),
+      Number(mm) - 1,
+      Number(dd),
+      Number(hh),
+      Number(min),
+      Number(ss)
+    )
+    return Number.isNaN(parsed.getTime()) ? null : parsed
   }
 
   const formatDayLabel = (date) => date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
   const formatMonthLabel = (date) => date.toLocaleDateString('ru-RU', { month: '2-digit', year: 'numeric' })
+  const toLocalDayKey = (date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  const toLocalMonthKey = (date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 
   const buildStats = () => {
     const now = new Date()
@@ -62,14 +80,14 @@ function AdminUsers() {
       const d = new Date(now)
       d.setHours(0, 0, 0, 0)
       d.setDate(d.getDate() - i)
-      const key = d.toISOString().slice(0, 10)
+      const key = toLocalDayKey(d)
       usersByDay.set(key, 0)
       sevenDays.push({ key, label: formatDayLabel(d), count: 0 })
     }
 
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const key = toLocalMonthKey(d)
       usersByMonth.set(key, 0)
       sixMonths.push({ key, label: formatMonthLabel(d), count: 0 })
     }
@@ -77,9 +95,9 @@ function AdminUsers() {
     users.forEach((u) => {
       const d = parseUserDate(u.createdAt || u.CreatedAt)
       if (!d) return
-      const dayKey = d.toISOString().slice(0, 10)
+      const dayKey = toLocalDayKey(d)
       if (usersByDay.has(dayKey)) usersByDay.set(dayKey, (usersByDay.get(dayKey) || 0) + 1)
-      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const monthKey = toLocalMonthKey(d)
       if (usersByMonth.has(monthKey)) usersByMonth.set(monthKey, (usersByMonth.get(monthKey) || 0) + 1)
     })
 
