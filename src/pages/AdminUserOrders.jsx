@@ -28,7 +28,26 @@ function formatMoney(n) {
 function formatWhen(d) {
   if (!d) return '—'
   const x = new Date(d)
-  return Number.isNaN(x.getTime()) ? '—' : x.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
+  if (Number.isNaN(x.getTime())) return '—'
+  return `${x.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Moscow'
+  })} МСК`
+}
+
+function getVkProfileUrl(user) {
+  if (!user) return null
+  const explicit = user.vkProfileUrl ?? user.VkProfileUrl
+  if (explicit && /^https?:\/\//i.test(String(explicit).trim())) return String(explicit).trim()
+  const raw = user.vkUserId ?? user.VkUserId ?? user.vkId ?? user.VkId
+  const normalized = String(raw ?? '').trim()
+  if (!normalized) return null
+  if (/^https?:\/\//i.test(normalized)) return normalized
+  return `https://vk.com/${normalized}`
 }
 
 function toImgUrl(path) {
@@ -257,6 +276,7 @@ export default function AdminUserOrders() {
   const userLabel = user
     ? (user.fullName || user.FullName || user.username || user.Username || user.email || user.Email || `id ${userId}`)
     : `id ${userId}`
+  const vkProfileUrl = getVkProfileUrl(user)
 
   const renderOrderCard = (o, defaultOpen) => {
     const st = getOrderStatus(o)
@@ -286,6 +306,23 @@ export default function AdminUserOrders() {
       )}
     >
       <div className="admin-user-orders-page">
+        {!loading && !error && (
+          <div className="admin-user-orders-user-meta">
+            <span><strong>ID пользователя:</strong> {userId}</span>
+            {vkProfileUrl && (
+              <a
+                href={vkProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-user-orders-vk-link"
+                title="Открыть профиль ВКонтакте"
+              >
+                <span className="admin-user-orders-vk-icon" aria-hidden="true">VK</span>
+                Профиль в VK
+              </a>
+            )}
+          </div>
+        )}
         {loading && <p className="admin-user-orders-muted">Загрузка…</p>}
         {!loading && error && <p className="admin-user-orders-error">{error}</p>}
         {!loading && !error && sortedOrders.length === 0 && (

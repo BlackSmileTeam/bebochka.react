@@ -416,13 +416,14 @@ function AdminOrders() {
     if (!dateString) return '-'
     try {
       const date = new Date(dateString)
-      return date.toLocaleString('ru-RU', {
+      return `${date.toLocaleString('ru-RU', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
-      })
+        minute: '2-digit',
+        timeZone: 'Europe/Moscow'
+      })} МСК`
     } catch {
       return dateString
     }
@@ -1523,7 +1524,7 @@ function AdminOrders() {
                         const st = row.status || row.Status || '—'
                         const at = row.changedAtUtc || row.ChangedAtUtc
                         const actor = row.actorKind || row.ActorKind || ''
-                        const label = at ? new Date(at).toLocaleString('ru-RU') : '—'
+                        const label = at ? formatDate(at) : '—'
                         return (
                           <li key={`${idx}-${st}-${label}`}>
                             <strong>{st}</strong>

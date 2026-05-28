@@ -910,7 +910,9 @@ export const api = {
       email: u.email ?? u.Email ?? null,
       phone: u.phone ?? u.Phone ?? null,
       fullName: u.fullName ?? u.FullName ?? null,
-      isAdmin: !!(u.isAdmin ?? u.IsAdmin)
+      isAdmin: !!(u.isAdmin ?? u.IsAdmin),
+      vkUserId: u.vkUserId ?? u.VkUserId ?? u.vkId ?? u.VkId ?? null,
+      vkProfileUrl: u.vkProfileUrl ?? u.VkProfileUrl ?? null
     }
   },
 
