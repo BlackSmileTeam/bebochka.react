@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
@@ -28,6 +28,7 @@ function AdminUsers() {
   const [deleteConfirmUserId, setDeleteConfirmUserId] = useState(null)
   const [deleteUserBusy, setDeleteUserBusy] = useState(false)
   const [showStatsModal, setShowStatsModal] = useState(false)
+  const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
 
   const formatDate = (value) => {
     if (!value) return '—'
@@ -128,6 +129,69 @@ function AdminUsers() {
   }
 
   const stats = buildStats()
+
+  const getSortValue = (user, key) => {
+    switch (key) {
+      case 'id':
+        return Number(user.id || user.Id || 0)
+      case 'username':
+        return String(user.username || user.Username || '').toLowerCase()
+      case 'email':
+        return String(user.email || user.Email || '').toLowerCase()
+      case 'phone':
+        return String(user.phone || user.Phone || '').toLowerCase()
+      case 'fullName':
+        return String(user.fullName || user.FullName || '').toLowerCase()
+      case 'isAdmin':
+        return (user.isAdmin ?? user.IsAdmin) ? 1 : 0
+      case 'createdAt': {
+        const d = parseUserDate(user.createdAt || user.CreatedAt)
+        return d ? d.getTime() : 0
+      }
+      case 'lastLoginAt': {
+        const d = parseUserDate(user.lastLoginAt || user.LastLoginAt)
+        return d ? d.getTime() : 0
+      }
+      default:
+        return ''
+    }
+  }
+
+  const sortedUsers = useMemo(() => {
+    const copy = [...users]
+    copy.sort((a, b) => {
+      const av = getSortValue(a, sortConfig.key)
+      const bv = getSortValue(b, sortConfig.key)
+      if (av === bv) return 0
+      const cmp = av > bv ? 1 : -1
+      return sortConfig.direction === 'asc' ? cmp : -cmp
+    })
+    return copy
+  }, [users, sortConfig])
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+      }
+      return { key, direction: 'asc' }
+    })
+  }
+
+  const renderSortHeader = (label, key) => {
+    const active = sortConfig.key === key
+    const arrow = active ? (sortConfig.direction === 'asc' ? ' ↑' : ' ↓') : ''
+    return (
+      <button
+        type="button"
+        className={`users-sort-btn${active ? ' users-sort-btn--active' : ''}`}
+        onClick={() => handleSort(key)}
+      >
+        {label}
+        <span aria-hidden="true">{arrow}</span>
+      </button>
+    )
+  }
 
   useEffect(() => {
     loadUsers()
@@ -353,19 +417,19 @@ function AdminUsers() {
           <table className="users-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Имя пользователя</th>
-                <th>Email</th>
-                <th>Телефон</th>
-                <th>Полное имя</th>
-                <th>Админ</th>
-                <th>Создан</th>
-                <th>Последний вход</th>
+                <th>{renderSortHeader('ID', 'id')}</th>
+                <th>{renderSortHeader('Имя пользователя', 'username')}</th>
+                <th>{renderSortHeader('Email', 'email')}</th>
+                <th>{renderSortHeader('Телефон', 'phone')}</th>
+                <th>{renderSortHeader('Полное имя', 'fullName')}</th>
+                <th>{renderSortHeader('Админ', 'isAdmin')}</th>
+                <th>{renderSortHeader('Создан', 'createdAt')}</th>
+                <th>{renderSortHeader('Последний вход', 'lastLoginAt')}</th>
                 <th aria-label="Действия">&nbsp;</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => {
+              {sortedUsers.map((user) => {
                 return (
                     <tr key={user.id || user.Id}>
                       <td data-label="ID" className="id-cell">{user.id || user.Id}</td>

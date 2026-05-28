@@ -47,6 +47,23 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
+.users-sort-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.users-sort-btn--active {
+  color: #4c51bf;
+}
+
 .users-table td {
   padding: 1rem;
   border-bottom: 1px solid #e2e8f0;
