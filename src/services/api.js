@@ -1150,7 +1150,20 @@ export const api = {
    */
   async getAdminCartItems() {
     const response = await apiClient.get('/cart/admin/items')
-    return Array.isArray(response.data) ? response.data : []
+    const rows = Array.isArray(response.data) ? response.data : []
+    return rows.map((item) => ({
+      ...item,
+      id: item.id ?? item.Id,
+      userId: item.userId ?? item.UserId,
+      sessionId: item.sessionId ?? item.SessionId,
+      productName: item.productName ?? item.ProductName,
+      productBrand: item.productBrand ?? item.ProductBrand,
+      productImages: item.productImages ?? item.ProductImages ?? [],
+      updatedAt: item.updatedAt ?? item.UpdatedAt,
+      customerName: item.customerName ?? item.CustomerName ?? null,
+      vkUserId: item.vkUserId ?? item.VkUserId ?? null,
+      vkProfileUrl: item.vkProfileUrl ?? item.VkProfileUrl ?? null
+    }))
   },
 
   /**

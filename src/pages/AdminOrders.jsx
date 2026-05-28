@@ -243,6 +243,28 @@ function AdminOrders() {
     return { [selectedStatusFilter]: groupedOrders[selectedStatusFilter] || [] }
   }, [groupBy, groupedOrders, groupedByClient, selectedStatusFilter, clientFilterKey])
 
+  const filteredOrdersCount = useMemo(() => {
+    if (selectedStatusFilter === 'cart') return adminCartItems.length
+    return Object.values(filteredGroups).reduce((sum, group) => sum + (group?.length || 0), 0)
+  }, [filteredGroups, selectedStatusFilter, adminCartItems.length])
+
+  const showNoOrdersForFilter = !loading
+    && selectedStatusFilter !== 'all'
+    && selectedStatusFilter !== 'cart'
+    && filteredOrdersCount === 0
+
+  const getCartItemUserId = (item) => {
+    const raw = item.userId ?? item.UserId
+    if (raw === undefined || raw === null || raw === '') return null
+    const n = typeof raw === 'number' ? raw : parseInt(String(raw).trim(), 10)
+    return Number.isFinite(n) && n > 0 ? n : null
+  }
+
+  const getCartCustomerName = (item) => {
+    const name = item.customerName ?? item.CustomerName
+    return name && String(name).trim() ? String(name).trim() : null
+  }
+
   useEffect(() => {
     const groupByParam = searchParams.get('groupBy')
     const clientName = searchParams.get('clientName') || ''
@@ -913,9 +935,6 @@ function AdminOrders() {
                   Товары в корзинах ({adminCartItems.length})
                 </h2>
               </div>
-              <button type="button" className="btn btn-secondary btn-small" onClick={loadAdminCartItems} disabled={loadingAdminCart}>
-                {loadingAdminCart ? 'Обновление...' : '🔄 Обновить'}
-              </button>
             </div>
             <div className="order-group-content">
               <div className="admin-cart-list admin-cart-list--embedded">
@@ -924,8 +943,9 @@ function AdminOrders() {
                 ) : (
                   adminCartItems.map((item) => {
                     const id = item.id ?? item.Id
-                    const userId = item.userId ?? item.UserId
+                    const userId = getCartItemUserId(item)
                     const sessionId = item.sessionId ?? item.SessionId
+                    const customerName = getCartCustomerName(item)
                     const imageUrl = getCartImageUrl(item)
                     const productName = item.productName ?? item.ProductName ?? '—'
                     const productBrand = item.productBrand ?? item.ProductBrand
@@ -940,7 +960,21 @@ function AdminOrders() {
                         <div className="admin-cart-item-info">
                           <strong>{productName}</strong>
                           {productBrand && <span>Бренд: {productBrand}</span>}
-                          <span>Владелец: {userId ? `user #${userId}` : `guest (${sessionId || '—'})`}</span>
+                          <span className="admin-cart-owner">
+                            Владелец:{' '}
+                            {userId != null ? (
+                              <Link
+                                to={`/admin/users/${userId}/orders`}
+                                className="admin-order-user-link"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Заказы пользователя"
+                              >
+                                {customerName || `user #${userId}`}
+                              </Link>
+                            ) : (
+                              `guest (${sessionId || '—'})`
+                            )}
+                          </span>
                           <span>Обновлено: {formatDate(updatedAt)}</span>
                         </div>
                         <button
@@ -1289,7 +1323,13 @@ function AdminOrders() {
       </div>
       )}
 
-      {totalOrders === 0 && (
+      {showNoOrdersForFilter && (
+        <div className="empty-state">
+          <p>Заказы отсутствуют</p>
+        </div>
+      )}
+
+      {totalOrders === 0 && !showNoOrdersForFilter && selectedStatusFilter !== 'cart' && (
         <div className="empty-state">
           <p>Заказы не найдены</p>
         </div>
