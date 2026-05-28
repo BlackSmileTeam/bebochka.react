@@ -64,6 +64,8 @@ function AdminUsers() {
 
   const formatDayLabel = (date) => date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
   const formatMonthLabel = (date) => date.toLocaleDateString('ru-RU', { month: '2-digit', year: 'numeric' })
+  const toDisplayDayKey = (date) =>
+    date.toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })
   const toLocalDayKey = (date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   const toLocalMonthKey = (date) =>
@@ -80,7 +82,7 @@ function AdminUsers() {
       const d = new Date(now)
       d.setHours(0, 0, 0, 0)
       d.setDate(d.getDate() - i)
-      const key = toLocalDayKey(d)
+      const key = toDisplayDayKey(d)
       usersByDay.set(key, 0)
       sevenDays.push({ key, label: formatDayLabel(d), count: 0 })
     }
@@ -93,9 +95,10 @@ function AdminUsers() {
     }
 
     users.forEach((u) => {
-      const d = parseUserDate(u.createdAt || u.CreatedAt)
+      const raw = u.createdAt || u.CreatedAt
+      const d = parseUserDate(raw)
       if (!d) return
-      const dayKey = toLocalDayKey(d)
+      const dayKey = formatDate(raw)
       if (usersByDay.has(dayKey)) usersByDay.set(dayKey, (usersByDay.get(dayKey) || 0) + 1)
       const monthKey = toLocalMonthKey(d)
       if (usersByMonth.has(monthKey)) usersByMonth.set(monthKey, (usersByMonth.get(monthKey) || 0) + 1)
