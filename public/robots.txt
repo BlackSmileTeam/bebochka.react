@@ -2,3 +2,7 @@ User-agent: *
 Allow: /
 
 Sitemap: https://bebochka.ru/sitemap.xml
+User-agent: *
+Allow: /
+
+Sitemap: https://bebochka.ru/sitemap.xml

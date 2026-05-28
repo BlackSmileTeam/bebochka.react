@@ -6,9 +6,49 @@ import {
   CONTACT_VK_GROUP_URL,
   CONTACT_VK_URL
 } from '../constants/contactLinks'
+import { usePageSeo } from '../utils/seo'
 import './InfoPages.css'
 
 export default function Faq() {
+  usePageSeo({
+    title: 'FAQ — покупка одежды и доставка | bebochka',
+    description:
+      'FAQ bebochka: покупка одежды, доставка одежды, секонд хенд/сэконд, сток одежда, новая одежда для всей семьи и детей.',
+    canonical: 'https://bebochka.ru/faq',
+    keywords:
+      'покупка одежды, доставка одежды, секонд хенд, сэконд, сток одежда, одежда для всей семьи, одежда для детей',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'Как оформить заказ на сайте?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Добавьте товары в корзину, оформите заказ, оплатите и согласуйте доставку в удобном канале связи.'
+          }
+        },
+        {
+          '@type': 'Question',
+          name: 'Как оплатить заказ?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'В профиле откройте заказ со статусом «Ожидает оплату», нажмите «К оплате», напишите номер заказа и получите реквизиты.'
+          }
+        },
+        {
+          '@type': 'Question',
+          name: 'Как согласовать доставку?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'После оплаты способ доставки согласуется в переписке. Подробности указаны на странице «Доставка».'
+          }
+        }
+      ]
+    }
+  })
+
   return (
     <PageShell
       title="FAQ"
@@ -49,6 +89,9 @@ export default function Faq() {
             Telegram-канале
           </a>
           .
+        </p>
+        <p>
+          Быстрый переход в <Link to="/">каталог товаров</Link> и к карточкам выбранных позиций.
         </p>
       </section>
 

@@ -1,8 +1,19 @@
 import PageShell from '../components/PageShell'
 import ContactChannelsLinks from '../components/ContactChannelsLinks'
+import { Link } from 'react-router-dom'
+import { usePageSeo } from '../utils/seo'
 import './InfoPages.css'
 
 export default function Delivery() {
+  usePageSeo({
+    title: 'Доставка одежды | bebochka',
+    description:
+      'Доставка одежды bebochka: согласование после оплаты, отправка через доступные сервисы и отслеживание заказа.',
+    canonical: 'https://bebochka.ru/delivery',
+    keywords:
+      'доставка одежды, покупка одежды, одежда для всей семьи, секонд хенд, сэконд, сток одежда'
+  })
+
   return (
     <PageShell
       title="Доставка"
@@ -19,6 +30,10 @@ export default function Delivery() {
           <li>Мы упакуем заказ, отправим и передадим трек для отслеживания.</li>
           <li>После получения подтвердите заказ на сайте кнопкой «Получен» в профиле.</li>
         </ol>
+        <p>
+          Вернуться в <Link to="/">каталог</Link> и открыть нужную карточку товара можно в любой момент перед
+          оформлением доставки.
+        </p>
       </section>
 
       <section className="info-block">

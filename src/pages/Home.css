@@ -344,6 +344,23 @@
   min-width: 0;
 }
 
+.product-card-links {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.product-card-link {
+  font-size: 0.72rem;
+  color: #4c51bf;
+  text-decoration: underline;
+}
+
+.product-card-link:hover {
+  color: #434190;
+}
+
 .product-price {
   font-size: 1.2rem;
   font-weight: 700;
@@ -590,6 +607,14 @@
     padding-top: 0;
   }
 
+  .product-card-links {
+    gap: 0.35rem 0.55rem;
+  }
+
+  .product-card-link {
+    font-size: 0.7rem;
+  }
+
   .product-price {
     font-size: 1.1rem;
     text-align: left;
@@ -605,6 +630,10 @@
     white-space: nowrap;
     flex: none;
     min-height: 40px;
+  }
+
+  .product-card-link {
+    font-size: 0.78rem;
   }
 
   .btn-buy.btn-buy--locked {
