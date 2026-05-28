@@ -375,8 +375,7 @@
 .order-group-content {
   padding: 0;
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 /* Таблица заказов */
@@ -1192,6 +1191,21 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.order-row-dropdown-menu--centered {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%);
+  margin: 0 !important;
+  min-width: 220px;
+  max-width: min(320px, 92vw);
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 1300;
 }
 
 .order-row-dropdown-menu button {

@@ -882,6 +882,8 @@ export const api = {
             email: user.email || user.Email || null,
             phone: user.phone || user.Phone || null,
             fullName: user.fullName || user.FullName || null,
+            vkUserId: user.vkUserId ?? user.VkUserId ?? user.vkId ?? user.VkId ?? null,
+            vkProfileUrl: user.vkProfileUrl ?? user.VkProfileUrl ?? null,
             createdAt: user.createdAt || user.CreatedAt || null,
             lastLoginAt: user.lastLoginAt || user.LastLoginAt || null,
             isAdmin: !!(user.isAdmin ?? user.IsAdmin)

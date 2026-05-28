@@ -300,6 +300,16 @@ function AdminUsers() {
 
   const ordersPathForUser = (user) => `/admin/users/${user.id ?? user.Id}/orders`
 
+  const getVkProfileUrl = (user) => {
+    const explicit = user?.vkProfileUrl ?? user?.VkProfileUrl
+    if (explicit && /^https?:\/\//i.test(String(explicit).trim())) return String(explicit).trim()
+    const raw = user?.vkUserId ?? user?.VkUserId ?? user?.vkId ?? user?.VkId
+    const normalized = String(raw ?? '').trim()
+    if (!normalized) return null
+    if (/^https?:\/\//i.test(normalized)) return normalized
+    return `https://vk.com/${normalized}`
+  }
+
   if (loading) {
     return (
       <PageShell title="Управление пользователями">
@@ -430,6 +440,7 @@ function AdminUsers() {
             </thead>
             <tbody>
               {sortedUsers.map((user) => {
+                const vkProfileUrl = getVkProfileUrl(user)
                 return (
                     <tr key={user.id || user.Id}>
                       <td data-label="ID" className="id-cell">{user.id || user.Id}</td>
@@ -501,6 +512,17 @@ function AdminUsers() {
                               >
                                 Изменить пароль
                               </button>
+                              {vkProfileUrl && (
+                                <a
+                                  className="actions-dropdown-item actions-dropdown-link"
+                                  href={vkProfileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => setOpenActionsFor(null)}
+                                >
+                                  Открыть профиль в ВК
+                                </a>
+                              )}
                               {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
                                 <button
                                   type="button"

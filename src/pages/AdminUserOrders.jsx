@@ -50,6 +50,12 @@ function getVkProfileUrl(user) {
   return `https://vk.com/${normalized}`
 }
 
+function mergeVkProfile(user, fallbackUser) {
+  const primary = getVkProfileUrl(user)
+  if (primary) return primary
+  return getVkProfileUrl(fallbackUser)
+}
+
 function toImgUrl(path) {
   if (!path) return '/logo.jpg'
   if (String(path).startsWith('http')) return path
@@ -185,6 +191,7 @@ export default function AdminUserOrders() {
 
   const [user, setUser] = useState(null)
   const [orders, setOrders] = useState([])
+  const [allUsers, setAllUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [detailProduct, setDetailProduct] = useState(null)
@@ -233,6 +240,12 @@ export default function AdminUserOrders() {
         if (cancelled) return
         setUser(u)
         setOrders(Array.isArray(list) ? list : [])
+        try {
+          const users = await api.getUsers()
+          if (!cancelled) setAllUsers(Array.isArray(users) ? users : [])
+        } catch {
+          if (!cancelled) setAllUsers([])
+        }
       } catch (e) {
         if (!cancelled) setError(e?.message || 'Не удалось загрузить данные')
       } finally {
@@ -276,7 +289,8 @@ export default function AdminUserOrders() {
   const userLabel = user
     ? (user.fullName || user.FullName || user.username || user.Username || user.email || user.Email || `id ${userId}`)
     : `id ${userId}`
-  const vkProfileUrl = getVkProfileUrl(user)
+  const fallbackUser = allUsers.find((x) => Number(x.id ?? x.Id) === Number(userId))
+  const vkProfileUrl = mergeVkProfile(user, fallbackUser)
 
   const renderOrderCard = (o, defaultOpen) => {
     const st = getOrderStatus(o)

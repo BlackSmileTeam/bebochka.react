@@ -373,6 +373,11 @@
   color: #2d3748;
 }
 
+.actions-dropdown-link {
+  display: block;
+  text-decoration: none;
+}
+
 .actions-dropdown-item:hover {
   background: #f7fafc;
 }
