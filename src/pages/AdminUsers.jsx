@@ -66,10 +66,12 @@ function AdminUsers() {
   const formatMonthLabel = (date) => date.toLocaleDateString('ru-RU', { month: '2-digit', year: 'numeric' })
   const toDisplayDayKey = (date) =>
     date.toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' })
-  const toLocalDayKey = (date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   const toLocalMonthKey = (date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  const isSameLocalDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
 
   const buildStats = () => {
     const now = new Date()
@@ -98,7 +100,7 @@ function AdminUsers() {
       const raw = u.createdAt || u.CreatedAt
       const d = parseUserDate(raw)
       if (!d) return
-      const dayKey = formatDate(raw)
+      const dayKey = toDisplayDayKey(d)
       if (usersByDay.has(dayKey)) usersByDay.set(dayKey, (usersByDay.get(dayKey) || 0) + 1)
       const monthKey = toLocalMonthKey(d)
       if (usersByMonth.has(monthKey)) usersByMonth.set(monthKey, (usersByMonth.get(monthKey) || 0) + 1)
@@ -106,10 +108,18 @@ function AdminUsers() {
 
     const daily = sevenDays.map((x) => ({ ...x, count: usersByDay.get(x.key) || 0 }))
     const monthly = sixMonths.map((x) => ({ ...x, count: usersByMonth.get(x.key) || 0 }))
+    const todayCount = users.reduce((acc, u) => {
+      const d = parseUserDate(u.createdAt || u.CreatedAt)
+      return d && isSameLocalDay(d, now) ? acc + 1 : acc
+    }, 0)
+    const currentMonthCount = users.reduce((acc, u) => {
+      const d = parseUserDate(u.createdAt || u.CreatedAt)
+      return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() ? acc + 1 : acc
+    }, 0)
 
     return {
-      todayCount: daily[daily.length - 1]?.count || 0,
-      currentMonthCount: monthly[monthly.length - 1]?.count || 0,
+      todayCount,
+      currentMonthCount,
       daily,
       monthly,
       maxDay: Math.max(1, ...daily.map((x) => x.count)),

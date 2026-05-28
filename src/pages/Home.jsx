@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Link } from 'react-router-dom'
 import { api } from '../services/api'
 import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
@@ -8,7 +7,7 @@ import PageShell from '../components/PageShell'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CatalogBuyButton from '../components/CatalogBuyButton'
-import { buildProductPath, usePageSeo } from '../utils/seo'
+import { usePageSeo } from '../utils/seo'
 import './Home.css'
 
 const CONDITION_PRIORITY = {
@@ -502,11 +501,6 @@ function Home() {
                   onAddToCart={handleAddToCart}
                   onJoinQueue={handleJoinQueue}
                 />
-                </div>
-                <div className="product-card-links">
-                  <Link to={buildProductPath(product)} className="product-card-link">
-                    Карточка товара
-                  </Link>
                 </div>
               </div>
             </div>
