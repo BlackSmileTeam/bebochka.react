@@ -507,8 +507,6 @@ function Home() {
                   <Link to={buildProductPath(product)} className="product-card-link">
                     Карточка товара
                   </Link>
-                  <Link to="/delivery" className="product-card-link">Доставка</Link>
-                  <Link to="/faq" className="product-card-link">FAQ</Link>
                 </div>
               </div>
             </div>
