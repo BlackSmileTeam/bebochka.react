@@ -74,6 +74,31 @@
   background-color: #f7fafc;
 }
 
+.users-table tbody tr.users-table-row--admin {
+  color: #c53030;
+}
+
+.users-table tbody tr.users-table-row--admin:hover {
+  background-color: #fff5f5;
+}
+
+.users-table tbody tr.users-table-row--admin td {
+  color: #c53030;
+}
+
+.users-table tbody tr.users-table-row--admin .admin-users-orders-link {
+  color: #c53030;
+}
+
+.users-table tbody tr.users-table-row--admin .admin-users-orders-link:hover {
+  color: #9b2c2c;
+}
+
+.last-login-cell {
+  white-space: nowrap;
+  min-width: 10.5rem;
+}
+
 .users-table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -362,7 +387,8 @@
   padding: 0.4rem;
 }
 
-.actions-dropdown-item {
+.actions-dropdown-item,
+.actions-dropdown-link {
   width: 100%;
   text-align: left;
   border: none;
@@ -371,6 +397,11 @@
   padding: 0.55rem 0.65rem;
   cursor: pointer;
   color: #2d3748;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  box-sizing: border-box;
 }
 
 .actions-dropdown-link {
@@ -507,6 +538,16 @@
     box-sizing: border-box;
   }
 
+  .users-table tr.users-table-row--admin {
+    border-color: #feb2b2;
+    background: #fff5f5;
+  }
+
+  .users-table tr.users-table-row--admin .user-mobile-username,
+  .users-table tr.users-table-row--admin .user-mobile-meta {
+    color: #c53030;
+  }
+
   .users-table td {
     display: flex;
     align-items: center;
@@ -522,12 +563,10 @@
     border-bottom: none;
   }
 
-  /* Скрываем колонки ID, Полное имя и Создан на мобильных */
-  .users-table .id-cell,
+  /* Скрываем колонки «Полное имя» и «Создан» на мобильных (дата входа — в шапке карточки) */
   .users-table .fullname-cell,
   .users-table .created-cell,
-  .users-table .last-login-cell,
-  .users-table .admin-cell {
+  .users-table .last-login-cell {
     display: none;
   }
 
@@ -628,12 +667,16 @@
     display: none;
   }
 
-  .users-table .actions-cell .btn {
+  .users-table .actions-cell .btn,
+  .users-table .actions-cell .actions-mobile-vk {
     width: auto;
     min-width: auto;
     padding: 0.5rem 1rem;
     margin-right: 0;
     font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-decoration: none;
   }
 
   .btn-small {

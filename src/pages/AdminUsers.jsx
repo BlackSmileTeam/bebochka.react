@@ -44,6 +44,24 @@ function AdminUsers() {
     }
   }
 
+  const formatDateTime = (value) => {
+    if (!value) return '—'
+    try {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return '—'
+      return `${date.toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Moscow'
+      })} МСК`
+    } catch {
+      return String(value)
+    }
+  }
+
   const parseUserDate = (value) => {
     if (!value) return null
     const d = new Date(value)
@@ -418,12 +436,10 @@ function AdminUsers() {
           <table className="users-table">
             <thead>
               <tr>
-                <th>{renderSortHeader('ID', 'id')}</th>
                 <th>{renderSortHeader('Имя пользователя', 'username')}</th>
                 <th>{renderSortHeader('Email', 'email')}</th>
                 <th>{renderSortHeader('Телефон', 'phone')}</th>
                 <th>{renderSortHeader('Полное имя', 'fullName')}</th>
-                <th>{renderSortHeader('Админ', 'isAdmin')}</th>
                 <th>{renderSortHeader('Создан', 'createdAt')}</th>
                 <th>{renderSortHeader('Последний вход', 'lastLoginAt')}</th>
                 <th aria-label="Действия">&nbsp;</th>
@@ -432,11 +448,12 @@ function AdminUsers() {
             <tbody>
               {sortedUsers.map((user) => {
                 const vkProfileUrl = getVkProfileUrl(user)
+                const isAdmin = !!(user.isAdmin ?? user.IsAdmin)
                 return (
-                    <tr key={user.id || user.Id}>
-                      <td data-label="ID" className="id-cell">
-                        <span>{user.id || user.Id}</span>
-                      </td>
+                    <tr
+                      key={user.id || user.Id}
+                      className={isAdmin ? 'users-table-row--admin' : undefined}
+                    >
                       <td data-label="Имя пользователя" className="username-cell">
                         <div className="user-mobile-head">
                           <div className="user-mobile-head__left">
@@ -453,8 +470,7 @@ function AdminUsers() {
                           </div>
                           <div className="user-mobile-head__right">
                             <span className="user-mobile-meta">Создан: {formatDate(user.createdAt || user.CreatedAt)}</span>
-                            <span className="user-mobile-meta">Вход: {formatDate(user.lastLoginAt || user.LastLoginAt)}</span>
-                            <span className="user-mobile-meta">Админ: {(user.isAdmin ?? user.IsAdmin) ? 'Да' : 'Нет'}</span>
+                            <span className="user-mobile-meta">Вход: {formatDateTime(user.lastLoginAt || user.LastLoginAt)}</span>
                           </div>
                         </div>
                       </td>
@@ -470,9 +486,8 @@ function AdminUsers() {
                           {user.fullName || user.FullName || '-'}
                         </Link>
                       </td>
-                      <td data-label="Админ" className="admin-cell">{(user.isAdmin ?? user.IsAdmin) ? '✓' : '—'}</td>
                       <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
-                      <td data-label="Последний вход" className="last-login-cell">{formatDate(user.lastLoginAt || user.LastLoginAt)}</td>
+                      <td data-label="Последний вход" className="last-login-cell">{formatDateTime(user.lastLoginAt || user.LastLoginAt)}</td>
                       <td data-label="Действия" className="actions-cell">
                         <div className="actions-menu-desktop">
                           <button
@@ -543,6 +558,16 @@ function AdminUsers() {
                           >
                             Изменить пароль
                           </button>
+                          {vkProfileUrl && (
+                            <a
+                              className="btn btn-small btn-secondary actions-mobile-vk"
+                              href={vkProfileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              ВК
+                            </a>
+                          )}
                           {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
                             <button
                               className="btn btn-small btn-delete"
