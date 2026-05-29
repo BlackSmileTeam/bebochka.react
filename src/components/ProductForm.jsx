@@ -29,7 +29,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     publishedAt: '',
     cartAvailableAt: '',
     boxNumber: '',
-    owner: 'Аня',
+    owner: 'Даша',
     incomingShipmentId: ''
   })
   const [scheduleSend, setScheduleSend] = useState(false)
@@ -201,7 +201,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         publishedAt: publishedAtValue,
         cartAvailableAt: cartAtValue,
         boxNumber: product.boxNumber || '',
-        owner: product.owner || 'Аня',
+        owner: product.owner || 'Даша',
         incomingShipmentId: product.incomingShipmentId ?? ''
       })
       setScheduleSend(TELEGRAM_UI_ENABLED && !!(product.publishedAt || product.PublishedAt))
@@ -224,7 +224,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         publishedAt: '',
         cartAvailableAt: '',
         boxNumber: '',
-        owner: 'Аня',
+        owner: 'Даша',
         incomingShipmentId: ''
       })
       setBrandSearch('')
