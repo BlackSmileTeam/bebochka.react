@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { useCart } from '../contexts/CartContext'
-import ProductDetail from '../components/ProductDetail'
+const ProductDetail = lazy(() => import('../components/ProductDetail'))
 import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
 import { formatCondition } from '../utils/formatCondition'
@@ -434,7 +434,9 @@ function Home() {
                       src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
                       alt={product.name}
                       className="product-image"
-                      priority={index < 4}
+                      priority={index === 0}
+                      width={400}
+                      height={220}
                       onError={(e) => {
                         e.target.src = '/logo.jpg'
                       }}
@@ -533,12 +535,14 @@ function Home() {
       )}
       
       {selectedProduct && (
-        <ProductDetail 
-          product={selectedProduct} 
-          onClose={() => setSelectedProduct(null)}
-          getAvailableQuantity={getAvailableQuantity}
-          onFilterSelect={applyCatalogFilter}
-        />
+        <Suspense fallback={null}>
+          <ProductDetail
+            product={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
+            getAvailableQuantity={getAvailableQuantity}
+            onFilterSelect={applyCatalogFilter}
+          />
+        </Suspense>
       )}
       {toast && (
         <Toast

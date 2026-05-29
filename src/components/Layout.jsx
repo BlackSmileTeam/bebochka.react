@@ -118,6 +118,8 @@ function Layout() {
                 className="logo-img"
                 width={50}
                 height={50}
+                decoding="async"
+                fetchPriority="low"
               />
               <span className="logo-text">bebochka</span>
             </Link>
