@@ -1,8 +1,10 @@
 User-agent: *
 Allow: /
-
-Sitemap: https://bebochka.ru/sitemap.xml
-User-agent: *
-Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /profile
+Disallow: /change-password
 
 Sitemap: https://bebochka.ru/sitemap.xml
