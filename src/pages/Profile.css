@@ -87,6 +87,21 @@ main.main > .profile-page .profile-actions {
   color: #2d3748;
 }
 
+.profile-order-placed {
+  margin: 0 0 1rem;
+  padding: 1rem 1.15rem;
+  border-radius: 10px;
+  background: #f0fff4;
+  border: 1px solid #9ae6b4;
+}
+
+.profile-order-placed p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #276749;
+}
+
 .profile-actions {
   display: flex;
   justify-content: flex-start;

@@ -44,7 +44,6 @@ function Checkout() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -152,16 +151,14 @@ function Checkout() {
       }
 
       const order = await response.json()
+      const orderNumber = order.orderNumber ?? order.OrderNumber ?? null
 
-      // Очищаем корзину
       clearCart()
-      
-      setSuccess(true)
-      
-      // Перенаправляем на главную через 3 секунды
-      setTimeout(() => {
-        navigate('/')
-      }, 3000)
+
+      navigate('/profile', {
+        replace: true,
+        state: { orderPlaced: true, orderNumber },
+      })
     } catch (err) {
       console.error('Order error:', err)
       setError('Ошибка при оформлении заказа. Попробуйте еще раз.')
@@ -170,17 +167,6 @@ function Checkout() {
     }
   }
 
-  if (success) {
-    return (
-      <PageShell title="Оформление заказа" className="page-shell--checkout">
-        <div className="checkout-success">
-          <div className="success-icon">✓</div>
-          <p>Спасибо за ваш заказ. Мы свяжемся с вами в ближайшее время.</p>
-          <p>Вы будете перенаправлены на главную страницу...</p>
-        </div>
-      </PageShell>
-    )
-  }
   if (cartItems.length === 0) {
     return (
       <PageShell title="Оформление заказа" className="page-shell--checkout">

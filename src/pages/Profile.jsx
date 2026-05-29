@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { api } from '../services/api'
 import { getOrderStatusColor } from '../constants/orderStatusColors'
 import { useCart } from '../contexts/CartContext'
@@ -42,6 +43,8 @@ function getUserPhone(user) {
 }
 
 function Profile() {
+  const location = useLocation()
+  const orderPlacedState = location.state?.orderPlaced ? location.state : null
   const { sessionId } = useCart()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -244,6 +247,11 @@ function Profile() {
     <>
       <PageShell title="Профиль" className="page-shell--catalog" subtitle={profileUserInfo}>
         <h2 className="profile-section-title">История заказов</h2>
+        {orderPlacedState?.orderNumber && (
+          <div className="profile-order-placed" role="status">
+            <p>Заказ №{orderPlacedState.orderNumber} оформлен.</p>
+          </div>
+        )}
         {loading && <p>Загрузка…</p>}
         {error && <p className="profile-error">{error}</p>}
         {!loading && !error && orders.length === 0 && (
