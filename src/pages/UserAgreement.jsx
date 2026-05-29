@@ -6,7 +6,7 @@ import { CONTACT_TELEGRAM_CHANNEL_URL, CONTACT_VK_GROUP_URL, CONTACT_VK_URL } fr
 import './InfoPages.css'
 import './UserAgreement.css'
 
-const AGREEMENT_VERSION = '27.05.2026'
+const AGREEMENT_VERSION = '29.05.2026'
 
 export default function UserAgreement() {
   return (
@@ -179,6 +179,30 @@ export default function UserAgreement() {
           <p>
             8.3. Согласие на обработку персональных данных даётся при регистрации путём отметки соответствующего
             поля и принятия настоящего Соглашения.
+          </p>
+          <p>
+            8.4. На Сайте используются cookie и аналогичные технологии:
+          </p>
+          <ul>
+            <li>
+              <strong>технические</strong> — для входа, корзины, идентификатора сессии гостя (localStorage /
+              cookie);
+            </li>
+            <li>
+              <strong>аналитические</strong> — сервис «Яндекс.Метрика» (ООО «Яндекс», РФ): статистика посещений,
+              кликов, источников трафика; при активном вебвизоре — обезличенные записи взаимодействия с
+              интерфейсом. Политика Яндекса:{' '}
+              <a href="https://yandex.ru/legal/confidential/" target="_blank" rel="noopener noreferrer">
+                yandex.ru/legal/confidential
+              </a>
+              .
+            </li>
+          </ul>
+          <p>
+            8.5. Cookie-файлы, необходимые для работы корзины и авторизации, устанавливаются при использовании
+            Сайта. Аналитика Яндекс.Метрики подключается после подтверждения уведомления о cookie на Сайте
+            (кнопка «Принять»). Вы можете удалить cookie в настройках браузера; это может ограничить функции
+            корзины и входа.
           </p>
         </section>
 

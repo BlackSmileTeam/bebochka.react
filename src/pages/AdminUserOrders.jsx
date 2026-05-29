@@ -91,7 +91,7 @@ function OrderItemsGrid({
               title="Открыть карточку товара"
             >
               <div className="admin-user-orders-item-thumb">
-                <img src={toImgUrl(img)} alt="" onError={(e) => { e.target.src = '/logo.jpg' }} />
+                <img src={toImgUrl(img)} alt={name} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/logo.jpg' }} />
               </div>
               <div className="admin-user-orders-item-body">
                 <div className="admin-user-orders-item-name">{loadingThis ? 'Загрузка…' : name}</div>

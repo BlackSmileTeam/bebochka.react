@@ -4,6 +4,7 @@ import { api } from '../services/api'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CartCountdown, { useCartCountdown } from './CartCountdown'
+import ProductImage from './ProductImage'
 import Toast from './Toast'
 import './ProductDetail.css'
 
@@ -113,6 +114,19 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
 
   const isScheduled = publishedAt ? publishedAt.getTime() > Date.now() : false
 
+  let stockClass = 'available'
+  let stockLabel = '✓ В наличии'
+  if (isInMyCart) {
+    stockClass = 'cart'
+    stockLabel = '🛒 В корзине'
+  } else if (isReservedByAnotherUser) {
+    stockClass = 'reserved'
+    stockLabel = '⏳ Забронирован'
+  } else if (available <= 0) {
+    stockClass = 'out'
+    stockLabel = '❌ Нет в наличии'
+  }
+
   const showPrimaryCartButton =
     !cartUnlocked ||
     isInMyCart ||
@@ -157,10 +171,11 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                     ‹
                   </button>
                 )}
-                <img
+                <ProductImage
                   src={getImageUrl(images[currentImageIndex])}
-                  alt={`${product.name} - фото ${currentImageIndex + 1}`}
+                  alt={`${product.name} — фото ${currentImageIndex + 1}`}
                   className="product-detail-image"
+                  priority
                   title="Открыть оригинал"
                   onClick={openOriginalImage}
                   onError={(e) => {
@@ -187,10 +202,10 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               {images.length > 1 && (
                 <div className="product-detail-thumbnails">
                   {images.map((image, index) => (
-                    <img
+                    <ProductImage
                       key={index}
                       src={getImageUrl(image)}
-                      alt={`${product.name} - миниатюра ${index + 1}`}
+                      alt={`${product.name} — миниатюра ${index + 1}`}
                       className={`thumbnail ${index === currentImageIndex ? 'active' : ''}`}
                       onClick={() => setCurrentImageIndex(index)}
                       onError={(e) => {
@@ -220,16 +235,16 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               </>
             )}
 
-            <h2 className="product-detail-name">{product.name}</h2>
-            {(isInMyCart || isReservedByAnotherUser || available > 0) && (
-              <div className={`product-detail-stock ${isReserved ? 'reserved' : 'in-stock'}`}>
-                {isInMyCart ? 'В корзине' : (isReservedByAnotherUser ? 'Забронирован' : 'В наличии')}
-              </div>
-            )}
-            
+            <div className="product-detail-title-row">
+              <h2 className="product-detail-name">{product.name}</h2>
+              <span className={`product-detail-stock-badge product-detail-stock-badge--${stockClass}`}>
+                {stockLabel}
+              </span>
+            </div>
+
             {product.brand && String(product.brand).trim() !== '' && String(product.brand).trim() !== '-' && (
               <p className="product-detail-brand">
-                <strong>Бренд:</strong> {product.brand}
+                🏷️ {product.brand}
               </p>
             )}
             
@@ -237,30 +252,26 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               <p className="product-detail-description">{product.description}</p>
             )}
             
-            <div className="product-detail-specs">
+            <div className="product-detail-meta-grid">
               {product.size && (
-                <div className="product-detail-spec">
-                  <span className="product-detail-spec-label">Размер:</span>
-                  <span className="product-detail-spec-value">{product.size}</span>
-                </div>
-              )}
-              {product.color && (
-                <div className="product-detail-spec">
-                  <span className="product-detail-spec-label">Цвет:</span>
-                  <span className="product-detail-spec-value">{product.color}</span>
-                </div>
+                <span className="product-detail-meta-item product-detail-meta-item--size">
+                  📏 {product.size}
+                </span>
               )}
               {product.gender && (
-                <div className="product-detail-spec">
-                  <span className="product-detail-spec-label">Пол:</span>
-                  <span className="product-detail-spec-value">{formatGender(product.gender)}</span>
-                </div>
+                <span className="product-detail-meta-item product-detail-meta-item--gender">
+                  👤 {formatGender(product.gender)}
+                </span>
               )}
               {product.condition && (
-                <div className="product-detail-spec">
-                  <span className="product-detail-spec-label">Состояние:</span>
-                  <span className="product-detail-spec-value">{formatCondition(product.condition)}</span>
-                </div>
+                <span className="product-detail-meta-item product-detail-meta-item--condition">
+                  ✨ {formatCondition(product.condition)}
+                </span>
+              )}
+              {product.color && (
+                <span className="product-detail-meta-item product-detail-meta-item--color">
+                  🎨 {product.color}
+                </span>
               )}
             </div>
 

@@ -261,9 +261,11 @@ function AdminAnnouncements() {
                       }}
                     >
                       {product.images && product.images.length > 0 && (
-                        <img 
+                        <img
                           src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${product.images[0]}`}
                           alt={product.name}
+                          loading="lazy"
+                          decoding="async"
                         />
                       )}
                       <div className="product-info">

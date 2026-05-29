@@ -119,7 +119,9 @@ function Cart() {
                 >
                   <img
                     src={getImageUrl(item.images?.[0])}
-                    alt=""
+                    alt={item.name}
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       e.target.src = '/logo.jpg'
                     }}
@@ -210,7 +212,9 @@ function Cart() {
                     >
                       <img
                         src={getImageUrl(item.productImages?.[0])}
-                        alt=""
+                        alt={item.productName || 'Товар в очереди'}
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => { e.target.src = '/logo.jpg' }}
                       />
                     </button>

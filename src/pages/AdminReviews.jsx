@@ -271,7 +271,7 @@ function AdminReviews() {
                       <div className="reviews-images-grid">
                         {(Array.isArray(row.imageUrls) ? row.imageUrls : []).map((img, idx) => (
                           <a key={`${row.id}-${idx}`} href={getImageUrl(img)} target="_blank" rel="noreferrer">
-                            <img src={getImageUrl(img)} alt="" />
+                            <img src={getImageUrl(img)} alt={`Фото к отзыву ${idx + 1}`} loading="lazy" decoding="async" />
                           </a>
                         ))}
                       </div>
@@ -310,7 +310,7 @@ function AdminReviews() {
                   <div className="reviews-images-grid">
                     {row.imageUrls.map((img, idx) => (
                       <a key={`${row.id}-${idx}`} href={getImageUrl(img)} target="_blank" rel="noreferrer">
-                        <img src={getImageUrl(img)} alt="" />
+                        <img src={getImageUrl(img)} alt={`Фото к отзыву ${idx + 1}`} loading="lazy" decoding="async" />
                       </a>
                     ))}
                   </div>

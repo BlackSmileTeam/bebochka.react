@@ -955,7 +955,7 @@ function AdminOrders() {
                     return (
                       <div key={id} className="admin-cart-item-card">
                         {imageUrl ? (
-                          <img className="admin-cart-item-image" src={imageUrl} alt="" />
+                          <img className="admin-cart-item-image" src={imageUrl} alt={productName} loading="lazy" decoding="async" />
                         ) : (
                           <div className="admin-cart-item-image admin-cart-item-image--empty">фото</div>
                         )}
@@ -1270,7 +1270,7 @@ function AdminOrders() {
                                               onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)}
                                               title="Открыть фото (карусель)"
                                             >
-                                              <img src={imgUrl} alt="" />
+                                              <img src={imgUrl} alt={name} loading="lazy" decoding="async" />
                                             </div>
                                           ) : (
                                             <div className="order-item-photo order-item-photo-placeholder">фото</div>
@@ -1594,7 +1594,7 @@ function AdminOrders() {
                       <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}${highlightMissingParcel && !addedToParcel ? ' order-item-card--missing-parcel' : ''}`}>
                         {imgUrl ? (
                           <div className="order-item-photo" onClick={() => openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} title="Открыть фото">
-                            <img src={imgUrl} alt="" />
+                            <img src={imgUrl} alt={name} loading="lazy" decoding="async" />
                           </div>
                         ) : (
                           <div className="order-item-photo order-item-photo-placeholder">фото</div>
@@ -1630,7 +1630,7 @@ function AdminOrders() {
         <div className="modal-overlay image-carousel-overlay" onClick={() => setImageCarousel(null)}>
           <div className="image-carousel-modal" onClick={e => e.stopPropagation()}>
             <button type="button" className="carousel-close" onClick={() => setImageCarousel(null)} aria-label="Закрыть">×</button>
-            <img src={imageCarousel.urls[imageCarousel.currentIndex]} alt="" className="carousel-image" />
+            <img src={imageCarousel.urls[imageCarousel.currentIndex]} alt={`Фото товара ${imageCarousel.currentIndex + 1} из ${imageCarousel.urls.length}`} className="carousel-image" />
             {imageCarousel.urls.length > 1 && (
               <>
                 <button type="button" className="carousel-prev" onClick={(e) => { e.stopPropagation(); setImageCarousel(prev => ({ ...prev, currentIndex: (prev.currentIndex - 1 + prev.urls.length) % prev.urls.length })) }}>‹</button>
@@ -1655,7 +1655,7 @@ function AdminOrders() {
           tabIndex={0}
           aria-label="Закрыть"
         >
-          <img src={imageModalUrl} alt="" onClick={(e) => e.stopPropagation()} />
+          <img src={imageModalUrl} alt="Увеличенное фото товара" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
       {toast && (

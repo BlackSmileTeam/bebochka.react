@@ -7,6 +7,7 @@ import PageShell from '../components/PageShell'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CatalogBuyButton from '../components/CatalogBuyButton'
+import ProductImage from '../components/ProductImage'
 import { usePageSeo } from '../utils/seo'
 import './Home.css'
 
@@ -382,7 +383,7 @@ function Home() {
       ) : (
         <div className="catalog-main">
         <div className="products-grid">
-          {visibleProducts.map((product) => {
+          {visibleProducts.map((product, index) => {
             const available = getAvailableQuantity(product)
             const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
             const inCart = getCartQuantity(product.id)
@@ -412,10 +413,11 @@ function Home() {
               >
                 {product.images && product.images.length > 0 ? (
                   <>
-                    <img
+                    <ProductImage
                       src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
                       alt={product.name}
                       className="product-image"
+                      priority={index < 4}
                       onError={(e) => {
                         e.target.src = '/logo.jpg'
                       }}

@@ -1,0 +1,30 @@
+/**
+ * Product/catalog image with lazy loading and sensible defaults for Lighthouse.
+ */
+export default function ProductImage({
+  src,
+  alt,
+  className,
+  priority = false,
+  width,
+  height,
+  onError,
+  onClick,
+  title,
+}) {
+  return (
+    <img
+      src={src}
+      alt={alt || 'Фото товара'}
+      className={className}
+      width={width}
+      height={height}
+      loading={priority ? 'eager' : 'lazy'}
+      decoding="async"
+      fetchPriority={priority ? 'high' : undefined}
+      title={title}
+      onClick={onClick}
+      onError={onError}
+    />
+  )
+}

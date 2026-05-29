@@ -2,6 +2,15 @@
   min-height: 100vh;
 }
 
+.route-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  color: #718096;
+  font-size: 1rem;
+}
+
 .btn-refresh-unified {
   display: inline-flex;
   align-items: center;

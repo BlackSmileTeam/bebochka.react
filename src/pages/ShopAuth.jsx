@@ -152,7 +152,7 @@ function ShopAuth() {
       <div className="login-container login-container--embedded">
         <div className="login-card" style={{ maxWidth: 440 }}>
           <div className="login-header login-header--compact">
-            <img src="/logo.jpg" alt="bebochka" className="login-logo" />
+            <img src="/logo.jpg" alt="bebochka — логотип магазина" className="login-logo" width={80} height={80} />
           </div>
 
         {error && <div className="login-error">{error}</div>}

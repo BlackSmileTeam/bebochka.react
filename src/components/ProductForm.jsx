@@ -404,7 +404,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                   >
                     <img
                       src={URL.createObjectURL(file)}
-                      alt={`Preview ${index}`}
+                      alt={`Предпросмотр фото ${index + 1}`}
                       className="preview-image"
                       onClick={() => setPreviewImage({ src: URL.createObjectURL(file), label: `Фото #${index + 1}` })}
                     />
@@ -438,7 +438,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                     >
                       <img
                         src={toAbsoluteMediaUrl(img) || '/logo.jpg'}
-                        alt={`Existing ${index}`}
+                        alt={`Текущее фото ${index + 1}`}
                         className="preview-image"
                         onClick={() =>
                           setPreviewImage({

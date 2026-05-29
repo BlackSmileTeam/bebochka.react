@@ -377,7 +377,7 @@ function Profile() {
                                   disabled={detailLoadingId === pid}
                                   title="Открыть карточку товара"
                                 >
-                                  <img src={getImageUrl(imgRaw)} alt="" onError={(e) => { e.target.src = '/logo.jpg' }} />
+                                  <img src={getImageUrl(imgRaw)} alt={name} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/logo.jpg' }} />
                                 </button>
                                 <div className="profile-order-item-text">
                                   <span className="profile-order-item-name">{name}</span>

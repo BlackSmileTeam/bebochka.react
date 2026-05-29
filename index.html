@@ -2,7 +2,7 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.jpg" />
+    <link rel="icon" type="image/jpeg" href="/logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>bebochka — недорогая качественная одежда для всей семьи</title>
     <meta
@@ -15,6 +15,7 @@
     />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://bebochka.ru/" />
+    <link rel="preload" href="/logo.jpg" as="image" type="image/jpeg" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://bebochka.ru/" />
@@ -32,6 +33,15 @@
       content="Одежда европейских брендов по доступным ценам. Быстрая связь и удобная доставка."
     />
     <meta name="twitter:image" content="https://bebochka.ru/logo.jpg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <noscript>
+      <div>
+        <img src="https://mc.yandex.ru/watch/109494790" style="position:absolute; left:-9999px;" alt="" />
+      </div>
+    </noscript>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -59,10 +69,5 @@
         }
       }
     </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-

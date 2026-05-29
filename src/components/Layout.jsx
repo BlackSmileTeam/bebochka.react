@@ -112,7 +112,13 @@ function Layout() {
         <div className={`container header-shell${isAdminRoute ? ' header-shell--admin' : ' header-shell--shop'}`}>
           <div className="header-top">
             <Link to={logoTo} className="logo">
-              <img src="/logo.jpg" alt="bebochka" className="logo-img" />
+              <img
+                src="/logo.jpg"
+                alt="bebochka — логотип магазина"
+                className="logo-img"
+                width={50}
+                height={50}
+              />
               <span className="logo-text">bebochka</span>
             </Link>
 

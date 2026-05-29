@@ -1185,6 +1185,8 @@ function AdminProducts() {
                             alt={product.name}
                             className="table-image"
                             title={product.name}
+                            loading="lazy"
+                            decoding="async"
                             onError={(e) => {
                               e.target.src = '/logo.jpg'
                             }}

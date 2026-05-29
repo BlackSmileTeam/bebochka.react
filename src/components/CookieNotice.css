@@ -41,3 +41,12 @@
 .cookie-notice-btn:hover {
   background: #5a6fd6;
 }
+
+.cookie-notice-link {
+  color: #a5b4fc;
+  text-decoration: underline;
+}
+
+.cookie-notice-link:hover {
+  color: #c7d2fe;
+}
