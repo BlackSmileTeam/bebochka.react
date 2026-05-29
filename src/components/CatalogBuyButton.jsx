@@ -1,7 +1,7 @@
 import CartCountdown, { useCartCountdown } from './CartCountdown'
 import './CartCountdown.css'
 
-function CartButtonIcon() {
+export function CartButtonIcon() {
   return (
     <svg className="btn-buy__icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
       <path

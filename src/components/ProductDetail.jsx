@@ -4,6 +4,7 @@ import { api } from '../services/api'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CartCountdown, { useCartCountdown } from './CartCountdown'
+import { CartButtonIcon } from './CatalogBuyButton'
 import ProductImage from './ProductImage'
 import Toast from './Toast'
 import './ProductDetail.css'
@@ -244,7 +245,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
 
             {product.brand && String(product.brand).trim() !== '' && String(product.brand).trim() !== '-' && (
               <p className="product-detail-brand">
-                🏷️ {product.brand}
+                <strong>Бренд:</strong> 🏷️ {product.brand}
               </p>
             )}
             
@@ -252,26 +253,30 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
               <p className="product-detail-description">{product.description}</p>
             )}
             
-            <div className="product-detail-meta-grid">
+            <div className="product-detail-specs">
               {product.size && (
-                <span className="product-detail-meta-item product-detail-meta-item--size">
-                  📏 {product.size}
-                </span>
-              )}
-              {product.gender && (
-                <span className="product-detail-meta-item product-detail-meta-item--gender">
-                  👤 {formatGender(product.gender)}
-                </span>
-              )}
-              {product.condition && (
-                <span className="product-detail-meta-item product-detail-meta-item--condition">
-                  ✨ {formatCondition(product.condition)}
-                </span>
+                <div className="product-detail-spec">
+                  <span className="product-detail-spec-label">Размер:</span>
+                  <span className="product-detail-spec-value">📏 {product.size}</span>
+                </div>
               )}
               {product.color && (
-                <span className="product-detail-meta-item product-detail-meta-item--color">
-                  🎨 {product.color}
-                </span>
+                <div className="product-detail-spec">
+                  <span className="product-detail-spec-label">Цвет:</span>
+                  <span className="product-detail-spec-value">🎨 {product.color}</span>
+                </div>
+              )}
+              {product.gender && (
+                <div className="product-detail-spec">
+                  <span className="product-detail-spec-label">Пол:</span>
+                  <span className="product-detail-spec-value">👤 {formatGender(product.gender)}</span>
+                </div>
+              )}
+              {product.condition && (
+                <div className="product-detail-spec">
+                  <span className="product-detail-spec-label">Состояние:</span>
+                  <span className="product-detail-spec-value">✨ {formatCondition(product.condition)}</span>
+                </div>
               )}
             </div>
 
@@ -329,7 +334,12 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                       ? <CartCountdown cartAvailableRaw={cartAvailableRaw} />
                       : (!canAdd
                         ? (isInMyCart ? 'В корзине' : 'Забронирован')
-                        : 'В корзину'))
+                        : (
+                          <>
+                            <CartButtonIcon />
+                            В корзину
+                          </>
+                        )))
                   }
                 </button>
               )}
