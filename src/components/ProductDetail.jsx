@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
-import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CartCountdown, { useCartCountdown } from './CartCountdown'
 import { CartButtonIcon } from './CatalogBuyButton'
 import ProductImage from './ProductImage'
+import ProductMetaFilter from './ProductMetaFilter'
 import Toast from './Toast'
 import './ProductDetail.css'
 
-function ProductDetail({ product, onClose, getAvailableQuantity }) {
+function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isAdding, setIsAdding] = useState(false)
   const [queueLoading, setQueueLoading] = useState(false)
@@ -108,9 +108,10 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
       ? d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
       : '—'
 
-  const formatGender = (gender) => {
-    if (!gender) return ''
-    return gender.charAt(0).toUpperCase() + gender.slice(1)
+  const handleFilterSelect = (field, value) => {
+    if (!onFilterSelect) return
+    onFilterSelect(field, value)
+    onClose()
   }
 
   const isScheduled = publishedAt ? publishedAt.getTime() > Date.now() : false
@@ -244,9 +245,12 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
             </div>
 
             {product.brand && String(product.brand).trim() !== '' && String(product.brand).trim() !== '-' && (
-              <p className="product-detail-brand">
-                <strong>Бренд:</strong> 🏷️ {product.brand}
-              </p>
+              <ProductMetaFilter
+                field="brand"
+                value={product.brand}
+                onFilter={onFilterSelect ? handleFilterSelect : undefined}
+                className="product-detail-brand-line product-meta-brand"
+              />
             )}
             
             {product.description && (
@@ -254,30 +258,26 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
             )}
             
             <div className="product-detail-specs">
-              {product.size && (
-                <div className="product-detail-spec">
-                  <span className="product-detail-spec-label">Размер:</span>
-                  <span className="product-detail-spec-value">📏 {product.size}</span>
-                </div>
-              )}
-              {product.color && (
-                <div className="product-detail-spec">
-                  <span className="product-detail-spec-label">Цвет:</span>
-                  <span className="product-detail-spec-value">🎨 {product.color}</span>
-                </div>
-              )}
-              {product.gender && (
-                <div className="product-detail-spec">
-                  <span className="product-detail-spec-label">Пол:</span>
-                  <span className="product-detail-spec-value">👤 {formatGender(product.gender)}</span>
-                </div>
-              )}
-              {product.condition && (
-                <div className="product-detail-spec">
-                  <span className="product-detail-spec-label">Состояние:</span>
-                  <span className="product-detail-spec-value">✨ {formatCondition(product.condition)}</span>
-                </div>
-              )}
+              <ProductMetaFilter
+                field="size"
+                value={product.size}
+                onFilter={onFilterSelect ? handleFilterSelect : undefined}
+              />
+              <ProductMetaFilter
+                field="color"
+                value={product.color}
+                onFilter={onFilterSelect ? handleFilterSelect : undefined}
+              />
+              <ProductMetaFilter
+                field="gender"
+                value={product.gender}
+                onFilter={onFilterSelect ? handleFilterSelect : undefined}
+              />
+              <ProductMetaFilter
+                field="condition"
+                value={product.condition}
+                onFilter={onFilterSelect ? handleFilterSelect : undefined}
+              />
             </div>
 
             {isAdminUser && (

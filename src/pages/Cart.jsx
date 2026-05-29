@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import ProductDetail from '../components/ProductDetail'
 import PageShell from '../components/PageShell'
+import { buildCatalogFilterSearch } from '../utils/catalogFilters'
 import './Cart.css'
 
 function Cart() {
+  const navigate = useNavigate()
   const { cartItems, removeFromCart, getTotalPrice, clearCart, sessionId } = useCart()
   const [queueItems, setQueueItems] = useState([])
   const [queueLoading, setQueueLoading] = useState(false)
@@ -19,6 +21,11 @@ function Cart() {
     product.availableQuantity !== undefined
       ? product.availableQuantity
       : (product.quantityInStock || 0)
+
+  const goToCatalogFilter = (key, value) => {
+    navigate(buildCatalogFilterSearch({ [key]: value }))
+    setDetailProduct(null)
+  }
 
   const openProductDetail = async (productId) => {
     if (productId == null) return
@@ -290,6 +297,7 @@ function Cart() {
           product={detailProduct}
           onClose={() => setDetailProduct(null)}
           getAvailableQuantity={getAvailableQuantity}
+          onFilterSelect={goToCatalogFilter}
         />
       )}
     </PageShell>

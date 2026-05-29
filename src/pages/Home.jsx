@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
@@ -8,7 +9,9 @@ import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CatalogBuyButton from '../components/CatalogBuyButton'
 import ProductImage from '../components/ProductImage'
+import ProductMetaFilter from '../components/ProductMetaFilter'
 import { usePageSeo } from '../utils/seo'
+import { catalogFiltersFromSearchParams } from '../utils/catalogFilters'
 import './Home.css'
 
 const CONDITION_PRIORITY = {
@@ -31,6 +34,7 @@ const catalogIntro = (
 )
 
 function Home() {
+  const [searchParams] = useSearchParams()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -74,6 +78,19 @@ function Home() {
       condition: ''
     })
   }
+
+  const applyCatalogFilter = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setSelectedProduct(null)
+    setPage(1)
+  }
+
+  useEffect(() => {
+    const fromUrl = catalogFiltersFromSearchParams(searchParams)
+    if (Object.values(fromUrl).some(Boolean)) {
+      setFilters(fromUrl)
+    }
+  }, [searchParams])
   
   // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailableQuantity = (product) => {
@@ -453,41 +470,41 @@ function Home() {
                   {product.description || '\u00a0'}
                 </p>
                 <div className="product-meta-grid">
-                  <span
-                    className={`product-meta-item product-meta-brand product-meta-slot product-meta-slot--brand${
-                      product.brand ? '' : ' product-meta-item--empty'
-                    }`}
-                  >
-                    {product.brand ? `🏷️ ${product.brand}` : '\u00a0'}
-                  </span>
-                  <span
-                    className={`product-meta-item product-meta-slot product-meta-slot--size${
-                      product.size ? '' : ' product-meta-item--empty'
-                    }`}
-                  >
-                    {product.size ? `📏 ${product.size}` : '\u00a0'}
-                  </span>
-                  <span
-                    className={`product-meta-item product-meta-slot product-meta-slot--gender${
-                      product.gender ? '' : ' product-meta-item--empty'
-                    }`}
-                  >
-                    {product.gender ? `👤 ${formatGender(product.gender)}` : '\u00a0'}
-                  </span>
-                  <span
-                    className={`product-meta-item product-meta-slot product-meta-slot--condition${
-                      product.condition ? '' : ' product-meta-item--empty'
-                    }`}
-                  >
-                    {product.condition ? `✨ ${formatCondition(product.condition)}` : '\u00a0'}
-                  </span>
-                  <span
-                    className={`product-meta-item product-meta-slot product-meta-slot--color${
-                      product.color ? '' : ' product-meta-item--empty'
-                    }`}
-                  >
-                    {product.color ? `🎨 ${product.color}` : '\u00a0'}
-                  </span>
+                  <ProductMetaFilter
+                    field="brand"
+                    value={product.brand}
+                    onFilter={applyCatalogFilter}
+                    className="product-meta-item product-meta-brand product-meta-slot product-meta-slot--brand"
+                    empty={!product.brand}
+                  />
+                  <ProductMetaFilter
+                    field="size"
+                    value={product.size}
+                    onFilter={applyCatalogFilter}
+                    className="product-meta-item product-meta-slot product-meta-slot--size"
+                    empty={!product.size}
+                  />
+                  <ProductMetaFilter
+                    field="gender"
+                    value={product.gender}
+                    onFilter={applyCatalogFilter}
+                    className="product-meta-item product-meta-slot product-meta-slot--gender"
+                    empty={!product.gender}
+                  />
+                  <ProductMetaFilter
+                    field="condition"
+                    value={product.condition}
+                    onFilter={applyCatalogFilter}
+                    className="product-meta-item product-meta-slot product-meta-slot--condition"
+                    empty={!product.condition}
+                  />
+                  <ProductMetaFilter
+                    field="color"
+                    value={product.color}
+                    onFilter={applyCatalogFilter}
+                    className="product-meta-item product-meta-slot product-meta-slot--color"
+                    empty={!product.color}
+                  />
                 </div>
                 <div className="product-footer">
                   <div className="product-price">
@@ -520,6 +537,7 @@ function Home() {
           product={selectedProduct} 
           onClose={() => setSelectedProduct(null)}
           getAvailableQuantity={getAvailableQuantity}
+          onFilterSelect={applyCatalogFilter}
         />
       )}
       {toast && (

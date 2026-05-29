@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import { getOrderStatusColor } from '../constants/orderStatusColors'
 import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
 import PageShell from '../components/PageShell'
+import { buildCatalogFilterSearch } from '../utils/catalogFilters'
 import { buildTelegramPaymentHref, buildVkPaymentHref } from '../utils/paymentMessengerLinks'
 import {
   PAYMENT_AVITO_URL,
@@ -44,6 +45,7 @@ function getUserPhone(user) {
 
 function Profile() {
   const location = useLocation()
+  const navigate = useNavigate()
   const orderPlacedState = location.state?.orderPlaced ? location.state : null
   const { sessionId } = useCart()
   const [orders, setOrders] = useState([])
@@ -98,6 +100,11 @@ function Profile() {
     } finally {
       setDetailLoadingId(null)
     }
+  }
+
+  const goToCatalogFilter = (key, value) => {
+    navigate(buildCatalogFilterSearch({ [key]: value }))
+    setDetailProduct(null)
   }
 
   const startReceiveFlow = (orderId) => {
@@ -447,7 +454,11 @@ function Profile() {
       </PageShell>
 
       {detailProduct && (
-        <ProductDetail product={detailProduct} onClose={() => setDetailProduct(null)} />
+        <ProductDetail
+          product={detailProduct}
+          onClose={() => setDetailProduct(null)}
+          onFilterSelect={goToCatalogFilter}
+        />
       )}
 
       {paymentHintOrderId != null && (
