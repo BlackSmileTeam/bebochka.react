@@ -271,6 +271,11 @@ function ProductDetail({ product, onClose, getAvailableQuantity }) {
                     Номер коробки: {product.boxNumber}
                   </div>
                 )}
+                {product.owner && (
+                  <div className="product-detail-date-line product-detail-date-line--left">
+                    Владелец: {product.owner}
+                  </div>
+                )}
                 {product.incomingShipmentName && (
                   <div className="product-detail-date-line product-detail-date-line--left">
                     Посылка: {product.incomingShipmentName}

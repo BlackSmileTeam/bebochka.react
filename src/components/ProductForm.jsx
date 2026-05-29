@@ -29,6 +29,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     publishedAt: '',
     cartAvailableAt: '',
     boxNumber: '',
+    owner: 'Аня',
     incomingShipmentId: ''
   })
   const [scheduleSend, setScheduleSend] = useState(false)
@@ -200,6 +201,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         publishedAt: publishedAtValue,
         cartAvailableAt: cartAtValue,
         boxNumber: product.boxNumber || '',
+        owner: product.owner || 'Аня',
         incomingShipmentId: product.incomingShipmentId ?? ''
       })
       setScheduleSend(TELEGRAM_UI_ENABLED && !!(product.publishedAt || product.PublishedAt))
@@ -222,6 +224,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         publishedAt: '',
         cartAvailableAt: '',
         boxNumber: '',
+        owner: 'Аня',
         incomingShipmentId: ''
       })
       setBrandSearch('')
@@ -274,6 +277,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('gender', formData.gender || '')
       formDataToSend.append('condition', formData.condition || '')
       formDataToSend.append('boxNumber', formData.boxNumber || '')
+      formDataToSend.append('owner', formData.owner || '')
       formDataToSend.append('incomingShipmentId', formData.incomingShipmentId === '' ? '' : formData.incomingShipmentId)
       
       // Add PublishedAt if "отправить ко времени" is checked
@@ -652,6 +656,22 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               />
             </div>
             <div className="form-group">
+              <label htmlFor="owner">Владелец (системное)</label>
+              <select
+                className="form-native-select"
+                id="owner"
+                name="owner"
+                value={formData.owner}
+                onChange={handleChange}
+              >
+                <option value="Аня">Аня</option>
+                <option value="Даша">Даша</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
               <label htmlFor="incomingShipmentId">Поставка</label>
               <select
                 className="form-native-select"
@@ -666,6 +686,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 ))}
               </select>
             </div>
+            <div className="form-group" />
           </div>
 
 

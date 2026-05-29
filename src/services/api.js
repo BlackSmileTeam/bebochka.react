@@ -149,6 +149,7 @@ export const api = {
         cartAvailableAt: product.cartAvailableAt ?? product.CartAvailableAt ?? null,
         cartUnlocked: product.cartUnlocked !== undefined ? product.cartUnlocked : (product.CartUnlocked !== undefined ? product.CartUnlocked : true),
         boxNumber: product.boxNumber ?? product.BoxNumber ?? null,
+        owner: product.owner ?? product.Owner ?? null,
         incomingShipmentId: product.incomingShipmentId ?? product.IncomingShipmentId ?? null,
         incomingShipmentName: product.incomingShipmentName ?? product.IncomingShipmentName ?? null,
         createdAt: product.createdAt || product.CreatedAt,
@@ -200,6 +201,7 @@ export const api = {
         gender: product.gender || product.Gender || null,
         condition: product.condition || product.Condition || null,
         boxNumber: product.boxNumber ?? product.BoxNumber ?? null,
+        owner: product.owner ?? product.Owner ?? null,
         incomingShipmentId: product.incomingShipmentId ?? product.IncomingShipmentId ?? null,
         incomingShipmentName: product.incomingShipmentName ?? product.IncomingShipmentName ?? null,
         createdAt: product.createdAt || product.CreatedAt,
@@ -260,6 +262,7 @@ export const api = {
         cartAvailableAt: d.cartAvailableAt ?? d.CartAvailableAt ?? null,
         cartUnlocked: d.cartUnlocked !== undefined ? d.cartUnlocked : (d.CartUnlocked !== undefined ? d.CartUnlocked : true)
         ,boxNumber: d.boxNumber ?? d.BoxNumber ?? null
+        ,owner: d.owner ?? d.Owner ?? null
         ,incomingShipmentId: d.incomingShipmentId ?? d.IncomingShipmentId ?? null
         ,incomingShipmentName: d.incomingShipmentName ?? d.IncomingShipmentName ?? null
       }
@@ -332,6 +335,7 @@ export const api = {
         publishedAt: formData.get('publishedAt') || null,
         cartAvailableAt: formData.get('cartAvailableAt') || null,
         boxNumber: formData.get('boxNumber') || null,
+        owner: formData.get('owner') || null,
         incomingShipmentId: formData.get('incomingShipmentId') === '' ? null : parseInt(formData.get('incomingShipmentId') || 0),
         images: []
       }
@@ -385,6 +389,7 @@ export const api = {
         condition: response.data.condition || response.data.Condition || null,
         publishedAt: response.data.publishedAt || response.data.PublishedAt || null,
         boxNumber: response.data.boxNumber ?? response.data.BoxNumber ?? null,
+        owner: response.data.owner ?? response.data.Owner ?? null,
         incomingShipmentId: response.data.incomingShipmentId ?? response.data.IncomingShipmentId ?? null,
         incomingShipmentName: response.data.incomingShipmentName ?? response.data.IncomingShipmentName ?? null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
@@ -449,6 +454,7 @@ export const api = {
         publishedAt: formData.get('publishedAt') || null,
         cartAvailableAt: formData.get('cartAvailableAt') || null,
         boxNumber: formData.get('boxNumber') || null,
+        owner: formData.get('owner') || null,
         incomingShipmentId: formData.get('incomingShipmentId') === '' ? null : parseInt(formData.get('incomingShipmentId') || 0),
         images: []
       }
@@ -496,6 +502,7 @@ export const api = {
         condition: response.data.condition || response.data.Condition || null,
         publishedAt: response.data.publishedAt || response.data.PublishedAt || null,
         boxNumber: response.data.boxNumber ?? response.data.BoxNumber ?? null,
+        owner: response.data.owner ?? response.data.Owner ?? null,
         incomingShipmentId: response.data.incomingShipmentId ?? response.data.IncomingShipmentId ?? null,
         incomingShipmentName: response.data.incomingShipmentName ?? response.data.IncomingShipmentName ?? null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
