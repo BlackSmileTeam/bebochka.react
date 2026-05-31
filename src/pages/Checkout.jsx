@@ -3,6 +3,7 @@ import { useCart } from '../contexts/CartContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
+import CartReservationTimer from '../components/CartReservationTimer'
 import './Checkout.css'
 
 function formatPhoneRu(value) {
@@ -247,6 +248,7 @@ function Checkout() {
             </div>
 
             <div className="checkout-form-actions">
+              <CartReservationTimer cartItems={cartItems} />
               <button
                 type="submit"
                 className="btn btn-primary btn-submit"

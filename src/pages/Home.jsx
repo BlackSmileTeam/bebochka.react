@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { useCart } from '../contexts/CartContext'
@@ -10,8 +10,9 @@ import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CatalogBuyButton from '../components/CatalogBuyButton'
 import ProductImage from '../components/ProductImage'
 import ProductMetaFilter from '../components/ProductMetaFilter'
+import SizeMultiSelect, { parseSizeValue } from '../components/SizeMultiSelect'
 import { usePageSeo } from '../utils/seo'
-import { catalogFiltersFromSearchParams } from '../utils/catalogFilters'
+import { catalogFiltersFromSearchParams, countActiveCatalogFilters, toggleSizeFilter, buildFiltersFromChildren, readAutoFilterEnabled, productMatchesCatalogFilters, normalizeGender } from '../utils/catalogFilters'
 import './Home.css'
 
 const CONDITION_PRIORITY = {
@@ -47,7 +48,7 @@ function Home() {
   const loadMoreRef = useRef(null)
   const [filters, setFilters] = useState({
     brand: '',
-    size: '',
+    size: [],
     color: '',
     gender: '',
     condition: ''
@@ -65,14 +66,14 @@ function Home() {
   })
 
   const activeFilterCount = useMemo(
-    () => Object.values(filters).filter(Boolean).length,
+    () => countActiveCatalogFilters(filters),
     [filters]
   )
 
   const resetCatalogFilters = () => {
     setFilters({
       brand: '',
-      size: '',
+      size: [],
       color: '',
       gender: '',
       condition: ''
@@ -80,17 +81,53 @@ function Home() {
   }
 
   const applyCatalogFilter = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setFilters((prev) => {
+      if (key === 'size') {
+        return { ...prev, size: toggleSizeFilter(prev.size, value) }
+      }
+      if (key === 'gender') {
+        return { ...prev, gender: normalizeGender(value) }
+      }
+      return { ...prev, [key]: value }
+    })
     setSelectedProduct(null)
     setPage(1)
   }
 
   useEffect(() => {
     const fromUrl = catalogFiltersFromSearchParams(searchParams)
-    if (Object.values(fromUrl).some(Boolean)) {
+    if (countActiveCatalogFilters(fromUrl) > 0) {
       setFilters(fromUrl)
     }
   }, [searchParams])
+
+  const applyAutoFilterFromChildren = useCallback(async () => {
+    if (countActiveCatalogFilters(catalogFiltersFromSearchParams(searchParams)) > 0) return
+    const token = localStorage.getItem('authToken')
+    if (!token) return
+
+    try {
+      const [profile, childList] = await Promise.all([
+        api.getMyProfile(),
+        api.getMyChildren(),
+      ])
+      const enabled = readAutoFilterEnabled(profile)
+      const childFilters = buildFiltersFromChildren(childList, enabled)
+      if (childFilters) setFilters(childFilters)
+    } catch {
+      /* ignore — catalog works without auto-filter */
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    applyAutoFilterFromChildren()
+  }, [applyAutoFilterFromChildren])
+
+  useEffect(() => {
+    const onProfileChange = () => { applyAutoFilterFromChildren() }
+    window.addEventListener('bebochka-auth', onProfileChange)
+    return () => window.removeEventListener('bebochka-auth', onProfileChange)
+  }, [applyAutoFilterFromChildren])
   
   // Используем availableQuantity из сервера (уже учитывает резервы всех пользователей)
   const getAvailableQuantity = (product) => {
@@ -237,14 +274,7 @@ function Home() {
   }, [products])
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      if (filters.brand && product.brand !== filters.brand) return false
-      if (filters.size && product.size !== filters.size) return false
-      if (filters.color && product.color !== filters.color) return false
-      if (filters.gender && product.gender !== filters.gender) return false
-      if (filters.condition && product.condition !== filters.condition) return false
-      return true
-    })
+    return products.filter((product) => productMatchesCatalogFilters(product, filters))
   }, [products, filters])
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE))
@@ -364,12 +394,12 @@ function Home() {
               <option key={brand} value={brand}>{brand}</option>
             ))}
           </select>
-          <select value={filters.size} onChange={(e) => setFilters((prev) => ({ ...prev, size: e.target.value }))}>
-            <option value="">Все размеры</option>
-            {filterOptions.sizes.map((size) => (
-              <option key={size} value={size}>{size}</option>
-            ))}
-          </select>
+          <SizeMultiSelect
+              value={filters.size.join(',')}
+              onChange={(val) => setFilters((prev) => ({ ...prev, size: parseSizeValue(val) }))}
+              options={filterOptions.sizes}
+              placeholder="Все размеры"
+            />
           <select value={filters.color} onChange={(e) => setFilters((prev) => ({ ...prev, color: e.target.value }))}>
             <option value="">Все цвета</option>
             {filterOptions.colors.map((color) => (
@@ -379,7 +409,7 @@ function Home() {
           <select value={filters.gender} onChange={(e) => setFilters((prev) => ({ ...prev, gender: e.target.value }))}>
             <option value="">Любой пол</option>
             {filterOptions.genders.map((gender) => (
-              <option key={gender} value={gender}>{formatGender(gender)}</option>
+              <option key={gender} value={normalizeGender(gender)}>{formatGender(gender)}</option>
             ))}
           </select>
           <select value={filters.condition} onChange={(e) => setFilters((prev) => ({ ...prev, condition: e.target.value }))}>
@@ -437,6 +467,7 @@ function Home() {
                       priority={index === 0}
                       width={400}
                       height={220}
+                      sizes="(max-width: 480px) 46vw, (max-width: 768px) 31vw, 280px"
                       onError={(e) => {
                         e.target.src = '/logo.jpg'
                       }}

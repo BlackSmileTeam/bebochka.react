@@ -7,6 +7,7 @@ import { useCart } from '../contexts/CartContext'
 import { getOrderStatusColor } from '../constants/orderStatusColors'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import VkProfileLink from '../components/VkProfileLink'
+import { AdminUserEmailLink, AdminUserPhoneLink } from '../utils/adminUserContact'
 import './AdminUserOrders.css'
 
 function getOrderId(o) {
@@ -38,6 +39,79 @@ function formatWhen(d) {
     minute: '2-digit',
     timeZone: 'Europe/Moscow'
   })} МСК`
+}
+
+function formatDateOnly(d) {
+  if (!d) return '—'
+  const x = new Date(d)
+  if (Number.isNaN(x.getTime())) return '—'
+  return x.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
+function formatBool(value) {
+  if (value === true || value === 1) return 'Да'
+  if (value === false || value === 0) return 'Нет'
+  return '—'
+}
+
+function AdminUserInfo({ user, userId }) {
+  if (!user) {
+    return (
+      <div className="admin-user-orders-user-info">
+        <span><strong>ID:</strong> {userId}</span>
+      </div>
+    )
+  }
+
+  const rows = [
+    { label: 'ID', value: user.id ?? userId },
+    { label: 'Имя пользователя', value: user.username || user.Username || '—' },
+    { label: 'ФИО', value: user.fullName || user.FullName || '—' },
+    {
+      label: 'Email',
+      value: <AdminUserEmailLink email={user.email || user.Email} className="admin-user-contact-link" />
+    },
+    {
+      label: 'Телефон',
+      value: <AdminUserPhoneLink user={user} className="admin-user-contact-link" />
+    },
+    { label: 'Администратор', value: formatBool(user.isAdmin ?? user.IsAdmin) },
+    ...(user.isActive !== undefined || user.IsActive !== undefined
+      ? [{ label: 'Активен', value: formatBool(user.isActive ?? user.IsActive) }]
+      : []),
+    { label: 'Создан', value: formatDateOnly(user.createdAt || user.CreatedAt) },
+    { label: 'Последний вход', value: formatWhen(user.lastLoginAt || user.LastLoginAt) },
+    ...(user.autoFilterByChildren !== undefined || user.AutoFilterByChildren !== undefined
+      ? [{ label: 'Автофильтр по детям', value: formatBool(user.autoFilterByChildren ?? user.AutoFilterByChildren) }]
+      : []),
+    ...(user.dateOfBirth || user.DateOfBirth
+      ? [{ label: 'Дата рождения', value: formatDateOnly(user.dateOfBirth || user.DateOfBirth) }]
+      : []),
+    ...(user.telegramUserId || user.TelegramUserId
+      ? [{ label: 'Telegram ID', value: user.telegramUserId ?? user.TelegramUserId }]
+      : []),
+  ]
+
+  return (
+    <div className="admin-user-orders-user-info">
+      <h2 className="admin-user-orders-user-info-title">Пользователь</h2>
+      <dl className="admin-user-orders-user-info-grid">
+        {rows.map(({ label, value }) => (
+          <div key={label} className="admin-user-orders-user-info-row">
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="admin-user-orders-user-info-links">
+        <VkProfileLink user={user} />
+      </div>
+    </div>
+  )
 }
 
 function toImgUrl(path) {
@@ -216,12 +290,16 @@ export default function AdminUserOrders() {
       try {
         setLoading(true)
         setError('')
-        const [u, list] = await Promise.all([
+        const [u, allUsers, list] = await Promise.all([
           api.getUserById(userId),
+          api.getUsers(),
           api.getOrdersByUserForAdmin(userId)
         ])
         if (cancelled) return
-        setUser(u)
+        const fromList = Array.isArray(allUsers)
+          ? allUsers.find((x) => (x.id ?? x.Id) === userId)
+          : null
+        setUser(fromList ? { ...fromList, ...u } : u)
         setOrders(Array.isArray(list) ? list : [])
       } catch (e) {
         if (!cancelled) setError(e?.message || 'Не удалось загрузить данные')
@@ -298,10 +376,7 @@ export default function AdminUserOrders() {
     >
       <div className="admin-user-orders-page">
         {!loading && !error && (
-          <div className="admin-user-orders-user-meta">
-            <span><strong>ID пользователя:</strong> {userId}</span>
-            {user && <VkProfileLink user={user} />}
-          </div>
+          <AdminUserInfo user={user} userId={userId} />
         )}
         {loading && <p className="admin-user-orders-muted">Загрузка…</p>}
         {!loading && error && <p className="admin-user-orders-error">{error}</p>}

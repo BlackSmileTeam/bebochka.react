@@ -4,6 +4,7 @@ import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { getVkProfileUrl } from '../utils/vkProfile'
+import { AdminUserEmailLink, AdminUserPhoneLink } from '../utils/adminUserContact'
 import './AdminUsers.css'
 
 function AdminUsers() {
@@ -439,7 +440,6 @@ function AdminUsers() {
                 <th>{renderSortHeader('Имя пользователя', 'username')}</th>
                 <th>{renderSortHeader('Email', 'email')}</th>
                 <th>{renderSortHeader('Телефон', 'phone')}</th>
-                <th>{renderSortHeader('Полное имя', 'fullName')}</th>
                 <th>{renderSortHeader('Создан', 'createdAt')}</th>
                 <th>{renderSortHeader('Последний вход', 'lastLoginAt')}</th>
                 <th aria-label="Действия">&nbsp;</th>
@@ -474,17 +474,11 @@ function AdminUsers() {
                           </div>
                         </div>
                       </td>
-                      <td data-label="Email" className="email-cell">{user.email || user.Email || '-'}</td>
-                      <td data-label="Телефон" className="phone-cell">{user.phone || user.Phone || '-'}</td>
-                      <td data-label="Полное имя" className="fullname-cell">
-                        <Link
-                          className="admin-users-orders-link"
-                          to={ordersPathForUser(user)}
-                          onClick={() => setOpenActionsFor(null)}
-                          title="Заказы пользователя"
-                        >
-                          {user.fullName || user.FullName || '-'}
-                        </Link>
+                      <td data-label="Email" className="email-cell">
+                        <AdminUserEmailLink email={user.email || user.Email} className="admin-user-contact-link" />
+                      </td>
+                      <td data-label="Телефон" className="phone-cell">
+                        <AdminUserPhoneLink user={user} className="admin-user-contact-link" />
                       </td>
                       <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
                       <td data-label="Последний вход" className="last-login-cell">{formatDateTime(user.lastLoginAt || user.LastLoginAt)}</td>

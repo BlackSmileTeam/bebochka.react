@@ -9,6 +9,15 @@ import {
 import { usePageSeo } from '../utils/seo'
 import './InfoPages.css'
 
+function FaqSection({ title, children }) {
+  return (
+    <details className="faq-section">
+      <summary className="faq-section__summary">{title}</summary>
+      <div className="faq-section__body">{children}</div>
+    </details>
+  )
+}
+
 export default function Faq() {
   usePageSeo({
     title: 'FAQ — покупка одежды и доставка | bebochka',
@@ -54,8 +63,7 @@ export default function Faq() {
       title="FAQ"
       subtitle="Как зарегистрироваться, оформить заказ, оплатить, получить посылку и оставить отзыв."
     >
-      <section className="info-block">
-        <h2>Как зарегистрироваться?</h2>
+      <FaqSection title="Как зарегистрироваться?">
         <p>
           Перейдите на страницу{' '}
           <Link to="/account">входа и регистрации</Link> и войдите через{' '}
@@ -65,10 +73,9 @@ export default function Faq() {
           или зарегистрируйтесь по номеру телефона с паролем. Без аккаунта оформить заказ не получится — так мы
           видим ваши заказы и статусы в личном кабинете.
         </p>
-      </section>
+      </FaqSection>
 
-      <section className="info-block">
-        <h2>Как оформить заказ на сайте?</h2>
+      <FaqSection title="Как оформить заказ на сайте?">
         <ol>
           <li>Добавьте нужные товары в корзину (кнопка «В корзину» на карточке).</li>
           <li>Если заказ не оплачен, товар в корзине хранится до 24 часов, затем автоматически освобождается.</li>
@@ -93,10 +100,9 @@ export default function Faq() {
         <p>
           Быстрый переход в <Link to="/">каталог товаров</Link> и к карточкам выбранных позиций.
         </p>
-      </section>
+      </FaqSection>
 
-      <section className="info-block">
-        <h2>Как оплатить заказ?</h2>
+      <FaqSection title="Как оплатить заказ?">
         <ol>
           <li>Откройте «Профиль» и найдите заказ со статусом «Ожидает оплату».</li>
           <li>
@@ -107,10 +113,9 @@ export default function Faq() {
           </li>
           <li>Мы пришлём реквизиты и подтвердим оплату — статус заказа обновится в профиле.</li>
         </ol>
-      </section>
+      </FaqSection>
 
-      <section className="info-block">
-        <h2>Как согласовать доставку?</h2>
+      <FaqSection title="Как согласовать доставку?">
         <p>
           Способ доставки обсуждаем <strong>после оплаты</strong> в переписке. Подробнее — в разделе{' '}
           <Link to="/delivery">Доставка</Link>.
@@ -124,20 +129,18 @@ export default function Faq() {
           Копить товары перед отправкой можно, но не более 2 месяцев. В течение этого времени необходимо
           оформить доставку.
         </p>
-      </section>
+      </FaqSection>
 
-      <section className="info-block">
-        <h2>Как отслеживать заказ?</h2>
+      <FaqSection title="Как отслеживать заказ?">
         <p>
           В профиле на сайте отображается текущий статус заказа. Раскройте блок{' '}
           <strong>«История статусов»</strong>, чтобы видеть все этапы: оформление, ожидание оплаты, оплата,
           отправка и т.д. При отправке передадим трек-номер или ссылку для отслеживания в удобном вам канале
           связи: <ContactChannelsLinks />.
         </p>
-      </section>
+      </FaqSection>
 
-      <section className="info-block">
-        <h2>Что сделать после получения посылки?</h2>
+      <FaqSection title="Что сделать после получения посылки?">
         <ol>
           <li>Когда заказ у вас на руках, зайдите в профиль на сайте.</li>
           <li>
@@ -145,10 +148,9 @@ export default function Faq() {
           </li>
           <li>По желанию оставьте оценку и отзыв — мы всегда рады обратной связи.</li>
         </ol>
-      </section>
+      </FaqSection>
 
-      <section className="info-block">
-        <h2>Товар забронирован. Что делать?</h2>
+      <FaqSection title="Товар забронирован. Что делать?">
         <p>
           Если товар временно занят другим покупателем, нажмите «В очередь». Как только бронь освободится,
           товар автоматически попадёт в вашу корзину.
@@ -163,10 +165,9 @@ export default function Faq() {
           оформить заказ вовремя. Иначе бронь снова освободится, и товар перейдёт следующему покупателю в
           очереди или вернётся в каталог.
         </p>
-      </section>
+      </FaqSection>
 
-      <section className="info-block">
-        <h2>Где смотреть анонсы новинок?</h2>
+      <FaqSection title="Где смотреть анонсы новинок?">
         <p>
           Важные объявления публикуем в{' '}
           <a href={CONTACT_VK_GROUP_URL} target="_blank" rel="noopener noreferrer">
@@ -179,12 +180,11 @@ export default function Faq() {
           . Накануне выкладки делаем анонсы в этих каналах, затем на сайте появляются карточки товаров с
           таймером: кнопка «В корзину» откроется в указанное время.
         </p>
-      </section>
+      </FaqSection>
 
-      <section className="info-block">
-        <h2>Остались вопросы?</h2>
+      <FaqSection title="Остались вопросы?">
         <p>Если что-то непонятно — пишите, поможем и ответим: <ContactChannelsLinks />.</p>
-      </section>
+      </FaqSection>
     </PageShell>
   )
 }

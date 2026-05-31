@@ -800,9 +800,9 @@ function AdminOrders() {
   return (
     <PageShell
       title="Управление заказами"
-      actions={(
-        <div className="header-actions header-actions--row">
-          {selectedCount > 0 && (
+      actions={
+        selectedCount > 0 ? (
+          <div className="header-actions header-actions--row">
             <button
               type="button"
               className="btn btn-sale"
@@ -810,17 +810,9 @@ function AdminOrders() {
             >
               🏷️ Распродажа
             </button>
-          )}
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={loadOrders}
-            disabled={loading}
-          >
-            🔄 Обновить
-          </button>
-        </div>
-      )}
+          </div>
+        ) : null
+      }
     >
       <div className="admin-orders-page">
 

@@ -94,6 +94,15 @@ function validateArray(data, fieldName = 'data') {
   return true
 }
 
+function extractApiError(error, fallback) {
+  return (
+    error?.response?.data?.message
+    || error?.response?.data?.Message
+    || error?.message
+    || fallback
+  )
+}
+
 /**
  * Validates product data structure
  * @param {any} product - Product data to validate
@@ -681,6 +690,39 @@ export const api = {
     return normalized
   },
 
+  _normalizeReferralInfo(data) {
+    const d = data || {}
+    const referredByRaw = d.referredBy ?? d.ReferredBy ?? null
+    const referredBy = referredByRaw
+      ? {
+          code: referredByRaw.code ?? referredByRaw.Code ?? '',
+          referrerName: referredByRaw.referrerName ?? referredByRaw.ReferrerName ?? null,
+          status: referredByRaw.status ?? referredByRaw.Status ?? '',
+          appliedAt: referredByRaw.appliedAt ?? referredByRaw.AppliedAt ?? null,
+        }
+      : null
+    const invited = Array.isArray(d.invited ?? d.Invited)
+      ? (d.invited ?? d.Invited).map((row) => ({
+          id: row.id ?? row.Id,
+          referredName: row.referredName ?? row.ReferredName ?? null,
+          status: row.status ?? row.Status ?? '',
+          createdAt: row.createdAt ?? row.CreatedAt,
+          registeredAt: row.registeredAt ?? row.RegisteredAt ?? null,
+          referrerRewardAmount: row.referrerRewardAmount ?? row.ReferrerRewardAmount ?? null,
+        }))
+      : []
+
+    return {
+      myCode: d.myCode ?? d.MyCode ?? null,
+      canGenerateCode: !!(d.canGenerateCode ?? d.CanGenerateCode),
+      canApplyReferrerCode: !!(d.canApplyReferrerCode ?? d.CanApplyReferrerCode),
+      invitedCount: d.invitedCount ?? d.InvitedCount ?? invited.length,
+      invited,
+      referredBy,
+      rules: d.rules ?? d.Rules ?? '',
+    }
+  },
+
   /**
    * Logs in a user and returns authentication token
    * @param {string} username - Username
@@ -749,6 +791,158 @@ export const api = {
     } catch (error) {
       console.error('[API] Error getting current user:', error)
       throw error
+    }
+  },
+
+  async getMyProfile() {
+    const response = await apiClient.get('/profile/me')
+    const d = response.data || {}
+    const dobRaw = d.dateOfBirth ?? d.DateOfBirth ?? null
+    const normalized = {
+      ...d,
+      dateOfBirth: dobRaw,
+      DateOfBirth: dobRaw,
+      autoFilterByChildren: d.autoFilterByChildren ?? d.AutoFilterByChildren,
+    }
+    const af = normalized.autoFilterByChildren
+    if (af !== undefined && af !== null) {
+      try {
+        const cached = JSON.parse(localStorage.getItem('user') || '{}')
+        localStorage.setItem('user', JSON.stringify({
+          ...cached,
+          autoFilterByChildren: !!af,
+          dateOfBirth: dobRaw,
+          DateOfBirth: dobRaw,
+        }))
+        localStorage.setItem('bebochka-auto-filter-by-children', af ? '1' : '0')
+      } catch (_) {}
+    }
+    return normalized
+  },
+
+  async updateMyProfile(payload) {
+    const autoFilter =
+      payload.autoFilterByChildren ?? payload.AutoFilterByChildren
+    const dateOfBirth = payload.dateOfBirth ?? payload.DateOfBirth ?? null
+    const response = await apiClient.put('/profile/me', {
+      FullName: payload.fullName ?? payload.FullName ?? null,
+      Email: payload.email ?? payload.Email ?? null,
+      Phone: payload.phone ?? payload.Phone ?? null,
+      AutoFilterByChildren: autoFilter,
+      DateOfBirth: dateOfBirth,
+      dateOfBirth,
+    })
+    const d = response.data || {}
+    const savedAutoFilter = d.autoFilterByChildren ?? d.AutoFilterByChildren ?? autoFilter
+    const savedDob = d.dateOfBirth ?? d.DateOfBirth ?? dateOfBirth
+    try {
+      const cached = JSON.parse(localStorage.getItem('user') || '{}')
+      const next = {
+        ...cached,
+        fullName: d.fullName ?? d.FullName ?? cached.fullName,
+        email: d.email ?? d.Email ?? cached.email,
+        phone: d.phone ?? d.Phone ?? cached.phone,
+        autoFilterByChildren: savedAutoFilter,
+        dateOfBirth: savedDob,
+        DateOfBirth: savedDob,
+      }
+      localStorage.setItem('user', JSON.stringify(next))
+      if (savedAutoFilter !== undefined && savedAutoFilter !== null) {
+        localStorage.setItem('bebochka-auto-filter-by-children', savedAutoFilter ? '1' : '0')
+      }
+      window.dispatchEvent(new Event('bebochka-auth'))
+    } catch (_) {}
+    return {
+      ...d,
+      dateOfBirth: savedDob,
+      DateOfBirth: savedDob,
+    }
+  },
+
+  async getMyChildren() {
+    const response = await apiClient.get('/profile/children')
+    return Array.isArray(response.data) ? response.data : []
+  },
+
+  async createMyChild(payload) {
+    try {
+      const response = await apiClient.post('/profile/children', {
+        name: payload.name,
+        dateOfBirth: payload.dateOfBirth,
+        clothingSize: payload.clothingSize,
+        gender: payload.gender,
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(extractApiError(error, 'Не удалось сохранить'))
+    }
+  },
+
+  async updateMyChild(id, payload) {
+    try {
+      const response = await apiClient.put(`/profile/children/${id}`, {
+        name: payload.name,
+        dateOfBirth: payload.dateOfBirth,
+        clothingSize: payload.clothingSize,
+        gender: payload.gender,
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(extractApiError(error, 'Не удалось сохранить'))
+    }
+  },
+
+  async deleteMyChild(id) {
+    await apiClient.delete(`/profile/children/${id}`)
+  },
+
+  async getMyReferralInfo() {
+    try {
+      const response = await apiClient.get('/profile/referral')
+      return this._normalizeReferralInfo(response.data)
+    } catch (error) {
+      throw new Error(extractApiError(error, 'Не удалось загрузить реферальную программу'))
+    }
+  },
+
+  async generateMyReferralCode() {
+    try {
+      const response = await apiClient.post('/profile/referral/code')
+      const code = response.data?.code ?? response.data?.Code ?? null
+      return { code }
+    } catch (error) {
+      throw new Error(extractApiError(error, 'Не удалось создать код'))
+    }
+  },
+
+  async applyReferrerCode(code) {
+    try {
+      const response = await apiClient.post('/profile/referral/apply', { code })
+      return response.data
+    } catch (error) {
+      throw new Error(extractApiError(error, 'Не удалось применить код'))
+    }
+  },
+
+  async getAdminReferrals(search = '', status = '') {
+    const params = new URLSearchParams()
+    if (search) params.set('search', search)
+    if (status) params.set('status', status)
+    const qs = params.toString()
+    const response = await apiClient.get(`/admin/referrals${qs ? `?${qs}` : ''}`)
+    return Array.isArray(response.data) ? response.data : []
+  },
+
+  async changeMyPassword(currentPassword, newPassword) {
+    try {
+      const response = await apiClient.put('/profile/me/password', {
+        currentPassword,
+        newPassword,
+      })
+      return response.data
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Не удалось сменить пароль'
+      throw new Error(msg)
     }
   },
 
@@ -891,6 +1085,7 @@ export const api = {
             fullName: user.fullName || user.FullName || null,
             vkUserId: user.vkUserId ?? user.VkUserId ?? user.vkId ?? user.VkId ?? null,
             vkProfileUrl: user.vkProfileUrl ?? user.VkProfileUrl ?? null,
+            telegramUserId: user.telegramUserId ?? user.TelegramUserId ?? null,
             createdAt: user.createdAt || user.CreatedAt || null,
             lastLoginAt: user.lastLoginAt || user.LastLoginAt || null,
             isAdmin: !!(user.isAdmin ?? user.IsAdmin)
@@ -920,8 +1115,14 @@ export const api = {
       phone: u.phone ?? u.Phone ?? null,
       fullName: u.fullName ?? u.FullName ?? null,
       isAdmin: !!(u.isAdmin ?? u.IsAdmin),
+      isActive: u.isActive ?? u.IsActive,
       vkUserId: u.vkUserId ?? u.VkUserId ?? u.vkId ?? u.VkId ?? null,
-      vkProfileUrl: u.vkProfileUrl ?? u.VkProfileUrl ?? null
+      vkProfileUrl: u.vkProfileUrl ?? u.VkProfileUrl ?? null,
+      createdAt: u.createdAt ?? u.CreatedAt ?? null,
+      lastLoginAt: u.lastLoginAt ?? u.LastLoginAt ?? null,
+      autoFilterByChildren: u.autoFilterByChildren ?? u.AutoFilterByChildren,
+      dateOfBirth: u.dateOfBirth ?? u.DateOfBirth ?? null,
+      telegramUserId: u.telegramUserId ?? u.TelegramUserId ?? null,
     }
   },
 
@@ -1278,11 +1479,31 @@ export const api = {
    */
   async createBrand(brand) {
     try {
-      const response = await apiClient.post('/brands', brand)
+      const response = await apiClient.post('/brands', {
+        Name: brand.name ?? brand.Name,
+      })
       return response.data
     } catch (error) {
-      console.error('[API] Error creating brand:', error)
-      throw error
+      throw new Error(extractApiError(error, 'Не удалось добавить бренд'))
+    }
+  },
+
+  async updateBrand(id, brand) {
+    try {
+      const response = await apiClient.put(`/brands/${id}`, {
+        Name: brand.name ?? brand.Name,
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(extractApiError(error, 'Не удалось сохранить бренд'))
+    }
+  },
+
+  async deleteBrand(id) {
+    try {
+      await apiClient.delete(`/brands/${id}`)
+    } catch (error) {
+      throw new Error(extractApiError(error, 'Не удалось удалить бренд'))
     }
   },
 
@@ -1479,6 +1700,7 @@ export const api = {
       return rows.map((row) => ({
         id: row.id ?? row.Id,
         orderId: row.orderId ?? row.OrderId,
+        orderId: row.orderId ?? row.OrderId ?? null,
         orderNumber: row.orderNumber ?? row.OrderNumber ?? '',
         userId: row.userId ?? row.UserId,
         customerName: row.customerName ?? row.CustomerName ?? '',
@@ -1495,6 +1717,18 @@ export const api = {
   },
 
   async createOrderReviewAsAdmin(payload) {
+    const body = await this._buildOrderReviewBody(payload)
+    const response = await apiClient.post('/orders/reviews/admin', body)
+    return response.data
+  },
+
+  async updateOrderReviewAsAdmin(reviewId, payload) {
+    const body = await this._buildOrderReviewBody(payload)
+    const response = await apiClient.put(`/orders/reviews/${reviewId}`, body)
+    return response.data
+  },
+
+  async _buildOrderReviewBody(payload) {
     const toBase64 = (file) => new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = () => {
@@ -1514,18 +1748,21 @@ export const api = {
       }
     }
 
-    const body = {
+    const keepImageUrls = Array.isArray(payload?.keepImageUrls)
+      ? payload.keepImageUrls.filter(Boolean)
+      : null
+
+    return {
       orderNumber: payload.orderNumber ? String(payload.orderNumber).trim() : null,
       customerName: payload.customerName ? String(payload.customerName).trim() : null,
       customerPhone: payload.customerPhone ? String(payload.customerPhone).trim() : null,
       rating: Number(payload.rating) || 0,
       comment: payload.comment ? String(payload.comment).trim() : '',
       imagesBase64,
+      keepImageUrls,
       createdDate: payload.createdDate ?? payload.CreatedDate ?? null,
       createdAtUtc: payload.createdAtUtc ?? payload.CreatedAtUtc ?? null
     }
-    const response = await apiClient.post('/orders/reviews/admin', body)
-    return response.data
   },
 
   /**

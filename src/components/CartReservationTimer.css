@@ -1,0 +1,36 @@
+.checkout-reserve-timer {
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  color: #2c5282;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.checkout-reserve-timer strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.checkout-reserve-timer--expired {
+  background: #fff5f5;
+  border-color: #feb2b2;
+  color: #9b2c2c;
+}
+
+.cart-reserve-timer {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #2c5282;
+  text-align: center;
+}
+
+.cart-reserve-timer strong {
+  font-weight: 700;
+}
+
+.cart-reserve-timer--expired {
+  color: #c53030;
+}

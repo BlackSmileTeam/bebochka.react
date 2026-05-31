@@ -24,6 +24,72 @@
   width: 100%;
 }
 
+.admin-user-orders-user-info {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #2d3748;
+}
+
+.admin-user-orders-user-info-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.admin-user-orders-user-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+}
+
+.admin-user-orders-user-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.admin-user-orders-user-info-row dt {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.admin-user-orders-user-info-row dd {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #2d3748;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.admin-user-orders-user-info-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.admin-user-contact-link {
+  color: #667eea;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.admin-user-contact-link:hover {
+  text-decoration: underline;
+}
+
 .admin-user-orders-user-meta {
   display: flex;
   align-items: center;

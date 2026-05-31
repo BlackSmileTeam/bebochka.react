@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import Toast from '../components/Toast'
@@ -46,6 +46,31 @@ function getImageUrl(path) {
   return base + (String(path).startsWith('/') ? String(path) : `/${String(path)}`)
 }
 
+const EMPTY_REVIEW_FORM = {
+  orderNumber: '',
+  customerName: '',
+  customerPhone: '',
+  rating: 5,
+  reviewDateLocal: '',
+  comment: '',
+  files: [],
+}
+
+function toReviewDateInput(dateRaw) {
+  if (!dateRaw) return ''
+  const s = String(dateRaw)
+  const match = s.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (match) return match[1]
+  const d = new Date(dateRaw)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString().slice(0, 10)
+}
+
+function absentToEmpty(value) {
+  const v = String(value || '').trim()
+  return v === 'Отсутствует' ? '' : v
+}
+
 function AdminReviews() {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
@@ -54,16 +79,22 @@ function AdminReviews() {
   const [submitting, setSubmitting] = useState(false)
   const [deleteConfirmReviewId, setDeleteConfirmReviewId] = useState(null)
   const [deleteReviewBusy, setDeleteReviewBusy] = useState(false)
-  const [form, setForm] = useState({
-    orderNumber: '',
-    customerName: '',
-    customerPhone: '',
-    rating: 5,
-    reviewDateLocal: '',
-    comment: '',
-    files: []
-  })
+  const [editingReviewId, setEditingReviewId] = useState(null)
+  const [editingOrderLinked, setEditingOrderLinked] = useState(false)
+  const [existingImages, setExistingImages] = useState([])
+  const [form, setForm] = useState({ ...EMPTY_REVIEW_FORM })
   const isAdmin = getViewerIsAdmin()
+  const fileInputRef = useRef(null)
+  const formRef = useRef(null)
+  const [filePreviewUrls, setFilePreviewUrls] = useState([])
+
+  useEffect(() => {
+    const urls = (form.files || []).map((file) => URL.createObjectURL(file))
+    setFilePreviewUrls(urls)
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [form.files])
 
   const loadReviews = async () => {
     try {
@@ -86,27 +117,59 @@ function AdminReviews() {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
+  const handleFilesChange = (event) => {
+    const picked = Array.from(event.target.files || [])
+    if (!picked.length) return
+    setForm((prev) => ({ ...prev, files: [...prev.files, ...picked] }))
+    event.target.value = ''
+  }
+
+  const removeFile = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index),
+    }))
+  }
+
   const resetForm = () => {
+    setForm({ ...EMPTY_REVIEW_FORM })
+    setEditingReviewId(null)
+    setEditingOrderLinked(false)
+    setExistingImages([])
+  }
+
+  const startEditReview = (row) => {
+    setEditingReviewId(row.id)
+    setEditingOrderLinked(!!row.orderId)
+    setExistingImages(Array.isArray(row.imageUrls) ? [...row.imageUrls] : [])
     setForm({
-      orderNumber: '',
-      customerName: '',
-      customerPhone: '',
-      rating: 5,
-      reviewDateLocal: '',
-      comment: '',
-      files: []
+      orderNumber: absentToEmpty(row.orderNumber),
+      customerName: absentToEmpty(row.customerName),
+      customerPhone: absentToEmpty(row.customerPhone),
+      rating: Number(row.rating) || 5,
+      reviewDateLocal: toReviewDateInput(row.createdAtUtc),
+      comment: row.comment || '',
+      files: [],
+    })
+    window.requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
   }
 
-  const handleCreateReview = async (event) => {
+  const removeExistingImage = (url) => {
+    setExistingImages((prev) => prev.filter((item) => item !== url))
+  }
+
+  const handleSaveReview = async (event) => {
     event.preventDefault()
     if (!form.rating || Number(form.rating) < 1 || Number(form.rating) > 5) {
       setToast({ message: 'Оценка должна быть от 1 до 5', type: 'warning' })
       return
     }
     const hasComment = String(form.comment || '').trim().length > 0
-    const hasPhotos = Array.isArray(form.files) && form.files.length > 0
-    if (!hasComment && !hasPhotos) {
+    const hasNewPhotos = Array.isArray(form.files) && form.files.length > 0
+    const hasExistingPhotos = existingImages.length > 0
+    if (!hasComment && !hasNewPhotos && !hasExistingPhotos) {
       setToast({ message: 'Добавьте текст отзыва или хотя бы одно фото', type: 'warning' })
       return
     }
@@ -117,12 +180,27 @@ function AdminReviews() {
         reviewDateLocal && String(reviewDateLocal).trim()
           ? String(reviewDateLocal).trim().slice(0, 10)
           : null
-      await api.createOrderReviewAsAdmin({ ...formRest, files, createdDate, createdAtUtc: null })
-      setToast({ message: 'Отзыв добавлен', type: 'success' })
+      const payload = {
+        ...formRest,
+        files,
+        keepImageUrls: editingReviewId ? existingImages : undefined,
+        createdDate,
+        createdAtUtc: null,
+      }
+      if (editingReviewId) {
+        await api.updateOrderReviewAsAdmin(editingReviewId, payload)
+        setToast({ message: 'Отзыв обновлён', type: 'success' })
+      } else {
+        await api.createOrderReviewAsAdmin(payload)
+        setToast({ message: 'Отзыв добавлен', type: 'success' })
+      }
       resetForm()
       await loadReviews()
     } catch (e) {
-      setToast({ message: e?.message || 'Не удалось добавить отзыв', type: 'error' })
+      setToast({
+        message: e?.message || (editingReviewId ? 'Не удалось сохранить отзыв' : 'Не удалось добавить отзыв'),
+        type: 'error',
+      })
     } finally {
       setSubmitting(false)
     }
@@ -157,8 +235,8 @@ function AdminReviews() {
         {loading && <div className="admin-reviews-loading">Загрузка отзывов…</div>}
         {!loading && error && <div className="admin-reviews-error">{error}</div>}
         {!loading && !error && isAdmin && (
-          <form className="admin-reviews-create-form" onSubmit={handleCreateReview}>
-            <h3>Добавить отзыв вручную</h3>
+          <form ref={formRef} className="admin-reviews-create-form" onSubmit={handleSaveReview}>
+            <h3>{editingReviewId ? 'Редактировать отзыв' : 'Добавить отзыв вручную'}</h3>
             <div className="admin-reviews-create-grid">
               <label className="admin-review-field">
                 <span className="admin-review-field-label">Дата отзыва</span>
@@ -176,6 +254,8 @@ function AdminReviews() {
                   placeholder="Опционально"
                   value={form.orderNumber}
                   onChange={(e) => onFormChange('orderNumber', e.target.value)}
+                  disabled={editingOrderLinked}
+                  title={editingOrderLinked ? 'Отзыв привязан к заказу — номер нельзя изменить' : undefined}
                 />
               </label>
               <label className="admin-review-field">
@@ -185,6 +265,7 @@ function AdminReviews() {
                   placeholder="Опционально"
                   value={form.customerName}
                   onChange={(e) => onFormChange('customerName', e.target.value)}
+                  disabled={editingOrderLinked}
                 />
               </label>
               <label className="admin-review-field">
@@ -194,6 +275,7 @@ function AdminReviews() {
                   placeholder="Опционально"
                   value={form.customerPhone}
                   onChange={(e) => onFormChange('customerPhone', e.target.value)}
+                  disabled={editingOrderLinked}
                 />
               </label>
               <label className="admin-review-field">
@@ -214,28 +296,89 @@ function AdminReviews() {
             <label className="admin-review-field admin-review-field--full">
               <span className="admin-review-field-label">Комментарий</span>
               <textarea
-                placeholder={form.files.length > 0 ? 'Необязательно, если добавлено фото' : 'Текст отзыва'}
+                placeholder={
+                  form.files.length > 0 || existingImages.length > 0
+                    ? 'Необязательно, если добавлено фото'
+                    : 'Текст отзыва'
+                }
                 value={form.comment}
                 onChange={(e) => onFormChange('comment', e.target.value)}
                 rows={3}
               />
             </label>
-            <label className="admin-reviews-upload">
-              Фото (можно несколько)
+            <div className="admin-review-field admin-review-field--full">
+              <span className="admin-review-field-label">Фото</span>
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) => onFormChange('files', Array.from(e.target.files || []))}
+                className="admin-reviews-upload-input"
+                onChange={handleFilesChange}
               />
-            </label>
-            {form.files.length > 0 && (
-              <p className="admin-reviews-files-note">Выбрано файлов: {form.files.length}</p>
-            )}
-            <div className="admin-reviews-create-actions">
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
-                {submitting ? 'Сохранение…' : 'Добавить отзыв'}
+              <button
+                type="button"
+                className="admin-reviews-btn admin-reviews-btn--secondary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={submitting}
+              >
+                {form.files.length === 0 && existingImages.length === 0 ? 'Выбрать файлы' : 'Добавить фото'}
               </button>
+              {(existingImages.length > 0 || form.files.length > 0) && (
+                <div className="admin-reviews-preview-grid">
+                  {existingImages.map((url) => (
+                    <div key={url} className="admin-reviews-preview-item">
+                      <img
+                        src={getImageUrl(url)}
+                        alt="Фото отзыва"
+                        className="admin-reviews-preview-image"
+                      />
+                      <button
+                        type="button"
+                        className="admin-reviews-preview-remove"
+                        onClick={() => removeExistingImage(url)}
+                        aria-label="Удалить фото"
+                        disabled={submitting}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {form.files.map((file, index) => (
+                    <div key={`${file.name}-${file.size}-${index}`} className="admin-reviews-preview-item">
+                      <img
+                        src={filePreviewUrls[index]}
+                        alt={file.name}
+                        className="admin-reviews-preview-image"
+                      />
+                      <button
+                        type="button"
+                        className="admin-reviews-preview-remove"
+                        onClick={() => removeFile(index)}
+                        aria-label={`Удалить ${file.name}`}
+                        disabled={submitting}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="admin-reviews-create-actions">
+              <button type="submit" className="admin-reviews-btn admin-reviews-btn--primary" disabled={submitting}>
+                {submitting ? 'Сохранение…' : (editingReviewId ? 'Сохранить изменения' : 'Добавить отзыв')}
+              </button>
+              {editingReviewId && (
+                <button
+                  type="button"
+                  className="admin-reviews-btn admin-reviews-btn--secondary"
+                  onClick={resetForm}
+                  disabled={submitting}
+                >
+                  Отмена
+                </button>
+              )}
             </div>
           </form>
         )}
@@ -264,7 +407,7 @@ function AdminReviews() {
                   <tr key={row.id}>
                     <td>{row.orderNumber || 'Отсутствует'}</td>
                     <td>{row.customerName || 'Отсутствует'}</td>
-                    <td>{row.customerPhone || '—'}</td>
+                    <td>{row.customerPhone || 'Отсутствует'}</td>
                     <td title={row.rating ? `Оценка: ${row.rating}/5` : 'Без оценки'}>{renderStars(row.rating)}</td>
                     <td>{row.comment || ''}</td>
                     <td>
@@ -278,15 +421,26 @@ function AdminReviews() {
                     </td>
                     <td>{formatReviewDate(row.createdAtUtc)}</td>
                     <td className="admin-reviews-actions-cell">
-                      <button
-                        type="button"
-                        className="btn-review-delete"
-                        disabled={deleteReviewBusy && deleteConfirmReviewId === row.id}
-                        onClick={() => requestDeleteReview(row.id)}
-                        title="Удалить отзыв"
-                      >
-                        {deleteReviewBusy && deleteConfirmReviewId === row.id ? '…' : 'Удалить'}
-                      </button>
+                      <div className="admin-reviews-row-actions">
+                        <button
+                          type="button"
+                          className="btn-review-edit"
+                          disabled={submitting && editingReviewId === row.id}
+                          onClick={() => startEditReview(row)}
+                          title="Редактировать отзыв"
+                        >
+                          Изменить
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-review-delete"
+                          disabled={deleteReviewBusy && deleteConfirmReviewId === row.id}
+                          onClick={() => requestDeleteReview(row.id)}
+                          title="Удалить отзыв"
+                        >
+                          {deleteReviewBusy && deleteConfirmReviewId === row.id ? '…' : 'Удалить'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -6,10 +6,10 @@
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(90deg, #677EE9 0%, #9B7FD4 50%, #E895AD 100%);
+  color: #fff8f5;
   padding: 1rem 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -39,7 +39,8 @@
   align-items: center;
   gap: 1rem;
   text-decoration: none;
-  color: white;
+  color: #fff8f5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   font-weight: 600;
   font-size: 1.2rem;
   min-width: 0;
@@ -89,20 +90,22 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: white;
+  color: #fff8f5;
   text-decoration: none;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 
 .header-icon-btn:hover {
   background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .header-icon-btn--active {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
 }
 
 .header-cart-icon__svg {
@@ -146,6 +149,28 @@
   transform: translateY(-6px) rotate(-45deg);
 }
 
+.header-login-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff8f5;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background-color 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.header-login-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -168,21 +193,23 @@
 }
 
 .nav a {
-  color: white;
+  color: #fff8f5;
   text-decoration: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .nav a:hover {
   background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .nav a.active {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
 }
 
 .cart-badge {
@@ -209,6 +236,10 @@
   padding: 2rem 0;
   align-items: stretch;
   overflow-x: hidden;
+}
+
+.main--welcome {
+  padding-top: 0;
 }
 
 .main > * {
@@ -277,6 +308,11 @@
 
   .header-menu-toggle {
     display: inline-flex;
+  }
+
+  .header-login-btn {
+    display: inline-flex;
+    min-height: 40px;
   }
 
   .nav--mobile-menu {

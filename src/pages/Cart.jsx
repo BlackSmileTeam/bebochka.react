@@ -4,6 +4,7 @@ import { api } from '../services/api'
 import { Link, useNavigate } from 'react-router-dom'
 import ProductDetail from '../components/ProductDetail'
 import PageShell from '../components/PageShell'
+import CartReservationTimer from '../components/CartReservationTimer'
 import { buildCatalogFilterSearch } from '../utils/catalogFilters'
 import './Cart.css'
 
@@ -23,7 +24,7 @@ function Cart() {
       : (product.quantityInStock || 0)
 
   const goToCatalogFilter = (key, value) => {
-    navigate(buildCatalogFilterSearch({ [key]: value }))
+    navigate(buildCatalogFilterSearch({ [key]: key === 'size' ? [value] : value }))
     setDetailProduct(null)
   }
 
@@ -179,32 +180,6 @@ function Cart() {
             <div className="queue-section">
               <div className="queue-section-header">
                 <h2>Товары в очереди</h2>
-                <button
-                  type="button"
-                  className="btn-queue-refresh"
-                  onClick={loadQueue}
-                  disabled={queueLoading}
-                  title="Обновить"
-                  aria-label="Обновить список очереди"
-                >
-                  <svg
-                    className={queueLoading ? 'queue-refresh-icon queue-refresh-icon--spin' : 'queue-refresh-icon'}
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                  >
-                    <path d="M23 4v6h-6" />
-                    <path d="M1 20v-6h6" />
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                  </svg>
-                </button>
               </div>
               <div className="queue-list">
                 {queueItems.map((item) => (
@@ -281,6 +256,7 @@ function Cart() {
               <span>{getTotalPrice().toLocaleString('ru-RU')} ₽</span>
             </div>
             <div className="cart-summary-actions">
+              <CartReservationTimer cartItems={cartItems} compact />
               <Link to="/checkout" className="btn btn-primary btn-checkout">
                 Оформить заказ
               </Link>

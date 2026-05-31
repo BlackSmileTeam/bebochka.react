@@ -120,6 +120,52 @@
   padding-right: 1.9rem;
 }
 
+.catalog-filter-size-select,
+.catalog-filters .size-multi-select {
+  min-width: 0;
+  width: 100%;
+}
+
+.catalog-filter-sizes__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.catalog-filter-sizes__empty {
+  font-size: 0.85rem;
+  color: #a0aec0;
+}
+
+.catalog-filter-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f7fafc;
+  font-size: 0.82rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.catalog-filter-size input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.catalog-filter-size--active {
+  border-color: #667eea;
+  background: #ebf4ff;
+  color: #434190;
+  font-weight: 600;
+}
+
 .catalog-main {
   display: flex;
   flex-direction: column;

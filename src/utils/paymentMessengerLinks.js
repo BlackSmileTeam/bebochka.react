@@ -23,14 +23,9 @@ export function buildTelegramPaymentHref(telegramBaseUrl, orderLabel) {
   const base = String(telegramBaseUrl || '').trim()
   if (!base) return base
   const text = pickInvoiceRequestMessage(orderLabel)
-  try {
-    const u = new URL(base)
-    u.searchParams.set('text', text)
-    return u.toString()
-  } catch {
-    const sep = base.includes('?') ? '&' : '?'
-    return `${base}${sep}text=${encodeURIComponent(text)}`
-  }
+  const basePath = base.split('?')[0].replace(/\/$/, '')
+  // encodeURIComponent → пробелы как %20; searchParams даёт «+», Telegram показывает их в тексте
+  return `${basePath}?text=${encodeURIComponent(text)}`
 }
 
 /** id7911729911 в ссылке часто опечатка вместо короткого имени i7911729911 */

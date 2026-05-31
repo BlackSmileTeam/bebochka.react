@@ -1,0 +1,63 @@
+.error-page {
+  max-width: 32rem;
+  margin: 2rem auto 3rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08);
+}
+
+.error-page__code {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #667eea;
+}
+
+.error-page__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  color: #2d3748;
+}
+
+.error-page__text {
+  margin: 0 0 1.5rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: #4a5568;
+}
+
+.error-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.error-page__link {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.98rem;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.error-page__link:hover {
+  color: #5a67d8;
+  border-bottom-color: #5a67d8;
+}
+
+.error-page__link--primary {
+  color: #2d3748;
+  border-bottom-color: #cbd5e0;
+}
+
+.error-page__link--primary:hover {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}

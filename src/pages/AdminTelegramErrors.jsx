@@ -100,16 +100,7 @@ function AdminTelegramErrors() {
   const totalErrors = Object.values(errors).reduce((sum, errs) => sum + errs.length, 0)
 
   return (
-    <PageShell
-      title="Ошибки отправки в Telegram канал"
-      actions={(
-        <div className="header-actions">
-          <button type="button" className="btn-refresh-unified" onClick={loadErrors}>
-            🔄 Обновить
-          </button>
-        </div>
-      )}
-    >
+    <PageShell title="Ошибки отправки в Telegram канал">
       <div className="admin-errors-page">
 
       {totalErrors === 0 ? (

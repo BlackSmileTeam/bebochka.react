@@ -1,10 +1,11 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { CONTACT_TELEGRAM_URL } from '../constants/contactLinks'
-import CookieNotice from './CookieNotice'
 import Toast from './Toast'
 import './Layout.css'
+
+const CookieNotice = lazy(() => import('./CookieNotice'))
 
 function readUser() {
   try {
@@ -81,14 +82,28 @@ function Layout() {
     ? cartItems.reduce((total, item) => total + (item.quantity || 0), 0)
     : 0
 
-  const logoTo = isLoggedIn ? '/' : '/account'
+  const logoTo = isLoggedIn ? '/' : '/welcome'
   const showShopLoginLink = !isLoggedIn && location.pathname !== '/account'
+  const isWelcomePage = location.pathname === '/welcome'
+
+  const closeMobileMenu = () => setMobileMenuOpen(false)
+
+  const scrollToWelcomeSection = (hash) => {
+    closeMobileMenu()
+    if (!isWelcomePage) {
+      window.location.href = `/welcome${hash}`
+      return
+    }
+    const el = document.querySelector(hash)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.history.replaceState(null, '', hash)
+    }
+  }
 
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [location.pathname])
-
-  const closeMobileMenu = () => setMobileMenuOpen(false)
 
   useEffect(() => {
     const onToast = (event) => {
@@ -112,15 +127,18 @@ function Layout() {
         <div className={`container header-shell${isAdminRoute ? ' header-shell--admin' : ' header-shell--shop'}`}>
           <div className="header-top">
             <Link to={logoTo} className="logo">
-              <img
-                src="/logo.jpg"
-                alt="bebochka — логотип магазина"
-                className="logo-img"
-                width={50}
-                height={50}
-                decoding="async"
-                fetchPriority="low"
-              />
+              <picture>
+                <source srcSet="/logo-96.webp" type="image/webp" />
+                <img
+                  src="/logo.jpg"
+                  alt="bebochka — логотип магазина"
+                  className="logo-img"
+                  width={50}
+                  height={50}
+                  decoding="async"
+                  fetchPriority="low"
+                />
+              </picture>
               <span className="logo-text">bebochka</span>
             </Link>
 
@@ -214,6 +232,20 @@ function Layout() {
             ) : (
               <div className="header-end">
                 <nav className="nav nav--shop-text" aria-label="Основное меню">
+                  {isWelcomePage ? (
+                    <a
+                      href="#catalog"
+                      className={location.hash === '#catalog' ? 'active' : ''}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        scrollToWelcomeSection('#catalog')
+                      }}
+                    >
+                      Каталог
+                    </a>
+                  ) : (
+                    <Link to="/welcome#catalog">Каталог</Link>
+                  )}
                   <Link
                     to="/delivery"
                     className={location.pathname === '/delivery' ? 'active' : ''}
@@ -246,6 +278,11 @@ function Layout() {
                     onClick={() => setMobileMenuOpen((v) => !v)}
                     controlsId="header-mobile-menu"
                   />
+                  {showShopLoginLink && (
+                    <Link to="/account" className="header-login-btn">
+                      Войти
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
@@ -259,13 +296,36 @@ function Layout() {
             >
               {isLoggedIn ? (
                 <>
-                  <Link
-                    to="/"
-                    className={location.pathname === '/' ? 'active' : ''}
-                    onClick={closeMobileMenu}
-                  >
-                    Каталог
-                  </Link>
+                  {isWelcomePage ? (
+                    <a
+                      href="#catalog"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        scrollToWelcomeSection('#catalog')
+                      }}
+                    >
+                      Каталог
+                    </a>
+                  ) : (
+                    <Link
+                      to="/"
+                      className={location.pathname === '/' ? 'active' : ''}
+                      onClick={closeMobileMenu}
+                    >
+                      Каталог
+                    </Link>
+                  )}
+                  {isWelcomePage && (
+                    <a
+                      href="#how"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        scrollToWelcomeSection('#how')
+                      }}
+                    >
+                      Как купить
+                    </a>
+                  )}
                   <Link
                     to="/reviews"
                     className={location.pathname === '/reviews' ? 'active' : ''}
@@ -306,13 +366,32 @@ function Layout() {
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/"
-                    className={location.pathname === '/' ? 'active' : ''}
-                    onClick={closeMobileMenu}
-                  >
-                    Каталог
-                  </Link>
+                  {isWelcomePage ? (
+                    <a
+                      href="#catalog"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        scrollToWelcomeSection('#catalog')
+                      }}
+                    >
+                      Каталог
+                    </a>
+                  ) : (
+                    <Link to="/welcome#catalog" onClick={closeMobileMenu}>
+                      Каталог
+                    </Link>
+                  )}
+                  {isWelcomePage && (
+                    <a
+                      href="#how"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        scrollToWelcomeSection('#how')
+                      }}
+                    >
+                      Как купить
+                    </a>
+                  )}
                   <Link
                     to="/reviews"
                     className={location.pathname === '/reviews' ? 'active' : ''}
@@ -341,21 +420,18 @@ function Layout() {
                   >
                     О нас
                   </Link>
-                  {showShopLoginLink && (
-                    <Link to="/account" onClick={closeMobileMenu}>
-                      Войти
-                    </Link>
-                  )}
                 </>
               )}
             </nav>
           )}
         </div>
       </header>
-      <main className="main">
+      <main className={`main${isWelcomePage ? ' main--welcome' : ''}`}>
         <Outlet />
       </main>
-      <CookieNotice />
+      <Suspense fallback={null}>
+        <CookieNotice />
+      </Suspense>
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}

@@ -1,30 +1,13 @@
 import PageShell from '../components/PageShell'
-import { CONTACT_TELEGRAM_URL } from '../constants/contactLinks'
-import './Contacts.css'
+import ContactChannelIcons from '../components/ContactChannelIcons'
 
 export default function Contacts() {
   return (
     <PageShell
       title="Контакты"
-      subtitle="Вопросы по заказам, размерам и наличию — пишите в Telegram, мы отвечаем как можно быстрее."
+      subtitle="Мы на связи в Telegram, ВКонтакте и на Avito — выберите удобный способ."
     >
-      <section className="contacts-block">
-        <h2>Telegram</h2>
-        <p>
-          <a href={CONTACT_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
-            bebochkaa
-          </a>
-        </p>
-      </section>
-
-      <section className="contacts-block">
-        <h2>Канал с новинками</h2>
-        <p>
-          <a href="https://t.me/bebochkasekond" target="_blank" rel="noopener noreferrer">
-            t.me/bebochkasekond
-          </a>
-        </p>
-      </section>
+      <ContactChannelIcons />
     </PageShell>
   )
 }

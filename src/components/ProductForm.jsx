@@ -616,6 +616,18 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
           <div className="form-row">
             <div className="form-group">
+              <label htmlFor="size">Размер</label>
+              <input
+                type="text"
+                id="size"
+                name="size"
+                value={formData.size}
+                onChange={handleChange}
+                placeholder="Например: 104, 110-116"
+              />
+            </div>
+
+            <div className="form-group">
               <label htmlFor="price">Цена (₽) *</label>
               <input
                 type="number"
@@ -627,18 +639,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 min="0"
                 step="0.01"
                 placeholder="1000"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="size">Размер</label>
-              <input
-                type="text"
-                id="size"
-                name="size"
-                value={formData.size}
-                onChange={handleChange}
-                placeholder="Например: 104, 110-116"
               />
             </div>
           </div>

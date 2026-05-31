@@ -8,6 +8,7 @@ export default function ProductImage({
   priority = false,
   width,
   height,
+  sizes,
   onError,
   onClick,
   title,
@@ -19,6 +20,7 @@ export default function ProductImage({
       className={className}
       width={width}
       height={height}
+      sizes={sizes}
       loading={priority ? 'eager' : 'lazy'}
       decoding="async"
       fetchPriority={priority ? 'high' : undefined}

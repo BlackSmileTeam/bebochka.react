@@ -53,7 +53,8 @@ export function CartProvider({ children }) {
         images: item.productImages || [],
         price: item.productPrice || item.productPrice,
         quantity: item.quantity || item.quantity,
-        cartItemId: item.id // ID элемента корзины на сервере
+        cartItemId: item.id, // ID элемента корзины на сервере
+        createdAt: item.createdAt ?? item.CreatedAt ?? null,
       }))
       console.log('[CartContext] Formatted cart items:', formattedItems)
       setCartItems(formattedItems)
@@ -89,11 +90,12 @@ export function CartProvider({ children }) {
         images: result?.ProductImages ?? result?.productImages ?? product?.images ?? [],
         price: result?.ProductPrice ?? result?.productPrice ?? product?.price ?? 0,
         quantity: qty,
-        cartItemId: id
+        cartItemId: id,
+        createdAt: result?.CreatedAt ?? result?.createdAt ?? new Date().toISOString(),
       }
       if (idx >= 0) {
         const next = [...prev]
-        next[idx] = { ...next[idx], ...line }
+        next[idx] = { ...next[idx], ...line, createdAt: next[idx].createdAt ?? line.createdAt }
         return next
       }
       return [...prev, line]
