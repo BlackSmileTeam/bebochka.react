@@ -85,12 +85,13 @@
 
 .catalog-filters {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.35rem;
   margin: 0.35rem 0 0.8rem;
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  align-items: stretch;
 }
 
 .catalog-filters > * {
@@ -102,28 +103,41 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   width: 100%;
-  min-height: 34px;
+  min-height: 30px;
   border: 1px solid #d2d6dc;
-  border-radius: 8px;
-  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  padding: 0.2rem 0.35rem;
   background: #fff;
   color: #2d3748;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
+  line-height: 1.2;
   background-image:
     linear-gradient(45deg, transparent 50%, #718096 50%),
     linear-gradient(135deg, #718096 50%, transparent 50%);
   background-position:
-    calc(100% - 16px) calc(50% - 3px),
-    calc(100% - 10px) calc(50% - 3px);
-  background-size: 6px 6px, 6px 6px;
+    calc(100% - 12px) calc(50% - 2px),
+    calc(100% - 7px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
-  padding-right: 1.9rem;
+  padding-right: 1.45rem;
+}
+
+.catalog-filter-price-sort {
+  min-width: 0;
 }
 
 .catalog-filter-size-select,
 .catalog-filters .size-multi-select {
   min-width: 0;
   width: 100%;
+  font-size: 0.78rem;
+}
+
+.catalog-filters .size-multi-select__control {
+  min-height: 30px;
+  padding: 0.15rem 0.35rem;
+  font-size: 0.78rem;
+  border-radius: 6px;
 }
 
 .catalog-filter-sizes__list {

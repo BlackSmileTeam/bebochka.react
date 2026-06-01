@@ -46,6 +46,7 @@ function ReferralInvitedTable({ rows, myCode }) {
             <th>Имя</th>
             <th>Дата</th>
             <th>Код</th>
+            <th aria-label="Скидка" />
           </tr>
         </thead>
         <tbody>
@@ -55,6 +56,13 @@ function ReferralInvitedTable({ rows, myCode }) {
               <td>{formatReferralInviteDate(row.registeredAt ?? row.createdAt)}</td>
               <td>
                 <code className="profile-referral-invited-table__code">{myCode || '—'}</code>
+              </td>
+              <td>
+                {row.referrerDiscountUsed && (
+                  <span className="profile-referral-used-mark" title="Скидка за приглашение использована">
+                    скидка
+                  </span>
+                )}
               </td>
             </tr>
           ))}
@@ -698,7 +706,7 @@ function Profile() {
     } catch (err) {
       setReferralInfo((prev) => prev ?? {
         rules: REFERRAL_RULES_FALLBACK,
-        canApplyReferrerCode: true,
+        canApplyReferrerCode: orders.length === 0,
         referredBy: null,
         myCode: null,
       })
@@ -818,7 +826,9 @@ function Profile() {
       : PAYMENT_VK_URL
 
   const showReferrerInput =
-    !referralInfo?.referredBy && referralInfo?.canApplyReferrerCode !== false
+    orders.length === 0
+    && !referralInfo?.referredBy
+    && referralInfo?.canApplyReferrerCode !== false
 
   const copyPaymentOrderNumber = async () => {
     const text = String(paymentHintOrderNumber || '').trim()
@@ -1036,10 +1046,30 @@ function Profile() {
                     </div>
                   )}
                   {referralInfo?.referredBy && (
-                    <div className="profile-setting-row">
-                      <span className="profile-setting-row__label">Код пригласившего</span>
-                      <span className="profile-setting-row__value">{referralInfo.referredBy.code}</span>
-                    </div>
+                    <>
+                      <div className="profile-setting-row">
+                        <span className="profile-setting-row__label">Код пригласившего</span>
+                        <span className="profile-setting-row__value">{referralInfo.referredBy.code}</span>
+                      </div>
+                      {referralInfo.referredBy.discountUsed && (
+                        <p className="profile-referral-used-inline">
+                          <span className="profile-referral-used-mark" title="Скидка по приглашению использована">
+                            скидка
+                          </span>
+                          {' '}уже использована
+                        </p>
+                      )}
+                      {!referralInfo.referredBy.discountUsed && referralInfo.referredDiscountAvailable !== false && (
+                        <p className="profile-referral-first-order-hint">
+                          На первый заказ в корзине автоматически скидка −10% (старая сумма зачёркнута, итог — красным).
+                        </p>
+                      )}
+                      {!referralInfo.referredBy.discountUsed && referralInfo.hasPriorOrders && (
+                        <p className="profile-referral-used-inline">
+                          Скидка −10% по приглашению недоступна: в системе уже есть заказ (в том числе «ожидает оплату»).
+                        </p>
+                      )}
+                    </>
                   )}
                   {referralInfo?.myCode && !profileEditing && (
                     <ReferralMyCodeBlock
@@ -1549,6 +1579,15 @@ function Profile() {
                       )}
                       <br />
                       Статус: {referralInfo.referredBy.status}
+                      {referralInfo.referredBy.discountUsed && (
+                        <>
+                          <br />
+                          <span className="profile-referral-used-mark" title="Скидка по приглашению использована">
+                            скидка
+                          </span>
+                          {' '}использована
+                        </>
+                      )}
                     </p>
                   ) : showReferrerInput ? (
                     <form className="profile-referral-apply" onSubmit={handleApplyReferrerCode}>
@@ -1563,9 +1602,9 @@ function Profile() {
                         {referralBusy ? '…' : 'Сохранить'}
                       </button>
                     </form>
-                  ) : (
+                  ) : orders.length === 0 ? (
                     <p className="profile-muted">Код можно указать только до первого заказа, если вы ещё не пользовались сервисом.</p>
-                  )}
+                  ) : null}
                 </div>
 
                 {referralInfo?.invited?.length > 0 && (

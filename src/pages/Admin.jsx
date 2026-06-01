@@ -18,10 +18,10 @@ function Admin() {
             <h2>Управление пользователями</h2>
             <p>Создавайте администраторов и управляйте паролями</p>
           </Link>
-          <Link to="/admin/brands" className="admin-card">
+          <Link to="/admin/helpers" className="admin-card">
             <div className="admin-card-icon">🏷️</div>
-            <h2>Бренды</h2>
-            <p>Просмотр, добавление и редактирование брендов</p>
+            <h2>Помощники</h2>
+            <p>Бренды, состояния и цвета для списков при добавлении товара</p>
           </Link>
           <Link to="/admin/referrals" className="admin-card">
             <div className="admin-card-icon">🎁</div>

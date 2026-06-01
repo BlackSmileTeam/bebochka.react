@@ -26,6 +26,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     quantityInStock: 1,
     gender: 'мальчик',
     condition: '',
+    nuance: '',
     publishedAt: '',
     cartAvailableAt: '',
     boxNumber: '',
@@ -44,6 +45,13 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [brandSearch, setBrandSearch] = useState('')
   const [showBrandDropdown, setShowBrandDropdown] = useState(false)
   const brandDropdownRef = useRef(null)
+  const brandLockedRef = useRef(false)
+  const [conditions, setConditions] = useState([])
+  const [nuances, setNuances] = useState([])
+  const [nuanceSearch, setNuanceSearch] = useState('')
+  const [showNuanceDropdown, setShowNuanceDropdown] = useState(false)
+  const nuanceDropdownRef = useRef(null)
+  const nuanceLockedRef = useRef(false)
   const [nameSuggestions, setNameSuggestions] = useState([])
   const [showNameDropdown, setShowNameDropdown] = useState(false)
   const [allNameSuggestions, setAllNameSuggestions] = useState(DEFAULT_PRODUCT_NAME_SUGGESTIONS)
@@ -85,27 +93,83 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     console.log('[ProductForm] Colors prop received:', colors, 'Type:', typeof colors, 'IsArray:', Array.isArray(colors), 'Length:', colors?.length)
   }, [colors])
 
+  useEffect(() => {
+    let mounted = true
+    api.getProductConditions()
+      .then((rows) => {
+        if (!mounted) return
+        const names = rows.map((r) => r.name).filter(Boolean)
+        if (names.length > 0) setConditions(names)
+      })
+      .catch(() => {})
+    return () => { mounted = false }
+  }, [])
+
+  const isNuanceCondition = (formData.condition || '').trim().toLowerCase() === 'нюанс'
+
   // Load brands when brand search changes
   useEffect(() => {
-    if (brandSearch) {
-      // Update formData.brand with what user types
-      setFormData(prev => ({ ...prev, brand: brandSearch }))
-      
-      // Load brands from API
-      api.getBrands(brandSearch).then(data => {
-        setBrands(data)
-        setShowBrandDropdown(data.length > 0)
-      }).catch(err => {
-        console.error('Error loading brands:', err)
-        setBrands([])
-        setShowBrandDropdown(false)
-      })
-    } else {
+    const query = brandSearch.trim()
+    if (!query) {
       setBrands([])
       setShowBrandDropdown(false)
+      brandLockedRef.current = false
       setFormData(prev => ({ ...prev, brand: '' }))
+      return
     }
+
+    setFormData(prev => ({ ...prev, brand: brandSearch }))
+
+    if (brandLockedRef.current) {
+      setBrands([])
+      setShowBrandDropdown(false)
+      return
+    }
+
+    api.getBrands(query).then(data => {
+      const filtered = data.filter((brand) => {
+        const brandName = typeof brand === 'string' ? brand : (brand.name || brand.Name || '')
+        return brandName.trim().toLowerCase() !== query.toLowerCase()
+      })
+      setBrands(filtered)
+      setShowBrandDropdown(filtered.length > 0)
+    }).catch(err => {
+      console.error('Error loading brands:', err)
+      setBrands([])
+      setShowBrandDropdown(false)
+    })
   }, [brandSearch])
+
+  useEffect(() => {
+    if (!isNuanceCondition) {
+      setNuances([])
+      setShowNuanceDropdown(false)
+      return
+    }
+    const query = nuanceSearch.trim()
+    if (!query) {
+      setNuances([])
+      setShowNuanceDropdown(false)
+      return
+    }
+    setFormData(prev => ({ ...prev, nuance: nuanceSearch }))
+    if (nuanceLockedRef.current) {
+      setNuances([])
+      setShowNuanceDropdown(false)
+      return
+    }
+    api.getProductNuances(query).then((rows) => {
+      const filtered = rows.filter((row) => {
+        const name = row.name || ''
+        return name.trim().toLowerCase() !== query.toLowerCase()
+      })
+      setNuances(filtered)
+      setShowNuanceDropdown(filtered.length > 0)
+    }).catch(() => {
+      setNuances([])
+      setShowNuanceDropdown(false)
+    })
+  }, [nuanceSearch, isNuanceCondition])
 
   useEffect(() => {
     let mounted = true
@@ -146,6 +210,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     const handleClickOutside = (event) => {
       if (brandDropdownRef.current && !brandDropdownRef.current.contains(event.target)) {
         setShowBrandDropdown(false)
+      }
+      if (nuanceDropdownRef.current && !nuanceDropdownRef.current.contains(event.target)) {
+        setShowNuanceDropdown(false)
       }
       if (nameDropdownRef.current && !nameDropdownRef.current.contains(event.target)) {
         setShowNameDropdown(false)
@@ -198,6 +265,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         quantityInStock: product.quantityInStock || 1,
         gender: product.gender || 'мальчик',
         condition: product.condition || '',
+        nuance: product.nuance || '',
         publishedAt: publishedAtValue,
         cartAvailableAt: cartAtValue,
         boxNumber: product.boxNumber || '',
@@ -207,6 +275,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       setScheduleSend(TELEGRAM_UI_ENABLED && !!(product.publishedAt || product.PublishedAt))
       setScheduleCartUnlock(!!(product.cartAvailableAt || product.CartAvailableAt))
       setBrandSearch(product.brand || '')
+      brandLockedRef.current = !!(product.brand || '').trim()
+      setNuanceSearch(product.nuance || '')
+      nuanceLockedRef.current = !!(product.nuance || '').trim()
       setExistingImages(product.images || [])
     } else {
       setScheduleSend(false)
@@ -221,6 +292,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         quantityInStock: 1,
         gender: 'мальчик',
         condition: '',
+        nuance: '',
         publishedAt: '',
         cartAvailableAt: '',
         boxNumber: '',
@@ -228,16 +300,24 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         incomingShipmentId: ''
       })
       setBrandSearch('')
+      brandLockedRef.current = false
+      setNuanceSearch('')
+      nuanceLockedRef.current = false
       setExistingImages([])
     }
   }, [product])
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => {
+      const next = { ...prev, [name]: value }
+      if (name === 'condition' && value.trim().toLowerCase() !== 'нюанс') {
+        next.nuance = ''
+        setNuanceSearch('')
+        nuanceLockedRef.current = false
+      }
+      return next
+    })
   }
 
   const handleImageChange = (e) => {
@@ -276,6 +356,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('quantityInStock', formData.quantityInStock || 1)
       formDataToSend.append('gender', formData.gender || '')
       formDataToSend.append('condition', formData.condition || '')
+      if ((formData.condition || '').trim().toLowerCase() === 'нюанс' && (formData.nuance || nuanceSearch).trim()) {
+        formDataToSend.append('nuance', (formData.nuance || nuanceSearch).trim())
+      }
       formDataToSend.append('boxNumber', formData.boxNumber || '')
       formDataToSend.append('owner', formData.owner || '')
       formDataToSend.append('incomingShipmentId', formData.incomingShipmentId === '' ? '' : formData.incomingShipmentId)
@@ -540,10 +623,11 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 name="brand"
                 value={brandSearch}
                 onChange={(e) => {
+                  brandLockedRef.current = false
                   setBrandSearch(e.target.value)
                 }}
                 onFocus={() => {
-                  if (brandSearch && brands.length > 0) {
+                  if (!brandLockedRef.current && brandSearch && brands.length > 0) {
                     setShowBrandDropdown(true)
                   }
                 }}
@@ -587,8 +671,10 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                         key={brandId}
                         onMouseDown={(e) => {
                           e.preventDefault()
+                          brandLockedRef.current = true
                           setFormData(prev => ({ ...prev, brand: brandName }))
                           setBrandSearch(brandName)
+                          setBrands([])
                           setShowBrandDropdown(false)
                         }}
                         style={{
@@ -746,14 +832,85 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               onChange={handleChange}
             >
               <option value="">Выберите состояние</option>
-              <option value="новая вещь">Новая вещь</option>
-              <option value="состояние новой вещи">Состояние новой вещи</option>
-              <option value="очень хорошее">Очень хорошее</option>
-              <option value="отличное">Отличное</option>
-              <option value="хорошее">Хорошее</option>
-              <option value="нюанс">Нюанс</option>
+              {(conditions.length > 0 ? conditions : [
+                'новая вещь',
+                'состояние новой вещи',
+                'очень хорошее',
+                'отличное',
+                'хорошее',
+                'нюанс',
+              ]).map((name) => (
+                <option key={name} value={name}>
+                  {name === 'нюанс' ? 'Нюанс' : name.charAt(0).toUpperCase() + name.slice(1)}
+                </option>
+              ))}
             </select>
           </div>
+
+          {isNuanceCondition && (
+            <div className="form-group">
+              <label htmlFor="nuance">Нюансы</label>
+              <div ref={nuanceDropdownRef} style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type="text"
+                  id="nuance"
+                  name="nuance"
+                  value={nuanceSearch}
+                  onChange={(e) => {
+                    nuanceLockedRef.current = false
+                    setNuanceSearch(e.target.value)
+                  }}
+                  onFocus={() => {
+                    if (!nuanceLockedRef.current && nuanceSearch && nuances.length > 0) {
+                      setShowNuanceDropdown(true)
+                    }
+                  }}
+                  placeholder="Выберите или введите нюанс"
+                  style={{ width: '100%' }}
+                />
+                {showNuanceDropdown && nuances.length > 0 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    width: '100%',
+                    backgroundColor: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    zIndex: 1000,
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                    marginTop: '4px'
+                  }}>
+                    {nuances.map((row) => (
+                      <div
+                        key={row.id}
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          nuanceLockedRef.current = true
+                          setFormData(prev => ({ ...prev, nuance: row.name }))
+                          setNuanceSearch(row.name)
+                          setNuances([])
+                          setShowNuanceDropdown(false)
+                        }}
+                        style={{
+                          padding: '0.75rem',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #e2e8f0',
+                          color: '#2d3748',
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        {row.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="description">Краткое описание</label>

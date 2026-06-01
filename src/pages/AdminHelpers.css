@@ -1,0 +1,31 @@
+.admin-helpers-lead {
+  margin: 0 0 1rem;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.admin-helpers-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.admin-helpers-tab {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-helpers-tab--active {
+  background: #667eea;
+  border-color: #667eea;
+  color: #fff;
+}
+
+.admin-helpers-panel {
+  margin-top: 0.25rem;
+}

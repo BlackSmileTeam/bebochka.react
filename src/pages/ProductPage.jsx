@@ -6,6 +6,7 @@ import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import { getSessionId } from '../utils/sessionId'
 import { usePageSeo, getProductStockCount } from '../utils/seo'
+import ProductPriceDisplay from '../components/ProductPriceDisplay'
 import './InfoPages.css'
 
 const SITE_URL = 'https://bebochka.ru'
@@ -138,7 +139,10 @@ export default function ProductPage() {
             <p><strong>Размер:</strong> {product.size || '—'}</p>
             <p><strong>Состояние:</strong> {formatCondition(product.condition)}</p>
             <p><strong>Цвет:</strong> {product.color || '—'}</p>
-            <p><strong>Цена:</strong> {(product.price ?? 0).toLocaleString('ru-RU')} ₽</p>
+            {product.nuance && (
+              <p><strong>Нюанс:</strong> {product.nuance}</p>
+            )}
+            <p><strong>Цена:</strong> <ProductPriceDisplay product={product} /></p>
           </section>
         </>
       )}

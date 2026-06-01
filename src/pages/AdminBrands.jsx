@@ -9,6 +9,23 @@ function getBrandName(brand) {
   return (brand.name ?? brand.Name ?? '').trim()
 }
 
+function getBrandProductCount(brand) {
+  const n = brand.productCount ?? brand.ProductCount
+  return Number.isFinite(Number(n)) ? Number(n) : 0
+}
+
+function formatProductCountShort(count) {
+  const n = Number(count) || 0
+  const mod10 = n % 10
+  const mod100 = n % 100
+  let word = 'товаров'
+  if (mod100 < 11 || mod100 > 14) {
+    if (mod10 === 1) word = 'товар'
+    else if (mod10 >= 2 && mod10 <= 4) word = 'товара'
+  }
+  return `${n} ${word}`
+}
+
 function getBrandLetter(name) {
   const n = (name || '').trim()
   if (!n) return '#'
@@ -178,8 +195,9 @@ export default function AdminBrands() {
   const renderBrandRow = (brand) => {
     const id = brand.id ?? brand.Id
     const isEditing = editingId === id
+    const menuOpen = openMenuId === id
     return (
-      <li key={id} className="admin-brands-row">
+      <li key={id} className={`admin-brands-row${menuOpen ? ' admin-brands-row--menu-open' : ''}`}>
         <span className="admin-brands-row__id">{id}</span>
         <div className="admin-brands-row__name">
           {isEditing ? (
@@ -191,7 +209,12 @@ export default function AdminBrands() {
               disabled={saving}
             />
           ) : (
-            getBrandName(brand)
+            <>
+              <span className="admin-brands-row__title">{getBrandName(brand)}</span>
+              <span className="admin-brands-row__products">
+                ({formatProductCountShort(getBrandProductCount(brand))})
+              </span>
+            </>
           )}
         </div>
         <div className="admin-brands-row__actions">
@@ -207,21 +230,21 @@ export default function AdminBrands() {
               </button>
             </div>
           ) : (
-            <div className="admin-brands-menu-wrap">
+            <div className={`admin-brands-menu-wrap${menuOpen ? ' admin-brands-menu-wrap--open' : ''}`}>
               <button
                 type="button"
                 className="admin-brands-menu-trigger"
                 aria-label="Действия"
-                aria-expanded={openMenuId === id}
+                aria-expanded={menuOpen}
                 onClick={(e) => {
                   e.stopPropagation()
-                  setOpenMenuId(openMenuId === id ? null : id)
+                  setOpenMenuId(menuOpen ? null : id)
                 }}
                 disabled={saving}
               >
                 ⋮
               </button>
-              {openMenuId === id && (
+              {menuOpen && (
                 <div className="admin-brands-menu" role="menu">
                   <button type="button" className="admin-brands-menu-item" role="menuitem" onClick={() => startEdit(brand)} disabled={saving}>
                     <EditIcon />

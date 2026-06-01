@@ -6,7 +6,15 @@ import ProductDetail from '../components/ProductDetail'
 import PageShell from '../components/PageShell'
 import CartReservationTimer from '../components/CartReservationTimer'
 import { buildCatalogFilterSearch } from '../utils/catalogFilters'
+import CartReferralDiscountPanel, { ReferralDiscountTotals } from '../components/CartReferralDiscount'
+import { getReferralDiscountSelection } from '../utils/referralDiscountStorage'
+import {
+  mergeCartReferralOptions,
+  resolveReferralSelection,
+  getDisplayReferralSelection,
+} from '../utils/referralCartDiscount'
 import './Cart.css'
+import '../components/CartReferralDiscount.css'
 
 function Cart() {
   const navigate = useNavigate()
@@ -16,6 +24,13 @@ function Cart() {
   const [queueCancellingId, setQueueCancellingId] = useState(null)
   const [detailProduct, setDetailProduct] = useState(null)
   const [detailLoadingId, setDetailLoadingId] = useState(null)
+  const [referralOptions, setReferralOptions] = useState([])
+  const [referralOptionsLoading, setReferralOptionsLoading] = useState(false)
+  const [referralLoadError, setReferralLoadError] = useState(null)
+  const [referralProfile, setReferralProfile] = useState(null)
+  const [referralSelection, setReferralSelection] = useState(() => getReferralDiscountSelection())
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('authToken'))
+  const displayReferralSelection = getDisplayReferralSelection(referralSelection, referralProfile)
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   const getAvailableQuantity = (product) =>
@@ -67,6 +82,56 @@ function Cart() {
   useEffect(() => {
     loadQueue()
   }, [])
+
+  const loadReferralDiscountOptions = async () => {
+    const token = localStorage.getItem('authToken')
+    setIsLoggedIn(!!token)
+    if (!token || cartItems.length === 0) {
+      setReferralOptions([])
+      setReferralLoadError(null)
+      setReferralOptionsLoading(false)
+      return
+    }
+    setReferralOptionsLoading(true)
+    setReferralLoadError(null)
+    try {
+      const profile = await api.getMyReferralInfo()
+      setReferralProfile(profile)
+      let apiOpts = profile?.cartDiscountOptions ?? []
+      if (!apiOpts.length) {
+        try {
+          apiOpts = await api.getCartReferralDiscounts()
+        } catch (optsErr) {
+          const status = optsErr?.response?.status
+          if (status !== 404 && status !== 405) {
+            setReferralLoadError(optsErr?.message || 'Не удалось загрузить реферальные скидки')
+          }
+        }
+      }
+      const merged = mergeCartReferralOptions(apiOpts, profile)
+      setReferralOptions(merged)
+      setReferralSelection(resolveReferralSelection(merged, profile))
+    } catch (e) {
+      setReferralProfile(null)
+      setReferralOptions([])
+      setReferralLoadError(e?.message || 'Не удалось загрузить реферальные скидки')
+    } finally {
+      setReferralOptionsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadReferralDiscountOptions()
+  }, [cartItems.length])
+
+  useEffect(() => {
+    const onAuth = () => {
+      setIsLoggedIn(!!localStorage.getItem('authToken'))
+      loadReferralDiscountOptions()
+    }
+    window.addEventListener('bebochka-auth', onAuth)
+    return () => window.removeEventListener('bebochka-auth', onAuth)
+  }, [cartItems.length])
 
   const cancelQueue = async (queueItemId) => {
     try {
@@ -168,9 +233,11 @@ function Cart() {
                 </div>
 
                 <div className="cart-item-price">
-                  <div className="item-total-price">
-                    {((item.price || 0) * (item.quantity || 1)).toLocaleString('ru-RU')} ₽
-                  </div>
+                  <ReferralDiscountTotals
+                    total={(item.price || 0) * (item.quantity || 1)}
+                    selection={displayReferralSelection}
+                    className="cart-item-price-totals"
+                  />
                 </div>
 
                 <button
@@ -257,13 +324,28 @@ function Cart() {
         {cartItems.length > 0 && (
           <div className="cart-summary">
             <h2>Итого</h2>
-            <div className="summary-row">
+            <div className="summary-row summary-row--positions">
               <span>Позиций:</span>
               <span>{cartItems.length}</span>
             </div>
+            <CartReferralDiscountPanel
+              options={referralOptions}
+              loading={referralOptionsLoading}
+              loadError={referralLoadError}
+              isAuthenticated={isLoggedIn}
+              referredBy={referralProfile?.referredBy}
+              referredDiscountAvailable={referralProfile?.referredDiscountAvailable}
+              hasPriorOrders={referralProfile?.hasPriorOrders}
+              total={getTotalPrice()}
+              selection={displayReferralSelection}
+              onSelectionChange={setReferralSelection}
+            />
             <div className="summary-row summary-total">
               <span>Сумма:</span>
-              <span>{getTotalPrice().toLocaleString('ru-RU')} ₽</span>
+              <ReferralDiscountTotals
+                total={getTotalPrice()}
+                selection={displayReferralSelection}
+              />
             </div>
             <div className="cart-summary-actions">
               <CartReservationTimer cartItems={cartItems} compact />

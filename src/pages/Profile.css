@@ -612,6 +612,31 @@
   background: #f7fafc;
 }
 
+.profile-referral-used-inline {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #718096;
+}
+
+.profile-referral-used-mark {
+  display: inline;
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.profile-referral-used-mark::before {
+  content: '✓ ';
+  color: #38a169;
+}
+
+.profile-referral-invited-table th:last-child,
+.profile-referral-invited-table td:last-child {
+  width: 3.5rem;
+  text-align: center;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
 .profile-referral-invited-table__code {
   font-size: 0.85rem;
   letter-spacing: 0.03em;

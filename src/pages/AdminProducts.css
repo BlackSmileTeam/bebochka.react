@@ -24,6 +24,34 @@
   }
 }
 
+.admin-discount-toolbar {
+  flex: 1 1 100%;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-discount-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-discount-input {
+  width: 4.5rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.btn-discount-open .btn-toolbar-icon__icon {
+  flex-shrink: 0;
+}
+
 .admin-page-header-actions--with-send .send-channel-wrapper {
   flex: 1 1 100%;
   width: 100%;

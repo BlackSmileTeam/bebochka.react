@@ -10,10 +10,13 @@ import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CatalogBuyButton from '../components/CatalogBuyButton'
 import ProductImage from '../components/ProductImage'
+import ProductPriceDisplay from '../components/ProductPriceDisplay'
 import ProductMetaFilter from '../components/ProductMetaFilter'
 import SizeMultiSelect, { parseSizeValue } from '../components/SizeMultiSelect'
 import { usePageSeo } from '../utils/seo'
 import { catalogFiltersFromSearchParams, countActiveCatalogFilters, toggleSizeFilter, buildFiltersFromChildren, readAutoFilterEnabled, productMatchesCatalogFilters, normalizeGender } from '../utils/catalogFilters'
+import { DEFAULT_CATALOG_FILTERS, readCatalogStateFromSession, saveCatalogStateToSession, hasStoredCatalogFilters } from '../utils/catalogFilterStorage'
+import { getProductPriceInfo } from '../utils/productPrice'
 import './Home.css'
 
 const CONDITION_PRIORITY = {
@@ -47,12 +50,13 @@ function Home() {
   const [toast, setToast] = useState(null)
   const [page, setPage] = useState(1)
   const loadMoreRef = useRef(null)
-  const [filters, setFilters] = useState({
-    brand: '',
-    size: [],
-    color: '',
-    gender: '',
-    condition: ''
+  const [filters, setFilters] = useState(() => {
+    const stored = readCatalogStateFromSession()
+    return stored?.filters ?? { ...DEFAULT_CATALOG_FILTERS }
+  })
+  const [priceSort, setPriceSort] = useState(() => {
+    const stored = readCatalogStateFromSession()
+    return stored?.priceSort ?? ''
   })
   const [filtersOpen, setFiltersOpen] = useState(false)
   const { addToCart, sessionId, cartItems } = useCart()
@@ -72,13 +76,8 @@ function Home() {
   )
 
   const resetCatalogFilters = () => {
-    setFilters({
-      brand: '',
-      size: [],
-      color: '',
-      gender: '',
-      condition: ''
-    })
+    setFilters({ ...DEFAULT_CATALOG_FILTERS })
+    setPriceSort('')
   }
 
   const applyCatalogFilter = (key, value) => {
@@ -102,8 +101,13 @@ function Home() {
     }
   }, [searchParams])
 
+  useEffect(() => {
+    saveCatalogStateToSession({ filters, priceSort })
+  }, [filters, priceSort])
+
   const applyAutoFilterFromChildren = useCallback(async () => {
     if (countActiveCatalogFilters(catalogFiltersFromSearchParams(searchParams)) > 0) return
+    if (hasStoredCatalogFilters()) return
     const token = localStorage.getItem('authToken')
     if (!token) return
 
@@ -275,8 +279,16 @@ function Home() {
   }, [products])
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => productMatchesCatalogFilters(product, filters))
-  }, [products, filters])
+    const list = products.filter((product) => productMatchesCatalogFilters(product, filters))
+    if (priceSort !== 'asc' && priceSort !== 'desc') return list
+    const dir = priceSort === 'asc' ? 1 : -1
+    return [...list].sort((a, b) => {
+      const pa = getProductPriceInfo(a).finalPrice
+      const pb = getProductPriceInfo(b).finalPrice
+      if (pa !== pb) return (pa - pb) * dir
+      return String(a.name || '').localeCompare(String(b.name || ''), 'ru')
+    })
+  }, [products, filters, priceSort])
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE))
   const hasMoreProducts = page < totalPages
@@ -288,7 +300,7 @@ function Home() {
 
   useEffect(() => {
     setPage(1)
-  }, [filters, products.length])
+  }, [filters, priceSort, products.length])
 
   useEffect(() => {
     if (!hasMoreProducts) return
@@ -408,6 +420,17 @@ function Home() {
                 {formatCondition(condition)}
               </option>
             ))}
+          </select>
+          <select
+            className="catalog-filter-price-sort"
+            value={priceSort}
+            onChange={(e) => setPriceSort(e.target.value)}
+            aria-label="Сортировка по цене"
+            title="Сортировка по цене"
+          >
+            <option value="">Цена</option>
+            <option value="asc">↑ Дешевле</option>
+            <option value="desc">↓ Дороже</option>
           </select>
         </div>
       </div>
@@ -530,7 +553,7 @@ function Home() {
                 </div>
                 <div className="product-footer">
                   <div className="product-price">
-                    {(product.price ?? 0).toLocaleString('ru-RU')} ₽
+                    <ProductPriceDisplay product={product} />
                   </div>
                 <CatalogBuyButton
                   product={product}

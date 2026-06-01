@@ -5,6 +5,7 @@ import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CartCountdown, { useCartCountdown } from './CartCountdown'
 import { CartButtonIcon } from './CatalogBuyButton'
 import ProductImage from './ProductImage'
+import ProductPriceDisplay from './ProductPriceDisplay'
 import ProductMetaFilter from './ProductMetaFilter'
 import Toast from './Toast'
 import './ProductDetail.css'
@@ -308,8 +309,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
             
             <div className="product-detail-footer">
               <div className="product-detail-price">
-                <span className="product-detail-price-value">{(product.price ?? 0).toLocaleString('ru-RU')}</span>
-                <span className="product-detail-price-currency">&nbsp;₽</span>
+                <ProductPriceDisplay product={product} className="product-detail-price-display" />
               </div>
               {showPrimaryCartButton && (
                 <button

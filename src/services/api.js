@@ -154,6 +154,9 @@ export const api = {
         availableQuantity: product.availableQuantity !== undefined ? product.availableQuantity : (product.AvailableQuantity !== undefined ? product.AvailableQuantity : product.quantityInStock || product.QuantityInStock || 1),
         gender: product.gender || product.Gender || null,
         condition: product.condition || product.Condition || null,
+        nuance: product.nuance ?? product.Nuance ?? null,
+        discountPercent: product.discountPercent ?? product.DiscountPercent ?? null,
+        finalPrice: product.finalPrice ?? product.FinalPrice ?? null,
         publishedAt: product.publishedAt || product.PublishedAt || null,
         cartAvailableAt: product.cartAvailableAt ?? product.CartAvailableAt ?? null,
         cartUnlocked: product.cartUnlocked !== undefined ? product.cartUnlocked : (product.CartUnlocked !== undefined ? product.CartUnlocked : true),
@@ -209,6 +212,9 @@ export const api = {
         availableQuantity: product.availableQuantity !== undefined ? product.availableQuantity : (product.AvailableQuantity !== undefined ? product.AvailableQuantity : product.quantityInStock || product.QuantityInStock || 1),
         gender: product.gender || product.Gender || null,
         condition: product.condition || product.Condition || null,
+        nuance: product.nuance ?? product.Nuance ?? null,
+        discountPercent: product.discountPercent ?? product.DiscountPercent ?? null,
+        finalPrice: product.finalPrice ?? product.FinalPrice ?? null,
         boxNumber: product.boxNumber ?? product.BoxNumber ?? null,
         owner: product.owner ?? product.Owner ?? null,
         incomingShipmentId: product.incomingShipmentId ?? product.IncomingShipmentId ?? null,
@@ -265,6 +271,9 @@ export const api = {
         availableQuantity: d.availableQuantity !== undefined ? d.availableQuantity : (d.AvailableQuantity !== undefined ? d.AvailableQuantity : d.quantityInStock ?? d.QuantityInStock ?? 1),
         gender: d.gender || d.Gender || null,
         condition: d.condition || d.Condition || null,
+        nuance: d.nuance ?? d.Nuance ?? null,
+        discountPercent: d.discountPercent ?? d.DiscountPercent ?? null,
+        finalPrice: d.finalPrice ?? d.FinalPrice ?? null,
         createdAt: d.createdAt || d.CreatedAt,
         updatedAt: d.updatedAt || d.UpdatedAt,
         publishedAt: d.publishedAt || d.PublishedAt || null,
@@ -341,6 +350,8 @@ export const api = {
         quantityInStock: parseInt(formData.get('quantityInStock') || 1),
         gender: formData.get('gender') || null,
         condition: formData.get('condition') || null,
+        nuance: formData.get('nuance') || null,
+        discountPercent: formData.get('discountPercent') ? parseInt(formData.get('discountPercent'), 10) : null,
         publishedAt: formData.get('publishedAt') || null,
         cartAvailableAt: formData.get('cartAvailableAt') || null,
         boxNumber: formData.get('boxNumber') || null,
@@ -460,6 +471,8 @@ export const api = {
         quantityInStock: parseInt(formData.get('quantityInStock') || 1),
         gender: formData.get('gender') || null,
         condition: formData.get('condition') || null,
+        nuance: formData.get('nuance') || null,
+        discountPercent: formData.get('discountPercent') ? parseInt(formData.get('discountPercent'), 10) : null,
         publishedAt: formData.get('publishedAt') || null,
         cartAvailableAt: formData.get('cartAvailableAt') || null,
         boxNumber: formData.get('boxNumber') || null,
@@ -664,6 +677,18 @@ export const api = {
     }
   },
 
+  getLoggedInUserId() {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}')
+      const id = u.userId ?? u.UserId ?? u.id ?? u.Id
+      if (id == null || id === '') return null
+      const n = Number(id)
+      return Number.isFinite(n) ? n : null
+    } catch {
+      return null
+    }
+  },
+
   _applyAuthPayload(data) {
     const d = data || {}
     const normalized = {
@@ -695,10 +720,17 @@ export const api = {
     const referredByRaw = d.referredBy ?? d.ReferredBy ?? null
     const referredBy = referredByRaw
       ? {
+          referralId:
+            referredByRaw.referralId
+            ?? referredByRaw.ReferralId
+            ?? referredByRaw.id
+            ?? referredByRaw.Id
+            ?? null,
           code: referredByRaw.code ?? referredByRaw.Code ?? '',
           referrerName: referredByRaw.referrerName ?? referredByRaw.ReferrerName ?? null,
           status: referredByRaw.status ?? referredByRaw.Status ?? '',
           appliedAt: referredByRaw.appliedAt ?? referredByRaw.AppliedAt ?? null,
+          discountUsed: !!(referredByRaw.discountUsed ?? referredByRaw.DiscountUsed),
         }
       : null
     const invited = Array.isArray(d.invited ?? d.Invited)
@@ -709,16 +741,25 @@ export const api = {
           createdAt: row.createdAt ?? row.CreatedAt,
           registeredAt: row.registeredAt ?? row.RegisteredAt ?? null,
           referrerRewardAmount: row.referrerRewardAmount ?? row.ReferrerRewardAmount ?? null,
+          referrerDiscountUsed: !!(row.referrerDiscountUsed ?? row.ReferrerDiscountUsed),
         }))
       : []
 
     return {
       myCode: d.myCode ?? d.MyCode ?? null,
       canGenerateCode: !!(d.canGenerateCode ?? d.CanGenerateCode),
+      referredDiscountAvailable: (() => {
+        const v = d.referredDiscountAvailable ?? d.ReferredDiscountAvailable
+        return v === undefined || v === null ? null : !!v
+      })(),
+      hasPriorOrders: !!(d.hasPriorOrders ?? d.HasPriorOrders),
       canApplyReferrerCode: !!(d.canApplyReferrerCode ?? d.CanApplyReferrerCode),
       invitedCount: d.invitedCount ?? d.InvitedCount ?? invited.length,
       invited,
       referredBy,
+      cartDiscountOptions: this._normalizeCartReferralDiscounts(
+        d.cartDiscountOptions ?? d.CartDiscountOptions ?? []
+      ),
       rules: d.rules ?? d.Rules ?? '',
     }
   },
@@ -894,6 +935,44 @@ export const api = {
 
   async deleteMyChild(id) {
     await apiClient.delete(`/profile/children/${id}`)
+  },
+
+  _normalizeCartReferralDiscounts(data) {
+    const list = Array.isArray(data) ? data : []
+    return list.map((row) => ({
+      referralId: row.referralId ?? row.ReferralId,
+      kind: row.kind ?? row.Kind ?? '',
+      label: row.label ?? row.Label ?? '',
+      forUserName: row.forUserName ?? row.ForUserName ?? null,
+      discountPercent: row.discountPercent ?? row.DiscountPercent ?? 10,
+    }))
+  },
+
+  async getCartReferralDiscounts() {
+    if (!localStorage.getItem('authToken')) {
+      return []
+    }
+    const paths = ['/profile/referral/cart-discounts', '/referral/cart-discounts']
+    for (const path of paths) {
+      try {
+        const response = await apiClient.get(path)
+        return this._normalizeCartReferralDiscounts(response.data)
+      } catch (error) {
+        const status = error.response?.status
+        if (status === 404 || status === 405) continue
+        const msg = extractApiError(error, 'Не удалось загрузить реферальные скидки')
+        throw new Error(msg)
+      }
+    }
+    try {
+      const profile = await this.getMyReferralInfo()
+      if (profile?.cartDiscountOptions?.length) {
+        return profile.cartDiscountOptions
+      }
+    } catch (_) {
+      /* профиль недоступен */
+    }
+    return []
   },
 
   async getMyReferralInfo() {
@@ -1505,6 +1584,74 @@ export const api = {
     } catch (error) {
       throw new Error(extractApiError(error, 'Не удалось удалить бренд'))
     }
+  },
+
+  _normalizeLookupList(data) {
+    const list = Array.isArray(data) ? data : []
+    return list.map((row) => ({
+      id: row.id ?? row.Id,
+      name: row.name ?? row.Name ?? '',
+      productCount: row.productCount ?? row.ProductCount ?? 0,
+    }))
+  },
+
+  async getProductColors(search = null) {
+    const params = search ? { search } : {}
+    const response = await apiClient.get('/product-colors', { params })
+    return this._normalizeLookupList(response.data)
+  },
+
+  async createProductColor(name) {
+    const response = await apiClient.post('/product-colors', { name })
+    return this._normalizeLookupList([response.data])[0]
+  },
+
+  async updateProductColor(id, name) {
+    const response = await apiClient.put(`/product-colors/${id}`, { name })
+    return this._normalizeLookupList([response.data])[0]
+  },
+
+  async deleteProductColor(id) {
+    await apiClient.delete(`/product-colors/${id}`)
+  },
+
+  async getProductConditions(search = null) {
+    const params = search ? { search } : {}
+    const response = await apiClient.get('/product-conditions', { params })
+    return this._normalizeLookupList(response.data)
+  },
+
+  async createProductCondition(name) {
+    const response = await apiClient.post('/product-conditions', { name })
+    return this._normalizeLookupList([response.data])[0]
+  },
+
+  async updateProductCondition(id, name) {
+    const response = await apiClient.put(`/product-conditions/${id}`, { name })
+    return this._normalizeLookupList([response.data])[0]
+  },
+
+  async deleteProductCondition(id) {
+    await apiClient.delete(`/product-conditions/${id}`)
+  },
+
+  async getProductNuances(search = null) {
+    const params = search ? { search } : {}
+    const response = await apiClient.get('/product-nuances', { params })
+    return this._normalizeLookupList(response.data)
+  },
+
+  async createProductNuance(name) {
+    const response = await apiClient.post('/product-nuances', { name })
+    return this._normalizeLookupList([response.data])[0]
+  },
+
+  async applyBulkProductDiscount(productIds, discountPercent) {
+    const response = await apiClient.post('/products/admin/bulk-discount', {
+      productIds,
+      discountPercent: discountPercent ?? null,
+    })
+    return response.data
   },
 
   /**

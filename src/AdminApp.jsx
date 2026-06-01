@@ -13,7 +13,8 @@ const AdminReviews = lazy(() => import('./pages/AdminReviews'))
 const AdminIncomingShipments = lazy(() => import('./pages/AdminIncomingShipments'))
 const AdminBackup = lazy(() => import('./pages/AdminBackup'))
 const AdminReferrals = lazy(() => import('./pages/AdminReferrals'))
-const AdminBrands = lazy(() => import('./pages/AdminBrands'))
+const AdminHelpers = lazy(() => import('./pages/AdminHelpers'))
+const AdminBrands = lazy(() => import('./pages/AdminHelpers'))
 
 function LazyAdminPage({ children }) {
   return <Suspense fallback={<RouteFallback />}>{children}</Suspense>
@@ -33,6 +34,7 @@ export default function AdminApp() {
       <Route path="incoming-shipments" element={<LazyAdminPage><AdminIncomingShipments /></LazyAdminPage>} />
       <Route path="backup" element={<LazyAdminPage><AdminBackup /></LazyAdminPage>} />
       <Route path="referrals" element={<LazyAdminPage><AdminReferrals /></LazyAdminPage>} />
+      <Route path="helpers" element={<LazyAdminPage><AdminHelpers /></LazyAdminPage>} />
       <Route path="brands" element={<LazyAdminPage><AdminBrands /></LazyAdminPage>} />
       <Route path="telegram-errors" element={<LazyAdminPage><AdminTelegramErrors /></LazyAdminPage>} />
     </Routes>

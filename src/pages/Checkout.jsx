@@ -4,7 +4,15 @@ import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import CartReservationTimer from '../components/CartReservationTimer'
+import CartReferralDiscountPanel, { ReferralDiscountTotals } from '../components/CartReferralDiscount'
+import { getReferralDiscountSelection, clearReferralDiscountSelection } from '../utils/referralDiscountStorage'
+import {
+  mergeCartReferralOptions,
+  resolveReferralSelection,
+  getDisplayReferralSelection,
+} from '../utils/referralCartDiscount'
 import './Checkout.css'
+import '../components/CartReferralDiscount.css'
 
 function formatPhoneRu(value) {
   const digitsOnly = String(value || '').replace(/\D/g, '')
@@ -45,6 +53,13 @@ function Checkout() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [referralOptions, setReferralOptions] = useState([])
+  const [referralOptionsLoading, setReferralOptionsLoading] = useState(false)
+  const [referralLoadError, setReferralLoadError] = useState(null)
+  const [referralProfile, setReferralProfile] = useState(null)
+  const [referralSelection, setReferralSelection] = useState(() => getReferralDiscountSelection())
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('authToken'))
+  const displayReferralSelection = getDisplayReferralSelection(referralSelection, referralProfile)
 
   useEffect(() => {
     let cancelled = false
@@ -84,6 +99,51 @@ function Checkout() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    const token = localStorage.getItem('authToken')
+    setIsLoggedIn(!!token)
+    if (!token || cartItems.length === 0) {
+      setReferralOptions([])
+      setReferralLoadError(null)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      setReferralOptionsLoading(true)
+      setReferralLoadError(null)
+      try {
+        if (cancelled) return
+        const profile = await api.getMyReferralInfo()
+        setReferralProfile(profile)
+        let apiOpts = profile?.cartDiscountOptions ?? []
+        if (!apiOpts.length) {
+          try {
+            apiOpts = await api.getCartReferralDiscounts()
+          } catch (optsErr) {
+            const status = optsErr?.response?.status
+            if (status !== 404 && status !== 405) {
+              setReferralLoadError(
+                optsErr?.message || 'Не удалось загрузить реферальные скидки'
+              )
+            }
+          }
+        }
+        const merged = mergeCartReferralOptions(apiOpts, profile)
+        setReferralOptions(merged)
+        setReferralSelection(resolveReferralSelection(merged, profile))
+      } catch (e) {
+        if (!cancelled) {
+          setReferralProfile(null)
+          setReferralOptions([])
+          setReferralLoadError(e?.message || 'Не удалось загрузить реферальные скидки')
+        }
+      } finally {
+        if (!cancelled) setReferralOptionsLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [cartItems.length])
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -116,13 +176,13 @@ function Checkout() {
     }
 
     try {
-      let userId = null
-      try {
-        const u = JSON.parse(localStorage.getItem('user') || '{}')
-        if (u.userId != null) userId = u.userId
-      } catch (_) {}
+      const userId = api.getLoggedInUserId()
 
       // Отправляем заказ на сервер
+      const referralDiscount = getDisplayReferralSelection(
+        getReferralDiscountSelection(),
+        referralProfile
+      )
       const orderData = {
         sessionId: sessionId,
         userId: userId,
@@ -135,26 +195,35 @@ function Checkout() {
         items: cartItems.map(item => ({
           productId: item.productId || item.id,
           quantity: item.quantity
-        }))
+        })),
       }
+      if (userId && referralDiscount?.kind) {
+        orderData.referralDiscountKind = referralDiscount.kind
+        if (referralDiscount.referralId) {
+          orderData.referralDiscountReferralId = referralDiscount.referralId
+        }
+      }
+
+      const headers = { 'Content-Type': 'application/json' }
+      const token = localStorage.getItem('authToken')
+      if (token) headers.Authorization = `Bearer ${token}`
 
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify(orderData)
       })
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Ошибка при оформлении заказа' }))
-        throw new Error(errorData.message || 'Ошибка при оформлении заказа')
+        throw new Error(errorData.message || errorData.Message || 'Ошибка при оформлении заказа')
       }
 
       const order = await response.json()
       const orderNumber = order.orderNumber ?? order.OrderNumber ?? null
 
       clearCart()
+      clearReferralDiscountSelection()
 
       navigate('/profile', {
         replace: true,
@@ -162,7 +231,7 @@ function Checkout() {
       })
     } catch (err) {
       console.error('Order error:', err)
-      setError('Ошибка при оформлении заказа. Попробуйте еще раз.')
+      setError(err?.message || 'Ошибка при оформлении заказа. Попробуйте еще раз.')
     } finally {
       setLoading(false)
     }
@@ -277,9 +346,25 @@ function Checkout() {
               </div>
             ))}
           </div>
+          <CartReferralDiscountPanel
+            options={referralOptions}
+            loading={referralOptionsLoading}
+            loadError={referralLoadError}
+            isAuthenticated={isLoggedIn}
+            referredBy={referralProfile?.referredBy}
+            referredDiscountAvailable={referralProfile?.referredDiscountAvailable}
+            hasPriorOrders={referralProfile?.hasPriorOrders}
+            loginHref="/account?returnUrl=%2Fcheckout"
+            total={getTotalPrice()}
+            selection={displayReferralSelection}
+            onSelectionChange={setReferralSelection}
+          />
           <div className="order-total">
             <span>Итого:</span>
-            <span>{getTotalPrice().toLocaleString('ru-RU')} ₽</span>
+            <ReferralDiscountTotals
+              total={getTotalPrice()}
+              selection={displayReferralSelection}
+            />
           </div>
         </div>
       </div>

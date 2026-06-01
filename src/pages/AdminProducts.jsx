@@ -7,6 +7,8 @@ import Toast from '../components/Toast.jsx'
 import PageShell from '../components/PageShell.jsx'
 import FilterIcon from '../components/FilterIcon.jsx'
 import BoxAddIcon from '../components/BoxAddIcon.jsx'
+import DiscountIcon from '../components/admin/DiscountIcon.jsx'
+import ProductPriceDisplay from '../components/ProductPriceDisplay.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl.js'
@@ -56,6 +58,9 @@ function AdminProducts() {
   const [toast, setToast] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
+  const [showDiscountForm, setShowDiscountForm] = useState(false)
+  const [discountPercentInput, setDiscountPercentInput] = useState('')
+  const [discountBusy, setDiscountBusy] = useState(false)
   const hasCheckedOngoingOperation = useRef(false)
   
   // Фильтры
@@ -82,6 +87,13 @@ function AdminProducts() {
     { id: '5411111760155408332', label: 'Голубой бантик', image: '/channel-emoji-6.svg' },
     { id: '5375191050283414804', label: 'Жемчужинка', image: '/channel-emoji-7.svg' }
   ], [])
+
+  useEffect(() => {
+    if (selectedProductIds.size === 0) {
+      setShowDiscountForm(false)
+      setDiscountPercentInput('')
+    }
+  }, [selectedProductIds.size])
 
   useEffect(() => {
     loadProducts()
@@ -438,15 +450,73 @@ function AdminProducts() {
 
   const loadColors = async () => {
     try {
-      const data = await api.getColors()
-      if (Array.isArray(data) && data.length > 0) {
-        setColors(data)
-      } else {
-        setColors([])
+      const rows = await api.getProductColors()
+      const names = rows.map((r) => r.name).filter(Boolean)
+      if (names.length > 0) {
+        setColors(names)
+        return
       }
+      const fallback = await api.getColors()
+      setColors(Array.isArray(fallback) ? fallback : [])
     } catch (err) {
       console.error('[AdminProducts] Ошибка загрузки цветов:', err)
-      setColors([])
+      try {
+        const fallback = await api.getColors()
+        setColors(Array.isArray(fallback) ? fallback : [])
+      } catch {
+        setColors([])
+      }
+    }
+  }
+
+  const selectedProducts = useMemo(
+    () => products.filter((p) => {
+      const id = getProductId(p)
+      return id != null && selectedProductIds.has(id)
+    }),
+    [products, selectedProductIds]
+  )
+
+  const allSelectedHaveDiscount = useMemo(
+    () => selectedProducts.length > 0
+      && selectedProducts.every((p) => Number(p.discountPercent) > 0),
+    [selectedProducts]
+  )
+
+  const handleApplyDiscount = async () => {
+    const pct = parseInt(discountPercentInput, 10)
+    if (!Number.isFinite(pct) || pct < 1 || pct > 99) {
+      setToast({ type: 'error', message: 'Укажите скидку от 1 до 99%' })
+      return
+    }
+    const productIds = Array.from(selectedProductIds)
+    setDiscountBusy(true)
+    try {
+      await api.applyBulkProductDiscount(productIds, pct)
+      await loadProducts()
+      setShowDiscountForm(false)
+      setDiscountPercentInput('')
+      setToast({ type: 'success', message: `Скидка ${pct}% применена к ${productIds.length} товар(ам)` })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Не удалось применить скидку' })
+    } finally {
+      setDiscountBusy(false)
+    }
+  }
+
+  const handleRemoveDiscount = async () => {
+    const productIds = Array.from(selectedProductIds)
+    setDiscountBusy(true)
+    try {
+      await api.applyBulkProductDiscount(productIds, null)
+      await loadProducts()
+      setShowDiscountForm(false)
+      setDiscountPercentInput('')
+      setToast({ type: 'success', message: `Скидка снята с ${productIds.length} товар(ов)` })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Не удалось снять скидку' })
+    } finally {
+      setDiscountBusy(false)
     }
   }
 
@@ -796,6 +866,64 @@ function AdminProducts() {
       title="Управление товарами"
       actions={(
         <div className={`admin-page-header-actions${selectedProductIds.size > 0 ? ' admin-page-header-actions--with-send' : ''}`}>
+          {selectedProductIds.size > 0 && (
+            <div className="admin-discount-toolbar">
+              {allSelectedHaveDiscount ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-discount-remove"
+                  onClick={handleRemoveDiscount}
+                  disabled={discountBusy}
+                >
+                  Убрать скидку
+                </button>
+              ) : !showDiscountForm ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-discount-open btn-toolbar-icon"
+                  onClick={() => setShowDiscountForm(true)}
+                  disabled={discountBusy}
+                  title="Задать скидку выбранным товарам"
+                >
+                  <DiscountIcon className="btn-toolbar-icon__icon" />
+                  <span className="btn-toolbar-icon__label">Скидка</span>
+                </button>
+              ) : (
+                <div className="admin-discount-form">
+                  <input
+                    type="number"
+                    className="admin-discount-input"
+                    min={1}
+                    max={99}
+                    placeholder="%"
+                    value={discountPercentInput}
+                    onChange={(e) => setDiscountPercentInput(e.target.value)}
+                    disabled={discountBusy}
+                    aria-label="Процент скидки"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleApplyDiscount}
+                    disabled={discountBusy}
+                  >
+                    Применить
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowDiscountForm(false)
+                      setDiscountPercentInput('')
+                    }}
+                    disabled={discountBusy}
+                  >
+                    Отмена
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <div className="admin-page-toolbar">
             <button
               type="button"
@@ -1247,7 +1375,9 @@ function AdminProducts() {
                         </span>
                         <span className="condition-cell">{formatCondition(product.condition)}</span>
                       </div>
-                      <div className="price-cell">{(product.price ?? 0).toLocaleString('ru-RU')} ₽</div>
+                      <div className="price-cell">
+                        <ProductPriceDisplay product={product} />
+                      </div>
                     </div>
                   </td>
                   <td data-label="Бренд" className="brand-cell desktop-only">{product.brand || '-'}</td>
@@ -1257,7 +1387,9 @@ function AdminProducts() {
                     {getGenderIcon(product.gender)}
                   </td>
                   <td data-label="Состояние" className="condition-cell desktop-only">{product.condition ? capitalize(product.condition) : '-'}</td>
-                  <td data-label="Цена" className="price-cell desktop-only">{(product.price ?? 0).toLocaleString('ru-RU')} ₽</td>
+                  <td data-label="Цена" className="price-cell desktop-only">
+                    <ProductPriceDisplay product={product} />
+                  </td>
                   <td data-label="Коробка" className="desktop-only">{product.boxNumber || '-'}</td>
                   {TELEGRAM_UI_ENABLED && (
                     <td data-label="Статус" className="publication-cell">

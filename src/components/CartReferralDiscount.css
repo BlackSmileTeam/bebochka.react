@@ -1,0 +1,134 @@
+.cart-referral-panel--hint {
+  padding: 0.75rem 0;
+}
+
+.cart-referral-panel__login-link {
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
+.cart-referral-panel__profile-link {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  color: #2b6cb0;
+}
+
+.cart-referral-panel__lead--error {
+  color: #c53030;
+}
+
+.cart-referral-panel {
+  margin-top: 0.5rem;
+  padding-top: 0;
+  border-top: none;
+}
+
+.cart-referral-panel__lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: #4a5568;
+  line-height: 1.4;
+}
+
+.cart-referral-panel__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cart-referral-panel__apply-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+}
+
+.cart-referral-panel__apply-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.cart-referral-panel__apply-hint {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-top: 0.2rem;
+}
+
+.cart-referral-panel__applied-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.cart-referral-panel__applied-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.cart-referral-panel__cancel {
+  margin-top: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #c53030;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.cart-referral-totals--discounted {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.cart-referral-totals__old {
+  text-decoration: line-through;
+  text-decoration-color: #c53030;
+  color: #a0aec0;
+  font-size: 0.95rem;
+}
+
+.cart-referral-totals__new {
+  color: #c53030;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.summary-total .cart-referral-totals--discounted {
+  align-items: flex-end;
+}
+
+.summary-total .cart-referral-totals__new {
+  font-size: 1.5rem;
+}
+
+.cart-item-price-totals:not(.cart-referral-totals--discounted) span {
+  font-weight: 600;
+}
+
+.cart-item-price-totals.cart-referral-totals--discounted {
+  align-items: flex-end;
+}
+
+.cart-item-price-totals .cart-referral-totals__new {
+  font-size: 1rem;
+}
+
+.profile-referral-used-mark {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #718096;
+  white-space: nowrap;
+}
+
+.profile-referral-used-mark::before {
+  content: '✓ ';
+  color: #38a169;
+}
