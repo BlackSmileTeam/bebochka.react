@@ -138,7 +138,6 @@ export default function CartReferralDiscountPanel({
           {referralDiscountHint(selection) && (
             <p className="cart-referral-panel__applied-hint">{referralDiscountHint(selection)}</p>
           )}
-          <ReferralDiscountTotals total={total} selection={selection} />
           <button type="button" className="cart-referral-panel__cancel" onClick={handleClear}>
             Отменить скидку
           </button>
@@ -181,7 +180,6 @@ export default function CartReferralDiscountPanel({
         <div className="cart-referral-panel__applied">
           <p className="cart-referral-panel__applied-title">Реферальный бонус −10% применён</p>
           {hint && <p className="cart-referral-panel__applied-hint">{hint}</p>}
-          <ReferralDiscountTotals total={total} selection={selection} />
           <button type="button" className="cart-referral-panel__cancel" onClick={handleClear}>
             Отменить скидку
           </button>

@@ -1,4 +1,4 @@
-const CART_RESERVE_MS = 24 * 60 * 60 * 1000
+export const CART_RESERVE_MS = 24 * 60 * 60 * 1000
 
 export function parseCartItemCreatedAt(raw) {
   if (!raw) return null
@@ -37,4 +37,14 @@ export function formatReservationCountdown(remainingMs) {
     return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
   }
   return `${m}:${String(s).padStart(2, '0')}`
+}
+
+/** Уровень срочности для цвета таймера (чем меньше времени, тем «краснее»). */
+export function getReservationUrgencyLevel(remainingMs) {
+  if (remainingMs == null || remainingMs <= 0) return 'expired'
+  const ratio = remainingMs / CART_RESERVE_MS
+  if (ratio > 0.25) return 'calm'
+  if (ratio > 0.1) return 'warning'
+  if (ratio > 1 / 48) return 'urgent' // ~30 мин при 24ч брони
+  return 'critical'
 }

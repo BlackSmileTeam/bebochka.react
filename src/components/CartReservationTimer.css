@@ -1,9 +1,9 @@
 .checkout-reserve-timer {
   padding: 0.85rem 1rem;
   border-radius: 8px;
-  background: #ebf8ff;
-  border: 1px solid #bee3f8;
-  color: #2c5282;
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  color: #9b2c2c;
   font-size: 0.92rem;
   line-height: 1.45;
 }
@@ -11,6 +11,28 @@
 .checkout-reserve-timer strong {
   display: block;
   margin-bottom: 0.25rem;
+}
+
+.checkout-reserve-timer--warning {
+  background: #fff5f5;
+  border-color: #fc8181;
+  color: #c53030;
+}
+
+.checkout-reserve-timer--urgent {
+  background: #fed7d7;
+  border-color: #f56565;
+  color: #c53030;
+}
+
+.checkout-reserve-timer--critical {
+  background: #feb2b2;
+  border-color: #e53e3e;
+  color: #9b1c1c;
+}
+
+.checkout-reserve-timer--critical strong {
+  color: #9b1c1c;
 }
 
 .checkout-reserve-timer--expired {
@@ -23,14 +45,42 @@
   margin: 0 0 0.65rem;
   font-size: 0.82rem;
   line-height: 1.4;
-  color: #2c5282;
+  color: #c05621;
   text-align: center;
 }
 
 .cart-reserve-timer strong {
   font-weight: 700;
+  color: #b83232;
+}
+
+.cart-reserve-timer--warning {
+  color: #c53030;
+}
+
+.cart-reserve-timer--warning strong {
+  color: #c53030;
+}
+
+.cart-reserve-timer--urgent {
+  color: #e53e3e;
+}
+
+.cart-reserve-timer--urgent strong {
+  color: #e53e3e;
+}
+
+.cart-reserve-timer--critical {
+  color: #9b1c1c;
+  font-weight: 600;
+}
+
+.cart-reserve-timer--critical strong {
+  color: #c53030;
+  font-weight: 800;
 }
 
 .cart-reserve-timer--expired {
-  color: #c53030;
+  color: #9b1c1c;
+  font-weight: 600;
 }

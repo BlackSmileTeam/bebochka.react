@@ -3,8 +3,19 @@ import {
   formatReservationCountdown,
   getCartReservationDeadline,
   getCartReservationRemainingMs,
+  getReservationUrgencyLevel,
 } from '../utils/cartReservationCountdown'
 import './CartReservationTimer.css'
+
+function urgencyModifier(remainingMs) {
+  const level = getReservationUrgencyLevel(remainingMs)
+  return level === 'calm' ? '' : ` cart-reserve-timer--${level}`
+}
+
+function checkoutUrgencyModifier(remainingMs) {
+  const level = getReservationUrgencyLevel(remainingMs)
+  return level === 'calm' ? '' : ` checkout-reserve-timer--${level}`
+}
 
 export default function CartReservationTimer({ cartItems, compact = false }) {
   const deadline = useMemo(() => getCartReservationDeadline(cartItems), [cartItems])
@@ -31,7 +42,7 @@ export default function CartReservationTimer({ cartItems, compact = false }) {
   if (compact) {
     return (
       <p
-        className={`cart-reserve-timer${expired ? ' cart-reserve-timer--expired' : ''}`}
+        className={`cart-reserve-timer${expired ? ' cart-reserve-timer--expired' : urgencyModifier(remainingMs)}`}
         role="status"
         aria-live="polite"
       >
@@ -46,7 +57,7 @@ export default function CartReservationTimer({ cartItems, compact = false }) {
 
   return (
     <div
-      className={`checkout-reserve-timer${expired ? ' checkout-reserve-timer--expired' : ''}`}
+      className={`checkout-reserve-timer${expired ? ' checkout-reserve-timer--expired' : checkoutUrgencyModifier(remainingMs)}`}
       role="status"
       aria-live="polite"
     >
