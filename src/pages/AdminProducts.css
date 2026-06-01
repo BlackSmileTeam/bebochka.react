@@ -24,118 +24,15 @@
   }
 }
 
-.page-shell__actions .header-actions {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
+.admin-page-header-actions--with-send .send-channel-wrapper {
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
+  max-width: 520px;
 }
 
-.page-shell__actions .header-actions.page-shell__actions .header-actions--with-send {
-  flex-wrap: wrap;
-}
-
-.page-shell__actions .header-actions .btn.btn-filters {
+.page-shell--admin-products .admin-page-toolbar .btn.btn-filters:not(.btn-toolbar-icon--square) {
   min-width: 9rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  min-height: 40px;
-  flex-shrink: 0;
-}
-
-.btn-toolbar-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-}
-
-.btn-toolbar-icon__icon {
-  display: block;
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-}
-
-.btn-toolbar-icon__badge {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .page-shell--admin-products .page-shell__header {
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 0.75rem;
-  }
-
-  .page-shell--admin-products .page-shell__headline {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .page-shell--admin-products .page-shell__title {
-    margin-bottom: 0;
-  }
-
-  .page-shell--admin-products .page-shell__actions {
-    width: auto;
-    flex-shrink: 0;
-  }
-
-  .page-shell__actions .header-actions {
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-    width: auto;
-    margin-left: auto;
-  }
-
-  .page-shell__actions .header-actions .btn.btn-filters,
-  .page-shell__actions .header-actions .btn.btn-add {
-    order: 0;
-    flex: 0 0 auto;
-    width: 42px;
-    min-width: 42px;
-    height: 42px;
-    padding: 0;
-    min-height: 42px;
-    position: relative;
-  }
-
-  .page-shell__actions .header-actions .btn-toolbar-icon__label {
-    display: none;
-  }
-
-  .page-shell__actions .header-actions .btn-toolbar-icon__badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    min-width: 1.1rem;
-    height: 1.1rem;
-    padding: 0 0.3rem;
-    border-radius: 999px;
-    background: #667eea;
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .send-channel-wrapper {
-    order: 3;
-    flex: 1 1 100%;
-    width: 100%;
-    min-width: 0;
-  }
 }
 
 .send-channel-wrapper {
@@ -153,7 +50,7 @@
   align-items: stretch;
 }
 
-.page-shell__actions .header-actions .btn.btn-send-channel {
+.page-shell__actions .admin-page-header-actions .btn.btn-send-channel {
   flex: 1;
   min-width: 0;
   padding: 0.5rem 0.75rem;
@@ -263,17 +160,6 @@
   border-color: #667eea;
   color: #667eea;
   font-weight: 600;
-}
-
-.page-shell__actions .header-actions .btn.btn-add {
-  white-space: nowrap;
-  flex-shrink: 0;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
 }
 
 .send-progress-bar {
@@ -1255,15 +1141,6 @@
 }
 
 @media (max-width: 480px) {
-  .page-shell__actions .header-actions {
-    gap: 0.5rem;
-  }
-
-  .page-shell__actions .header-actions .btn {
-    font-size: 0.875rem;
-    padding: 0.5rem 0.75rem;
-  }
-
   .table-info .btn-select-all {
     width: auto;
   }

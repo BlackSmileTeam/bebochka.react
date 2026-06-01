@@ -89,6 +89,98 @@
   margin-bottom: 1rem;
 }
 
+/* Админ-страницы: заголовок слева, иконки справа в одну строку */
+.page-shell--admin-toolbar .page-shell__header {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.page-shell--admin-toolbar .page-shell__headline {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-shell--admin-toolbar .page-shell__title {
+  margin-bottom: 0;
+}
+
+.page-shell--admin-toolbar .page-shell__actions {
+  width: auto;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.admin-page-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.admin-page-toolbar {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-toolbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  position: relative;
+}
+
+.btn-toolbar-icon__icon {
+  display: block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.btn-toolbar-icon__label {
+  white-space: nowrap;
+}
+
+.btn-toolbar-icon__badge {
+  display: none;
+}
+
+.page-shell--admin-toolbar .btn-toolbar-icon--square {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+}
+
+.page-shell--admin-toolbar .btn-toolbar-icon__label {
+  display: none;
+}
+
+.page-shell--admin-toolbar .btn-toolbar-icon__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #667eea;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 @media (max-width: 768px) {
   .page-shell {
     padding: 0 1rem;
@@ -108,6 +200,17 @@
   .page-shell__actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .page-shell--admin-toolbar .page-shell__header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .page-shell--admin-toolbar .page-shell__actions {
+    width: auto;
+    margin-left: auto;
+    justify-content: flex-end;
   }
 }
 

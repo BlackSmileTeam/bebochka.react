@@ -6,6 +6,7 @@ import ProductDetail from '../components/ProductDetail.jsx'
 import Toast from '../components/Toast.jsx'
 import PageShell from '../components/PageShell.jsx'
 import FilterIcon from '../components/FilterIcon.jsx'
+import BoxAddIcon from '../components/BoxAddIcon.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl.js'
@@ -781,7 +782,7 @@ function AdminProducts() {
 
   if (loading) {
     return (
-      <PageShell className="page-shell--no-x-pad page-shell--admin-products" title="Управление товарами">
+      <PageShell className="page-shell--no-x-pad page-shell--admin-toolbar page-shell--admin-products" title="Управление товарами">
         <div className="admin-products-page">
           <div className="loading">Загрузка...</div>
         </div>
@@ -791,26 +792,39 @@ function AdminProducts() {
 
   return (
     <PageShell
-      className="page-shell--no-x-pad page-shell--admin-products"
+      className="page-shell--no-x-pad page-shell--admin-toolbar page-shell--admin-products"
       title="Управление товарами"
       actions={(
-        <div className={`header-actions${selectedProductIds.size > 0 ? ' header-actions--with-send' : ''}`}>
-          <button 
-            className={`btn btn-secondary btn-filters btn-toolbar-icon ${showFiltersPopup ? 'active' : ''}`}
-            onClick={() => setShowFiltersPopup(!showFiltersPopup)}
-            title="Настроить фильтры"
-            aria-label={activeFiltersCount > 0 ? `Фильтры (${activeFiltersCount})` : 'Фильтры'}
-          >
-            <FilterIcon className="btn-toolbar-icon__icon" />
-            {activeFiltersCount > 0 && (
-              <span className="btn-toolbar-icon__badge" aria-hidden="true">
-                {activeFiltersCount}
+        <div className={`admin-page-header-actions${selectedProductIds.size > 0 ? ' admin-page-header-actions--with-send' : ''}`}>
+          <div className="admin-page-toolbar">
+            <button
+              type="button"
+              className={`btn btn-secondary btn-filters btn-toolbar-icon btn-toolbar-icon--square ${showFiltersPopup ? 'active' : ''}`}
+              onClick={() => setShowFiltersPopup(!showFiltersPopup)}
+              title="Настроить фильтры"
+              aria-label={activeFiltersCount > 0 ? `Фильтры (${activeFiltersCount})` : 'Фильтры'}
+            >
+              <FilterIcon className="btn-toolbar-icon__icon" />
+              {activeFiltersCount > 0 && (
+                <span className="btn-toolbar-icon__badge" aria-hidden="true">
+                  {activeFiltersCount}
+                </span>
+              )}
+              <span className="btn-toolbar-icon__label">
+                Фильтры{activeFiltersCount > 0 && ` (${activeFiltersCount})`}
               </span>
-            )}
-            <span className="btn-toolbar-icon__label">
-              Фильтры{activeFiltersCount > 0 && ` (${activeFiltersCount})`}
-            </span>
-          </button>
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary btn-add btn-toolbar-icon btn-toolbar-icon--square"
+              onClick={handleCreate}
+              title="Добавить товар"
+              aria-label="Добавить товар"
+            >
+              <BoxAddIcon className="btn-toolbar-icon__icon" />
+              <span className="btn-toolbar-icon__label">Добавить</span>
+            </button>
+          </div>
           {TELEGRAM_UI_ENABLED && selectedProductIds.size > 0 && (
             <div className="send-channel-wrapper">
               <div className="send-channel-group">
@@ -869,16 +883,6 @@ function AdminProducts() {
               )}
             </div>
           )}
-          <button
-            type="button"
-            className="btn btn-primary btn-add btn-toolbar-icon"
-            onClick={handleCreate}
-            title="Добавить товар"
-            aria-label="Добавить товар"
-          >
-            <span className="btn-toolbar-icon__glyph" aria-hidden="true">➕</span>
-            <span className="btn-toolbar-icon__label">Добавить</span>
-          </button>
         </div>
       )}
     >

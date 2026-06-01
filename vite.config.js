@@ -62,6 +62,10 @@ export default defineConfig({
   build: {
     cssCodeSplit: true,
     sourcemap: false,
+    modulePreload: {
+      resolveDependencies: (_filename, deps) =>
+        deps.filter((dep) => !dep.includes('admin-pages')),
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {

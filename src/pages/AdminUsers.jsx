@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PageShell from '../components/PageShell'
+import PersonAddIcon from '../components/PersonAddIcon.jsx'
+import StatsIcon from '../components/StatsIcon.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { getVkProfileUrl } from '../utils/vkProfile'
 import { AdminUserEmailLink, AdminUserPhoneLink } from '../utils/adminUserContact'
@@ -322,7 +324,7 @@ function AdminUsers() {
 
   if (loading) {
     return (
-      <PageShell title="Управление пользователями">
+      <PageShell className="page-shell--admin-toolbar" title="Управление пользователями">
         <div className="admin-users-page">
           <div className="loading">Загрузка...</div>
         </div>
@@ -332,14 +334,29 @@ function AdminUsers() {
 
   return (
     <PageShell
+      className="page-shell--admin-toolbar"
       title="Управление пользователями"
       actions={(
-        <div className="admin-users-actions">
-          <button type="button" className="btn btn-secondary" onClick={() => setShowStatsModal(true)}>
-            Статистика
+        <div className="admin-page-toolbar">
+          <button
+            type="button"
+            className="btn btn-secondary btn-toolbar-icon btn-toolbar-icon--square"
+            onClick={() => setShowStatsModal(true)}
+            title="Статистика"
+            aria-label="Статистика"
+          >
+            <StatsIcon className="btn-toolbar-icon__icon" />
+            <span className="btn-toolbar-icon__label">Статистика</span>
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => setShowCreateForm(true)}>
-            + Создать пользователя
+          <button
+            type="button"
+            className="btn btn-primary btn-toolbar-icon btn-toolbar-icon--square"
+            onClick={() => setShowCreateForm(true)}
+            title="Создать пользователя"
+            aria-label="Создать пользователя"
+          >
+            <PersonAddIcon className="btn-toolbar-icon__icon" />
+            <span className="btn-toolbar-icon__label">Создать</span>
           </button>
         </div>
       )}

@@ -42,7 +42,7 @@ export default function Landing() {
 
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
+    const loadCatalog = async () => {
       try {
         const data = await api.getProducts(sessionId)
         if (cancelled) return
@@ -53,7 +53,15 @@ export default function Landing() {
       } finally {
         if (!cancelled) setLoading(false)
       }
-    })()
+    }
+    const schedule = () => {
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => loadCatalog(), { timeout: 2500 })
+      } else {
+        window.setTimeout(loadCatalog, 200)
+      }
+    }
+    schedule()
     return () => {
       cancelled = true
     }
@@ -87,7 +95,16 @@ export default function Landing() {
 
   return (
     <div className="landing">
-      <section className="landing-hero landing-section--pattern">
+      <section className="landing-hero landing-hero--lcp">
+        <img
+          className="landing-hero-bg"
+          src="/background.png"
+          alt=""
+          width={1200}
+          height={800}
+          fetchPriority="high"
+          decoding="async"
+        />
         <div className="landing-hero-content">
           <h1>
             <span className="landing-hero-title-line">Качественная одежда для всей семьи</span>

@@ -5,7 +5,7 @@ import { api } from '../services/api'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import { getSessionId } from '../utils/sessionId'
-import { usePageSeo } from '../utils/seo'
+import { usePageSeo, getProductStockCount } from '../utils/seo'
 import './InfoPages.css'
 
 const SITE_URL = 'https://bebochka.ru'
@@ -20,25 +20,27 @@ export default function ProductPage() {
   const productId = extractProductId(productIdSlug)
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     let active = true
     const run = async () => {
       if (!productId) {
-        setError('Некорректный ID товара')
+        setNotFound(true)
         setLoading(false)
         return
       }
       setLoading(true)
+      setNotFound(false)
       try {
         const p = await api.getProduct(productId, getSessionId())
         if (!active) return
         setProduct(p)
-        setError('')
-      } catch {
+      } catch (err) {
         if (!active) return
-        setError('Товар не найден или недоступен')
+        setProduct(null)
+        const status = err?.response?.status
+        setNotFound(status === 404 || status === 410)
       } finally {
         if (active) setLoading(false)
       }
@@ -49,6 +51,9 @@ export default function ProductPage() {
     }
   }, [productId])
 
+  const inStock = product ? getProductStockCount(product) > 0 : false
+  const isIndexable = Boolean(product && inStock && !notFound)
+
   const canonical = useMemo(
     () => `${SITE_URL}/product/${productIdSlug || ''}`,
     [productIdSlug]
@@ -56,7 +61,9 @@ export default function ProductPage() {
 
   const seoTitle = product
     ? `${product.name} — купить одежду для всей семьи | bebochka`
-    : 'Карточка товара | bebochka'
+    : notFound
+      ? 'Товар не найден | bebochka'
+      : 'Карточка товара | bebochka'
   const seoDescription = product
     ? `${product.name}. Бренд: ${product.brand || 'без бренда'}, размер: ${product.size || 'не указан'}, состояние: ${formatCondition(product.condition)}. Секонд хенд, сэконд, сток одежда, новая одежда для всей семьи.`
     : 'Карточка товара bebochka: бренд, размер, состояние, цвет, доставка одежды.'
@@ -65,9 +72,10 @@ export default function ProductPage() {
     title: seoTitle,
     description: seoDescription,
     canonical,
+    robots: isIndexable ? 'index, follow' : 'noindex, nofollow',
     keywords:
       'секонд хенд, сэконд, сток одежда, одежда для всей семьи, новая одежда, новая одежда для всей семьи, одежда для детей, для детей секонд, доставка одежды, покупка одежды',
-    jsonLd: product
+    jsonLd: product && isIndexable
       ? {
           '@context': 'https://schema.org',
           '@type': 'Product',
@@ -82,10 +90,7 @@ export default function ProductPage() {
             '@type': 'Offer',
             priceCurrency: 'RUB',
             price: Number(product.price || 0),
-            availability:
-              (product.availableQuantity ?? product.quantityInStock ?? 0) > 0
-                ? 'https://schema.org/InStock'
-                : 'https://schema.org/OutOfStock',
+            availability: 'https://schema.org/InStock',
             url: canonical
           }
         }
@@ -96,14 +101,28 @@ export default function ProductPage() {
     <PageShell title={product?.name || 'Карточка товара'} subtitle="Описание товара, характеристики и условия заказа">
       <section className="info-block">
         <p>
-          <Link to="/">В каталог</Link> · <Link to="/faq">FAQ</Link> · <Link to="/delivery">Доставка</Link>
+          <Link to="/welcome">В каталог</Link> · <Link to="/faq">FAQ</Link> · <Link to="/delivery">Доставка</Link>
         </p>
       </section>
 
-      {loading && <section className="info-block"><p>Загрузка товара...</p></section>}
-      {!loading && error && <section className="info-block"><p>{error}</p></section>}
+      {loading && <section className="info-block"><p>Загрузка товара…</p></section>}
 
-      {!loading && !error && product && (
+      {!loading && notFound && (
+        <section className="info-block">
+          <h2>Товар не найден</h2>
+          <p>Такой страницы нет или товар уже снят с продажи.</p>
+        </section>
+      )}
+
+      {!loading && !notFound && product && !inStock && (
+        <section className="info-block">
+          <h2>Товар продан</h2>
+          <p>Эта вещь уже куплена. Посмотрите актуальные поступления на главной.</p>
+          <p><Link to="/welcome">Перейти к каталогу</Link></p>
+        </section>
+      )}
+
+      {!loading && !notFound && product && inStock && (
         <>
           <section className="info-block">
             <h2>О товаре</h2>

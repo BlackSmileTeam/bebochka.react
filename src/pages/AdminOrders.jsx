@@ -787,7 +787,7 @@ function AdminOrders() {
 
   if (loading) {
     return (
-      <PageShell title="Управление заказами">
+      <PageShell className="page-shell--admin-toolbar" title="Управление заказами">
         <div className="admin-orders-page">
           <div className="loading">Загрузка заказов...</div>
         </div>
@@ -800,38 +800,41 @@ function AdminOrders() {
 
   return (
     <PageShell
+      className="page-shell--admin-toolbar"
       title="Управление заказами"
-      actions={
-        selectedCount > 0 ? (
-          <div className="header-actions header-actions--row">
+      actions={(
+        <div className="admin-page-header-actions">
+          <div className="admin-page-toolbar">
             <button
               type="button"
-              className="btn btn-sale"
-              onClick={() => setSaleModalOpen(true)}
+              className={`btn btn-secondary btn-toolbar-icon btn-toolbar-icon--square status-filters-toggle-btn status-filters-toggle-btn--header${filtersExpanded ? ' active' : ''}`}
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              aria-expanded={filtersExpanded}
+              aria-label={filtersExpanded ? 'Скрыть фильтры' : 'Показать фильтры'}
+              title={filtersExpanded ? 'Скрыть фильтры' : 'Фильтры'}
             >
-              🏷️ Распродажа
+              <FilterIcon className="btn-toolbar-icon__icon" />
+              <span className="status-filters-toggle-btn__text">
+                {filtersExpanded ? '▼ Скрыть фильтры' : '▶ Фильтры'}
+              </span>
             </button>
+            {selectedCount > 0 && (
+              <button
+                type="button"
+                className="btn btn-sale"
+                onClick={() => setSaleModalOpen(true)}
+              >
+                🏷️ Распродажа
+              </button>
+            )}
           </div>
-        ) : null
-      }
+        </div>
+      )}
     >
       <div className="admin-orders-page">
 
       {/* Группировка и фильтры */}
       <div className={`status-filters ${filtersExpanded ? 'status-filters--expanded' : 'status-filters--collapsed'}`}>
-        <button
-          type="button"
-          className="status-filters-toggle-btn"
-          onClick={() => setFiltersExpanded(!filtersExpanded)}
-          aria-expanded={filtersExpanded}
-          aria-label={filtersExpanded ? 'Скрыть фильтры' : 'Показать фильтры'}
-          title={filtersExpanded ? 'Скрыть фильтры' : 'Фильтры'}
-        >
-          <FilterIcon className="status-filters-toggle-btn__icon" />
-          <span className="status-filters-toggle-btn__text">
-            {filtersExpanded ? '▼ Скрыть фильтры' : '▶ Фильтры'}
-          </span>
-        </button>
         <div className="status-filters-body">
         <div className="group-by-row">
           <span className="group-by-label">Группировка:</span>

@@ -24,11 +24,14 @@ function ensureCanonical(url) {
   el.setAttribute('href', url)
 }
 
-export function usePageSeo({ title, description, keywords, canonical, jsonLd }) {
+export function usePageSeo({ title, description, keywords, canonical, robots, jsonLd }) {
   useEffect(() => {
     if (title) document.title = title
     ensureMeta('description', description)
     ensureMeta('keywords', keywords)
+    if (robots) {
+      ensureMeta('robots', robots)
+    }
     ensureCanonical(canonical)
 
     const old = document.getElementById(SEO_TAG_ID)
@@ -45,7 +48,15 @@ export function usePageSeo({ title, description, keywords, canonical, jsonLd }) 
       const current = document.getElementById(SEO_TAG_ID)
       if (current) current.remove()
     }
-  }, [title, description, keywords, canonical, jsonLd])
+  }, [title, description, keywords, canonical, robots, jsonLd])
+}
+
+export function getProductStockCount(product) {
+  if (!product) return 0
+  const available = product.availableQuantity ?? product.AvailableQuantity
+  if (available != null) return Number(available) || 0
+  const stock = product.quantityInStock ?? product.QuantityInStock
+  return Number(stock) || 0
 }
 
 export function slugifyProductName(name) {
