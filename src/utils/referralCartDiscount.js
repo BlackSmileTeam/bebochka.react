@@ -1,6 +1,7 @@
 import {
   getReferralDiscountSelection,
   setReferralDiscountSelection,
+  getDeclinedReferralKind,
 } from './referralDiscountStorage'
 
 function buildReferredOption(rb) {
@@ -16,14 +17,14 @@ function buildReferredOption(rb) {
 
 function optionsMatch(a, b) {
   if (!a || !b) return false
-  if (String(a.kind) !== String(b.kind)) return false
+  if (String(a.kind).toLowerCase() !== String(b.kind).toLowerCase()) return false
   const idA = a.referralId
   const idB = b.referralId
-  if (idA == null || idB == null) return String(a.kind).toLowerCase() === 'referred'
+  if (idA == null || idB == null) return true
   return Number(idA) === Number(idB)
 }
 
-/** Можно ли применить скидку «приглашённый» по данным профиля (без cart-discounts API). */
+/** Можно ли применить скидку «приглашённый» по данным профиля. */
 export function isReferredDiscountEligible(referralInfo) {
   const rb = referralInfo?.referredBy
   if (!rb?.code || rb.discountUsed) return false
@@ -32,7 +33,6 @@ export function isReferredDiscountEligible(referralInfo) {
   return true
 }
 
-/** Собрать опцию скидки «приглашённый» из профиля. */
 export function buildReferredCartOptionFromProfile(referralInfo) {
   if (!isReferredDiscountEligible(referralInfo)) return null
   return buildReferredOption(referralInfo.referredBy)
@@ -46,15 +46,23 @@ export function mergeCartReferralOptions(apiOptions, referralInfo) {
   return [fallback, ...list]
 }
 
-/** Автовыбор скидки: для приглашённого на первый заказ — сразу −10%. */
+/**
+ * Автовыбор: по умолчанию скидка «приглашённый», если пользователь её не отменял.
+ * После отмены — null, чтобы выбрать скидку «за приглашение» или оформить без скидки.
+ */
 export function resolveReferralSelection(options, referralInfo) {
   const merged = mergeCartReferralOptions(options, referralInfo)
   const stored = getReferralDiscountSelection()
+  const declined = getDeclinedReferralKind()
 
   if (stored && merged.some((o) => optionsMatch(o, stored))) {
     const official = merged.find((o) => optionsMatch(o, stored))
     setReferralDiscountSelection(official)
     return official
+  }
+
+  if (declined) {
+    return null
   }
 
   const referred = merged.find((o) => String(o.kind).toLowerCase() === 'referred')
@@ -69,10 +77,4 @@ export function resolveReferralSelection(options, referralInfo) {
   }
 
   return null
-}
-
-/** Итоговая скидка для отображения (если state ещё не обновился). */
-export function getDisplayReferralSelection(referralSelection, referralInfo) {
-  if (referralSelection) return referralSelection
-  return buildReferredCartOptionFromProfile(referralInfo)
 }

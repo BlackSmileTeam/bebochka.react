@@ -8,11 +8,7 @@ import CartReservationTimer from '../components/CartReservationTimer'
 import { buildCatalogFilterSearch } from '../utils/catalogFilters'
 import CartReferralDiscountPanel, { ReferralDiscountTotals } from '../components/CartReferralDiscount'
 import { getReferralDiscountSelection } from '../utils/referralDiscountStorage'
-import {
-  mergeCartReferralOptions,
-  resolveReferralSelection,
-  getDisplayReferralSelection,
-} from '../utils/referralCartDiscount'
+import { mergeCartReferralOptions, resolveReferralSelection } from '../utils/referralCartDiscount'
 import './Cart.css'
 import '../components/CartReferralDiscount.css'
 
@@ -30,7 +26,6 @@ function Cart() {
   const [referralProfile, setReferralProfile] = useState(null)
   const [referralSelection, setReferralSelection] = useState(() => getReferralDiscountSelection())
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('authToken'))
-  const displayReferralSelection = getDisplayReferralSelection(referralSelection, referralProfile)
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
   const getAvailableQuantity = (product) =>
@@ -235,7 +230,7 @@ function Cart() {
                 <div className="cart-item-price">
                   <ReferralDiscountTotals
                     total={(item.price || 0) * (item.quantity || 1)}
-                    selection={displayReferralSelection}
+                    selection={referralSelection}
                     className="cart-item-price-totals"
                   />
                 </div>
@@ -337,14 +332,14 @@ function Cart() {
               referredDiscountAvailable={referralProfile?.referredDiscountAvailable}
               hasPriorOrders={referralProfile?.hasPriorOrders}
               total={getTotalPrice()}
-              selection={displayReferralSelection}
+              selection={referralSelection}
               onSelectionChange={setReferralSelection}
             />
             <div className="summary-row summary-total">
               <span>Сумма:</span>
               <ReferralDiscountTotals
                 total={getTotalPrice()}
-                selection={displayReferralSelection}
+                selection={referralSelection}
               />
             </div>
             <div className="cart-summary-actions">

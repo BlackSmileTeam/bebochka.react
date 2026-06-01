@@ -6,11 +6,7 @@ import PageShell from '../components/PageShell'
 import CartReservationTimer from '../components/CartReservationTimer'
 import CartReferralDiscountPanel, { ReferralDiscountTotals } from '../components/CartReferralDiscount'
 import { getReferralDiscountSelection, clearReferralDiscountSelection } from '../utils/referralDiscountStorage'
-import {
-  mergeCartReferralOptions,
-  resolveReferralSelection,
-  getDisplayReferralSelection,
-} from '../utils/referralCartDiscount'
+import { mergeCartReferralOptions, resolveReferralSelection } from '../utils/referralCartDiscount'
 import './Checkout.css'
 import '../components/CartReferralDiscount.css'
 
@@ -59,7 +55,6 @@ function Checkout() {
   const [referralProfile, setReferralProfile] = useState(null)
   const [referralSelection, setReferralSelection] = useState(() => getReferralDiscountSelection())
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('authToken'))
-  const displayReferralSelection = getDisplayReferralSelection(referralSelection, referralProfile)
 
   useEffect(() => {
     let cancelled = false
@@ -179,10 +174,7 @@ function Checkout() {
       const userId = api.getLoggedInUserId()
 
       // Отправляем заказ на сервер
-      const referralDiscount = getDisplayReferralSelection(
-        getReferralDiscountSelection(),
-        referralProfile
-      )
+      const referralDiscount = getReferralDiscountSelection()
       const orderData = {
         sessionId: sessionId,
         userId: userId,
@@ -356,14 +348,14 @@ function Checkout() {
             hasPriorOrders={referralProfile?.hasPriorOrders}
             loginHref="/account?returnUrl=%2Fcheckout"
             total={getTotalPrice()}
-            selection={displayReferralSelection}
+            selection={referralSelection}
             onSelectionChange={setReferralSelection}
           />
           <div className="order-total">
             <span>Итого:</span>
             <ReferralDiscountTotals
               total={getTotalPrice()}
-              selection={displayReferralSelection}
+              selection={referralSelection}
             />
           </div>
         </div>

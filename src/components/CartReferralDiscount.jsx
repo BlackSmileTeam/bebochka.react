@@ -2,6 +2,8 @@ import {
   getReferralDiscountSelection,
   setReferralDiscountSelection,
   clearReferralDiscountSelection,
+  setDeclinedReferralKind,
+  getDeclinedReferralKind,
   calcDiscountedTotal,
 } from '../utils/referralDiscountStorage'
 import './CartReferralDiscount.css'
@@ -60,9 +62,15 @@ export default function CartReferralDiscountPanel({
   }
 
   const handleClear = () => {
+    const current = selectionProp ?? getReferralDiscountSelection()
+    if (current?.kind) {
+      setDeclinedReferralKind(current.kind)
+    }
     clearReferralDiscountSelection()
     onSelectionChange?.(null)
   }
+
+  const declinedKind = getDeclinedReferralKind()
 
   if (!isAuthenticated) {
     return (
@@ -155,7 +163,11 @@ export default function CartReferralDiscountPanel({
       {!selection ? (
         <>
           <p className="cart-referral-panel__lead">
-            Выберите реферальную скидку −10% (в одном заказе — одна).
+            {declinedKind === 'Referred'
+              ? 'Скидка по приглашению отменена. Можно применить скидку за приглашённого друга или оформить заказ без скидки.'
+              : declinedKind === 'Referrer'
+                ? 'Скидка за приглашение отменена. Можно выбрать другую скидку или оформить без скидки.'
+                : 'Выберите реферальную скидку −10% (в одном заказе — одна).'}
           </p>
           <div className="cart-referral-panel__options">
             {options.map((opt) => {
