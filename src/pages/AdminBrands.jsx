@@ -51,6 +51,12 @@ export default function AdminBrands() {
 
   const { letters, map: brandsByLetter } = useMemo(() => groupBrandsByLetter(brands), [brands])
 
+  useEffect(() => {
+    if (!loading && letters.length > 0) {
+      setCollapsedLetters(new Set(letters))
+    }
+  }, [loading, letters])
+
   const load = async (term = search) => {
     setLoading(true)
     setError('')
@@ -173,9 +179,9 @@ export default function AdminBrands() {
     const id = brand.id ?? brand.Id
     const isEditing = editingId === id
     return (
-      <tr key={id}>
-        <td>{id}</td>
-        <td>
+      <li key={id} className="admin-brands-row">
+        <span className="admin-brands-row__id">{id}</span>
+        <div className="admin-brands-row__name">
           {isEditing ? (
             <input
               type="text"
@@ -187,8 +193,8 @@ export default function AdminBrands() {
           ) : (
             getBrandName(brand)
           )}
-        </td>
-        <td className="admin-brands-actions">
+        </div>
+        <div className="admin-brands-row__actions">
           {isEditing ? (
             <div className="admin-brands-inline-actions">
               <button type="button" className="admin-brands-btn admin-brands-btn--sm" onClick={saveEdit} disabled={saving}>
@@ -229,8 +235,8 @@ export default function AdminBrands() {
               )}
             </div>
           )}
-        </td>
-      </tr>
+        </div>
+      </li>
     )
   }
 
@@ -310,20 +316,9 @@ export default function AdminBrands() {
                 </button>
 
                 {!collapsed && (
-                  <div className="admin-brands-table-wrap">
-                    <table className="admin-brands-table">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Название</th>
-                          <th aria-label="Действия" />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {items.map(renderBrandRow)}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ul className="admin-brands-rows">
+                    {items.map(renderBrandRow)}
+                  </ul>
                 )}
               </section>
             )

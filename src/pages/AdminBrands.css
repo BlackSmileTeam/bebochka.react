@@ -113,7 +113,11 @@
 }
 
 .admin-brands-letter-header__chevron {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  flex-shrink: 0;
   font-size: 0.75rem;
   transition: transform 0.15s ease;
 }
@@ -132,37 +136,47 @@
   color: #718096;
 }
 
-.admin-brands-table-wrap {
-  overflow-x: auto;
+/* Единая сетка — названия на одной вертикали во всех блоках */
+.admin-brands-row {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  column-gap: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  margin: 0;
+  list-style: none;
 }
 
-.admin-brands-table {
-  width: 100%;
-  border-collapse: collapse;
+.admin-brands-rows {
+  margin: 0;
+  padding: 0;
+}
+
+.admin-brands-row {
+  border-bottom: 1px solid #e2e8f0;
   font-size: 0.92rem;
 }
 
-.admin-brands-table th,
-.admin-brands-table td {
-  padding: 0.55rem 0.65rem;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.admin-brands-table tbody tr:last-child td {
+.admin-brands-rows .admin-brands-row:last-child {
   border-bottom: none;
 }
 
-.admin-brands-table th {
-  font-weight: 600;
-  color: #4a5568;
-  background: #f7fafc;
+.admin-brands-row__id {
+  font-variant-numeric: tabular-nums;
+  color: #718096;
+  font-size: 0.85rem;
+  text-align: right;
 }
 
-.admin-brands-actions {
-  width: 3rem;
-  text-align: right;
+.admin-brands-row__name {
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.admin-brands-row__actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .admin-brands-inline-actions {
@@ -252,7 +266,7 @@
 
 .admin-brands-edit-input {
   width: 100%;
-  min-width: 10rem;
+  box-sizing: border-box;
   padding: 0.45rem 0.6rem;
   border: 1px solid #cbd5e0;
   border-radius: 6px;
