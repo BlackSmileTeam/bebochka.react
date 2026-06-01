@@ -1059,14 +1059,11 @@ function Profile() {
                           {' '}уже использована
                         </p>
                       )}
-                      {!referralInfo.referredBy.discountUsed && referralInfo.referredDiscountAvailable !== false && (
+                      {!referralInfo.referredBy.discountUsed
+                        && orders.length === 0
+                        && referralInfo.referredDiscountAvailable !== false && (
                         <p className="profile-referral-first-order-hint">
-                          На первый заказ в корзине автоматически скидка −10% (старая сумма зачёркнута, итог — красным).
-                        </p>
-                      )}
-                      {!referralInfo.referredBy.discountUsed && referralInfo.hasPriorOrders && (
-                        <p className="profile-referral-used-inline">
-                          Скидка −10% по приглашению недоступна: в системе уже есть заказ (в том числе «ожидает оплату»).
+                          Скидка −10% действует на ваш первый заказ.
                         </p>
                       )}
                     </>
