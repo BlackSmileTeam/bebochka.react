@@ -96,11 +96,21 @@ function Cart() {
 
   return (
     <PageShell
-      title="Корзина"
-      actions={(
-        <button type="button" className="btn-clear-cart" onClick={clearCart} title="Очистить корзину">
-          Очистить
-        </button>
+      className="page-shell--cart"
+      title={(
+        <>
+          <span className="cart-page-title">Корзина</span>
+          {cartItems.length > 0 && (
+            <button
+              type="button"
+              className="btn-clear-cart cart-page-clear"
+              onClick={clearCart}
+              title="Очистить корзину"
+            >
+              Очистить
+            </button>
+          )}
+        </>
       )}
     >
       <div

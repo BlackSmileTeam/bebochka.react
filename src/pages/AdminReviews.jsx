@@ -71,6 +71,40 @@ function absentToEmpty(value) {
   return v === 'Отсутствует' ? '' : v
 }
 
+function ReviewImageThumb({ src, alt, onOpen }) {
+  if (!src) return null
+  return (
+    <button type="button" className="reviews-image-thumb" onClick={() => onOpen(src)} title="Открыть фото">
+      <img src={src} alt={alt} loading="lazy" decoding="async" />
+    </button>
+  )
+}
+
+function ReviewImageLightbox({ src, onClose }) {
+  if (!src) return null
+  return (
+    <div
+      className="review-image-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Просмотр фото"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        className="review-image-lightbox__close"
+        onClick={onClose}
+        aria-label="Закрыть"
+      >
+        ×
+      </button>
+      <div className="review-image-lightbox__frame" onClick={(e) => e.stopPropagation()}>
+        <img src={src} alt="" className="review-image-lightbox__img" />
+      </div>
+    </div>
+  )
+}
+
 function AdminReviews() {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
@@ -87,6 +121,7 @@ function AdminReviews() {
   const fileInputRef = useRef(null)
   const formRef = useRef(null)
   const [filePreviewUrls, setFilePreviewUrls] = useState([])
+  const [lightboxSrc, setLightboxSrc] = useState(null)
 
   useEffect(() => {
     const urls = (form.files || []).map((file) => URL.createObjectURL(file))
@@ -95,6 +130,19 @@ function AdminReviews() {
       urls.forEach((url) => URL.revokeObjectURL(url))
     }
   }, [form.files])
+
+  useEffect(() => {
+    if (!lightboxSrc) return undefined
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLightboxSrc(null)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [lightboxSrc])
 
   const loadReviews = async () => {
     try {
@@ -413,9 +461,12 @@ function AdminReviews() {
                     <td>
                       <div className="reviews-images-grid">
                         {(Array.isArray(row.imageUrls) ? row.imageUrls : []).map((img, idx) => (
-                          <a key={`${row.id}-${idx}`} href={getImageUrl(img)} target="_blank" rel="noreferrer">
-                            <img src={getImageUrl(img)} alt={`Фото к отзыву ${idx + 1}`} loading="lazy" decoding="async" />
-                          </a>
+                          <ReviewImageThumb
+                            key={`${row.id}-${idx}`}
+                            src={getImageUrl(img)}
+                            alt={`Фото к отзыву ${idx + 1}`}
+                            onOpen={setLightboxSrc}
+                          />
                         ))}
                       </div>
                     </td>
@@ -463,9 +514,12 @@ function AdminReviews() {
                 {Array.isArray(row.imageUrls) && row.imageUrls.length > 0 && (
                   <div className="reviews-images-grid">
                     {row.imageUrls.map((img, idx) => (
-                      <a key={`${row.id}-${idx}`} href={getImageUrl(img)} target="_blank" rel="noreferrer">
-                        <img src={getImageUrl(img)} alt={`Фото к отзыву ${idx + 1}`} loading="lazy" decoding="async" />
-                      </a>
+                      <ReviewImageThumb
+                        key={`${row.id}-${idx}`}
+                        src={getImageUrl(img)}
+                        alt={`Фото к отзыву ${idx + 1}`}
+                        onOpen={setLightboxSrc}
+                      />
                     ))}
                   </div>
                 )}
@@ -495,6 +549,7 @@ function AdminReviews() {
           onClose={() => setToast(null)}
         />
       )}
+      <ReviewImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </PageShell>
   )
 }

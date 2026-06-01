@@ -1,3 +1,31 @@
+.page-shell--cart .page-shell__header {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.page-shell--cart .page-shell__headline {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-shell--cart .page-shell__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.cart-page-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.cart-page-clear {
+  flex-shrink: 0;
+}
+
 .btn-clear-cart {
   background: #fed7d7;
   color: #c53030;

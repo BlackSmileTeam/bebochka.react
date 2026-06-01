@@ -30,6 +30,40 @@ function CopyIcon() {
   )
 }
 
+function formatReferralInviteDate(iso) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('ru-RU')
+}
+
+function ReferralInvitedTable({ rows, myCode }) {
+  if (!rows?.length) return null
+  return (
+    <div className="profile-referral-invited-table-wrap">
+      <table className="profile-referral-invited-table">
+        <thead>
+          <tr>
+            <th>Имя</th>
+            <th>Дата</th>
+            <th>Код</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>{row.referredName?.trim() || '—'}</td>
+              <td>{formatReferralInviteDate(row.registeredAt ?? row.createdAt)}</td>
+              <td>
+                <code className="profile-referral-invited-table__code">{myCode || '—'}</code>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function ReferralMyCodeBlock({ code, onCopyCode, showHint = true }) {
   if (!code) return null
   return (
@@ -1013,6 +1047,14 @@ function Profile() {
                       onCopyCode={copyReferralCode}
                     />
                   )}
+                  {referralInfo?.invited?.length > 0 && !profileEditing && (
+                    <div className="profile-my-referral-invited">
+                      <span className="profile-my-referral-code__label">
+                        Кого вы пригласили ({referralInfo.invitedCount})
+                      </span>
+                      <ReferralInvitedTable rows={referralInfo.invited} myCode={referralInfo.myCode} />
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1525,18 +1567,8 @@ function Profile() {
 
                 {referralInfo?.invited?.length > 0 && (
                   <div className="profile-referral-block">
-                    <h4>Ваши приглашения ({referralInfo.invitedCount})</h4>
-                    <ul className="profile-referral-invited-list">
-                      {referralInfo.invited.map((row) => (
-                        <li key={row.id}>
-                          <strong>{row.referredName || 'Пользователь'}</strong>
-                          <span>{row.status}</span>
-                          {row.referrerRewardAmount != null && (
-                            <span className="profile-referral-reward">+{row.referrerRewardAmount} ₽</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
+                    <h4>Кого вы пригласили ({referralInfo.invitedCount})</h4>
+                    <ReferralInvitedTable rows={referralInfo.invited} myCode={referralInfo.myCode} />
                   </div>
                 )}
               </>
