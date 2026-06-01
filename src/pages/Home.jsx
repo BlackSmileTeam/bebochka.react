@@ -5,6 +5,7 @@ import { useCart } from '../contexts/CartContext'
 const ProductDetail = lazy(() => import('../components/ProductDetail'))
 import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
+import FilterIcon from '../components/FilterIcon'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CatalogBuyButton from '../components/CatalogBuyButton'
@@ -354,19 +355,7 @@ function Home() {
               aria-controls="catalog-filters-panel"
               aria-label={filtersOpen ? 'Свернуть фильтры' : 'Фильтры'}
             >
-              <svg
-                className="catalog-filters-toggle__icon"
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <path
-                  fill="currentColor"
-                  d="M4 5h16l-6 7v7l-4-2v-5L4 5z"
-                />
-              </svg>
+              <FilterIcon className="catalog-filters-toggle__icon" />
               {activeFilterCount > 0 && (
                 <span className="catalog-filters-badge" aria-hidden="true">
                   {activeFilterCount}

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
 import PageShell from '../components/PageShell'
+import FilterIcon from '../components/FilterIcon'
 import Toast from '../components/Toast'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { getApiPublicOrigin } from '../utils/apiBase'
@@ -92,7 +93,7 @@ function AdminOrders() {
   const [loading, setLoading] = useState(true)
   const [selectedOrders, setSelectedOrders] = useState(new Set())
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all')
-  const [expandedGroups, setExpandedGroups] = useState(new Set(ORDER_STATUSES_ALL))
+  const [expandedGroups, setExpandedGroups] = useState(() => new Set(['Ожидает оплату']))
   const [expandedOrderIds, setExpandedOrderIds] = useState(new Set())
   const [updatingStatuses, setUpdatingStatuses] = useState(new Set())
   const [bulkUpdating, setBulkUpdating] = useState(false)
@@ -336,7 +337,7 @@ function AdminOrders() {
     if (groupBy === 'client') {
       setExpandedGroups(new Set(Object.keys(groupedByClient)))
     } else {
-      setExpandedGroups(new Set(ORDER_STATUSES_ALL))
+      setExpandedGroups(new Set(['Ожидает оплату']))
     }
   }, [groupBy, groupedByClient])
 
@@ -823,8 +824,13 @@ function AdminOrders() {
           className="status-filters-toggle-btn"
           onClick={() => setFiltersExpanded(!filtersExpanded)}
           aria-expanded={filtersExpanded}
+          aria-label={filtersExpanded ? 'Скрыть фильтры' : 'Показать фильтры'}
+          title={filtersExpanded ? 'Скрыть фильтры' : 'Фильтры'}
         >
-          {filtersExpanded ? '▼ Скрыть фильтры' : '▶ Фильтры'}
+          <FilterIcon className="status-filters-toggle-btn__icon" />
+          <span className="status-filters-toggle-btn__text">
+            {filtersExpanded ? '▼ Скрыть фильтры' : '▶ Фильтры'}
+          </span>
         </button>
         <div className="status-filters-body">
         <div className="group-by-row">

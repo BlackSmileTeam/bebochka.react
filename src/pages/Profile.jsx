@@ -1104,16 +1104,6 @@ function Profile() {
                 <li key={oid} className="profile-order-card">
                   <div className="profile-order-head">
                     <strong>{o.orderNumber || o.OrderNumber}</strong>
-                    <span
-                      className="profile-order-status-badge"
-                      style={{ borderColor: statusColor, color: statusColor }}
-                    >
-                      {statusText}
-                    </span>
-                  </div>
-                  <div className="profile-order-meta">
-                    {(o.createdAt || o.CreatedAt) && new Date(o.createdAt || o.CreatedAt).toLocaleString('ru-RU')}
-                    {' · '}
                     <span className="profile-order-amount">
                       <span className="profile-order-amount-current">
                         {finalAmount.toLocaleString('ru-RU')}
@@ -1128,6 +1118,19 @@ function Profile() {
                         </span>
                       )}
                     </span>
+                  </div>
+                  <div className="profile-order-meta">
+                    <span
+                      className="profile-order-status-badge"
+                      style={{ borderColor: statusColor, color: statusColor }}
+                    >
+                      {statusText}
+                    </span>
+                    {(o.createdAt || o.CreatedAt) && (
+                      <time className="profile-order-date" dateTime={new Date(o.createdAt || o.CreatedAt).toISOString()}>
+                        {new Date(o.createdAt || o.CreatedAt).toLocaleString('ru-RU')}
+                      </time>
+                    )}
                   </div>
 
                   {thank && (

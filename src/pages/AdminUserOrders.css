@@ -41,26 +41,27 @@
 }
 
 .admin-user-orders-user-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  gap: 0.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
   margin: 0;
 }
 
 .admin-user-orders-user-info-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 0.75rem 1rem;
+  align-items: baseline;
   min-width: 0;
 }
 
 .admin-user-orders-user-info-row dt {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: #718096;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .admin-user-orders-user-info-row dd {
@@ -69,6 +70,13 @@
   color: #2d3748;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  .admin-user-orders-user-info-row {
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: 0.5rem 0.75rem;
+  }
 }
 
 .admin-user-orders-user-info-links {

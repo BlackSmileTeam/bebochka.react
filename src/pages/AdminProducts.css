@@ -49,6 +49,95 @@
   flex-shrink: 0;
 }
 
+.btn-toolbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.btn-toolbar-icon__icon {
+  display: block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.btn-toolbar-icon__badge {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .page-shell--admin-products .page-shell__header {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+  }
+
+  .page-shell--admin-products .page-shell__headline {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .page-shell--admin-products .page-shell__title {
+    margin-bottom: 0;
+  }
+
+  .page-shell--admin-products .page-shell__actions {
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .page-shell__actions .header-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    width: auto;
+    margin-left: auto;
+  }
+
+  .page-shell__actions .header-actions .btn.btn-filters,
+  .page-shell__actions .header-actions .btn.btn-add {
+    order: 0;
+    flex: 0 0 auto;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    padding: 0;
+    min-height: 42px;
+    position: relative;
+  }
+
+  .page-shell__actions .header-actions .btn-toolbar-icon__label {
+    display: none;
+  }
+
+  .page-shell__actions .header-actions .btn-toolbar-icon__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: #667eea;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .send-channel-wrapper {
+    order: 3;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .send-channel-wrapper {
   flex: 1 1 360px;
   min-width: 320px;
@@ -1088,37 +1177,6 @@
 
   .btn-clear {
     width: 100%;
-  }
-  
-  .page-shell__actions .header-actions {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .page-shell__actions .header-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .page-shell__actions .header-actions .btn.btn-filters {
-    order: 1;
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .page-shell__actions .header-actions .btn.btn-add {
-    order: 1;
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .send-channel-wrapper {
-    order: 2;
-    flex: 1 1 100%;
-    width: 100%;
-    min-width: 0;
   }
 
   .send-channel-group {

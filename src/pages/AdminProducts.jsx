@@ -5,11 +5,17 @@ import ProductForm from '../components/ProductForm.jsx'
 import ProductDetail from '../components/ProductDetail.jsx'
 import Toast from '../components/Toast.jsx'
 import PageShell from '../components/PageShell.jsx'
+import FilterIcon from '../components/FilterIcon.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl.js'
 import { TELEGRAM_UI_ENABLED } from '../constants/featureFlags.js'
 import './AdminProducts.css'
+
+function getProductId(product) {
+  const id = product?.id ?? product?.Id
+  return id != null ? id : null
+}
 
 function getDeleteProductErrorMessage(err) {
   if (err && typeof err === 'object' && 'response' in err && err.response?.data != null) {
@@ -455,6 +461,12 @@ function AdminProducts() {
   }
   
   const handleRowClick = (product, event) => {
+    if (
+      event.target.closest('.checkbox-column') ||
+      event.target.closest('input[type="checkbox"]')
+    ) {
+      return
+    }
     // Не открываем детали если кликнули на кнопку меню или внутри меню
     if (event.target.closest('.action-menu-wrapper') || event.target.closest('.action-menu')) {
       return
@@ -643,7 +655,7 @@ function AdminProducts() {
     if (selectedProductIds.size === filteredProducts.length) {
       setSelectedProductIds(new Set())
     } else {
-      setSelectedProductIds(new Set(filteredProducts.map(p => p.id)))
+      setSelectedProductIds(new Set(filteredProducts.map(p => getProductId(p)).filter(id => id != null)))
     }
   }
 
@@ -769,7 +781,7 @@ function AdminProducts() {
 
   if (loading) {
     return (
-      <PageShell className="page-shell--no-x-pad" title="Управление товарами">
+      <PageShell className="page-shell--no-x-pad page-shell--admin-products" title="Управление товарами">
         <div className="admin-products-page">
           <div className="loading">Загрузка...</div>
         </div>
@@ -779,16 +791,25 @@ function AdminProducts() {
 
   return (
     <PageShell
-      className="page-shell--no-x-pad"
+      className="page-shell--no-x-pad page-shell--admin-products"
       title="Управление товарами"
       actions={(
         <div className={`header-actions${selectedProductIds.size > 0 ? ' header-actions--with-send' : ''}`}>
           <button 
-            className={`btn btn-secondary btn-filters ${showFiltersPopup ? 'active' : ''}`}
+            className={`btn btn-secondary btn-filters btn-toolbar-icon ${showFiltersPopup ? 'active' : ''}`}
             onClick={() => setShowFiltersPopup(!showFiltersPopup)}
             title="Настроить фильтры"
+            aria-label={activeFiltersCount > 0 ? `Фильтры (${activeFiltersCount})` : 'Фильтры'}
           >
-            🔍 Фильтры {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+            <FilterIcon className="btn-toolbar-icon__icon" />
+            {activeFiltersCount > 0 && (
+              <span className="btn-toolbar-icon__badge" aria-hidden="true">
+                {activeFiltersCount}
+              </span>
+            )}
+            <span className="btn-toolbar-icon__label">
+              Фильтры{activeFiltersCount > 0 && ` (${activeFiltersCount})`}
+            </span>
           </button>
           {TELEGRAM_UI_ENABLED && selectedProductIds.size > 0 && (
             <div className="send-channel-wrapper">
@@ -848,8 +869,15 @@ function AdminProducts() {
               )}
             </div>
           )}
-          <button className="btn btn-primary btn-add" onClick={handleCreate}>
-            ➕ Добавить
+          <button
+            type="button"
+            className="btn btn-primary btn-add btn-toolbar-icon"
+            onClick={handleCreate}
+            title="Добавить товар"
+            aria-label="Добавить товар"
+          >
+            <span className="btn-toolbar-icon__glyph" aria-hidden="true">➕</span>
+            <span className="btn-toolbar-icon__label">Добавить</span>
           </button>
         </div>
       )}
@@ -1161,18 +1189,19 @@ function AdminProducts() {
             <tbody>
               {filteredProducts.map((product) => {
                 const published = isPublished(product)
+                const productId = getProductId(product)
                 return (
                 <tr 
-                  key={product.id}
-                  className={`product-row ${published ? '' : 'product-unpublished'} ${selectedProductIds.has(product.id) ? 'row-selected' : ''}`}
+                  key={productId}
+                  className={`product-row ${published ? '' : 'product-unpublished'} ${productId != null && selectedProductIds.has(productId) ? 'row-selected' : ''}`}
                   style={published ? {} : { backgroundColor: '#fff8e1' }}
                   onClick={(e) => handleRowClick(product, e)}
                 >
                   <td className="checkbox-column" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
-                      checked={selectedProductIds.has(product.id)}
-                      onChange={(e) => toggleProductSelection(product.id, e)}
+                      checked={productId != null && selectedProductIds.has(productId)}
+                      onChange={(e) => productId != null && toggleProductSelection(productId, e)}
                       onClick={(e) => e.stopPropagation()}
                     />
                   </td>

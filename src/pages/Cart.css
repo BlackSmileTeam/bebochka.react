@@ -401,6 +401,31 @@
   }
 }
 
+@media (max-width: 768px) {
+  .page-shell--cart .page-shell__header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .page-shell--cart .page-shell__headline {
+    width: 100%;
+  }
+
+  .page-shell--cart .page-shell__title {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cart-page-title {
+    text-align: left;
+  }
+
+  .cart-page-clear {
+    margin-left: auto;
+  }
+}
+
 @media (max-width: 480px) {
   .cart-item {
     padding: 0.75rem 2.75rem 0.75rem 0.75rem;
