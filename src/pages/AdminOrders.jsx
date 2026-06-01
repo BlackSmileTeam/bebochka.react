@@ -256,6 +256,15 @@ function AdminOrders() {
     && selectedStatusFilter !== 'cart'
     && filteredOrdersCount === 0
 
+  const hasActiveFilters =
+    selectedStatusFilter !== 'all'
+    || discountFilter === 'withDiscount'
+    || groupBy === 'client'
+    || clientFilterKey != null
+
+  const showFiltersPanel = hasActiveFilters || filtersExpanded
+  const filtersPanelExpanded = hasActiveFilters || filtersExpanded
+
   const getCartItemUserId = (item) => {
     const raw = item.userId ?? item.UserId
     if (raw === undefined || raw === null || raw === '') return null
@@ -807,15 +816,21 @@ function AdminOrders() {
           <div className="admin-page-toolbar">
             <button
               type="button"
-              className={`btn btn-secondary btn-toolbar-icon btn-toolbar-icon--square status-filters-toggle-btn status-filters-toggle-btn--header${filtersExpanded ? ' active' : ''}`}
-              onClick={() => setFiltersExpanded(!filtersExpanded)}
-              aria-expanded={filtersExpanded}
-              aria-label={filtersExpanded ? 'Скрыть фильтры' : 'Показать фильтры'}
-              title={filtersExpanded ? 'Скрыть фильтры' : 'Фильтры'}
+              className={`btn btn-secondary btn-toolbar-icon btn-toolbar-icon--square status-filters-toggle-btn status-filters-toggle-btn--header${showFiltersPanel ? ' active' : ''}`}
+              onClick={() => {
+                if (showFiltersPanel && !hasActiveFilters) {
+                  setFiltersExpanded(false)
+                } else {
+                  setFiltersExpanded(!filtersExpanded)
+                }
+              }}
+              aria-expanded={showFiltersPanel}
+              aria-label={showFiltersPanel ? 'Скрыть фильтры' : 'Показать фильтры'}
+              title={showFiltersPanel ? 'Скрыть фильтры' : 'Фильтры'}
             >
               <FilterIcon className="btn-toolbar-icon__icon" />
               <span className="status-filters-toggle-btn__text">
-                {filtersExpanded ? '▼ Скрыть фильтры' : '▶ Фильтры'}
+                {showFiltersPanel ? '▼ Скрыть фильтры' : '▶ Фильтры'}
               </span>
             </button>
             {selectedCount > 0 && (
@@ -833,8 +848,9 @@ function AdminOrders() {
     >
       <div className="admin-orders-page">
 
-      {/* Группировка и фильтры */}
-      <div className={`status-filters ${filtersExpanded ? 'status-filters--expanded' : 'status-filters--collapsed'}`}>
+      {/* Группировка и фильтры — только если выбран фильтр или открыта панель */}
+      {showFiltersPanel && (
+      <div className={`status-filters ${filtersPanelExpanded ? 'status-filters--expanded' : 'status-filters--collapsed'}`}>
         <div className="status-filters-body">
         <div className="group-by-row">
           <span className="group-by-label">Группировка:</span>
@@ -887,6 +903,7 @@ function AdminOrders() {
         </button>
         </div>
       </div>
+      )}
 
       {/* Массовые действия */}
       {selectedStatusFilter !== 'cart' && selectedCount > 0 && (
