@@ -143,6 +143,16 @@
   height: 18px;
 }
 
+.box-add-icon {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.btn-primary .box-add-icon {
+  filter: brightness(0) invert(1);
+}
+
 .btn-toolbar-icon__label {
   white-space: nowrap;
 }
