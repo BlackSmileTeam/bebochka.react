@@ -12,10 +12,11 @@ function formatRub(amount) {
   return `${Number(amount).toLocaleString('ru-RU')} ₽`
 }
 
+/** Вторая строка кнопки скидки — кого пригласили / кто пригласил вас. */
 export function referralDiscountHint(option) {
   if (!option) return null
   if (option.kind === 'Referrer' && option.forUserName) {
-    return `Скидка за приглашение: ${option.forUserName}`
+    return option.forUserName
   }
   if (option.kind === 'Referred' && option.forUserName) {
     return `По приглашению от ${option.forUserName}`
@@ -181,7 +182,11 @@ export default function CartReferralDiscountPanel({
                 >
                   <span className="cart-referral-panel__apply-label">{opt.label || 'Скидка −10%'}</span>
                   {optHint && (
-                    <span className="cart-referral-panel__apply-hint">{optHint}</span>
+                    <span
+                      className={`cart-referral-panel__apply-hint${String(opt.kind).toLowerCase() === 'referrer' ? ' cart-referral-panel__apply-hint--referrer' : ''}`}
+                    >
+                      {optHint}
+                    </span>
                   )}
                 </button>
               )

@@ -37,24 +37,39 @@
   gap: 0.5rem;
 }
 
-.cart-referral-panel__apply-btn {
+.cart-referral-panel__options .cart-referral-panel__apply-btn.btn-secondary {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
   text-align: left;
   width: 100%;
+  height: auto;
+  min-height: 3rem;
   padding: 0.65rem 0.85rem;
+  white-space: normal;
+  line-height: 1.35;
 }
 
 .cart-referral-panel__apply-label {
+  display: block;
+  width: 100%;
   font-weight: 600;
   font-size: 0.9rem;
 }
 
 .cart-referral-panel__apply-hint {
+  display: block;
+  width: 100%;
   font-size: 0.8rem;
   color: #718096;
-  margin-top: 0.2rem;
+  margin-top: 0.35rem;
+  font-weight: 400;
+}
+
+.cart-referral-panel__apply-hint--referrer::before {
+  content: 'Приглашённый: ';
+  color: #a0aec0;
 }
 
 .cart-referral-panel__applied-title {
