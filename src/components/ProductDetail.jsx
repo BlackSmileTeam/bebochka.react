@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
+import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
 import CartCountdown, { useCartCountdown } from './CartCountdown'
 import { CartButtonIcon } from './CatalogBuyButton'
 import ProductImage from './ProductImage'
@@ -15,6 +16,7 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
   const [isAdding, setIsAdding] = useState(false)
   const [queueLoading, setQueueLoading] = useState(false)
   const [toast, setToast] = useState(null)
+  const [favoriteProductIds, setFavoriteProductIds] = useState(() => new Set(readFavoriteProductIds()))
   const { addToCart, cartItems } = useCart()
   const authToken = typeof localStorage !== 'undefined' ? localStorage.getItem('authToken') : null
   let user = {}
@@ -92,6 +94,59 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
     }
   }
 
+  const handleToggleFavorite = (event) => {
+    event.stopPropagation()
+    if (!productId) return
+
+    if (!authToken) {
+      const { ids, isFavorite } = toggleFavoriteProductId(productId)
+      setFavoriteProductIds(new Set(ids))
+      setToast({
+        type: 'success',
+        message: isFavorite ? 'Товар добавлен в избранное' : 'Товар убран из избранного'
+      })
+      return
+    }
+
+    const isFavoriteNow = favoriteProductIds.has(productId)
+    ;(async () => {
+      try {
+        if (isFavoriteNow) {
+          await api.removeProductFromFavorites(productId)
+          setFavoriteProductIds((prev) => {
+            const next = new Set(prev)
+            next.delete(productId)
+            return next
+          })
+          setToast({ type: 'success', message: 'Товар убран из избранного' })
+        } else {
+          await api.addProductToFavorites(productId)
+          setFavoriteProductIds((prev) => new Set([...prev, productId]))
+          setToast({ type: 'success', message: 'Товар добавлен в избранное' })
+        }
+      } catch (error) {
+        setToast({ type: 'error', message: error.message || 'Не удалось обновить избранное' })
+      }
+    })()
+  }
+
+  useEffect(() => {
+    if (!authToken) {
+      setFavoriteProductIds(new Set(readFavoriteProductIds()))
+      return
+    }
+    ;(async () => {
+      try {
+        const ids = await api.getMyFavoriteProductIds()
+        setFavoriteProductIds(new Set(ids))
+      } catch {
+        setFavoriteProductIds(new Set())
+      }
+    })()
+  }, [authToken])
+
+  const isFavorite = favoriteProductIds.has(productId)
+
   if (!product) return null
 
   const images = product.images || []
@@ -165,6 +220,15 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
           {images.length > 0 ? (
             <div className="product-detail-gallery">
               <div className="product-detail-main-image">
+                <button
+                  type="button"
+                  className={`product-detail-favorite-btn${isFavorite ? ' product-detail-favorite-btn--active' : ''}`}
+                  onClick={handleToggleFavorite}
+                  aria-label={isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}
+                  title={isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}
+                >
+                  {isFavorite ? '♥' : '♡'}
+                </button>
                 {images.length > 1 && (
                   <button 
                     className="gallery-nav gallery-nav-prev" 
@@ -221,6 +285,15 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
             </div>
           ) : (
             <div className="product-detail-no-image">
+              <button
+                type="button"
+                className={`product-detail-favorite-btn${isFavorite ? ' product-detail-favorite-btn--active' : ''}`}
+                onClick={handleToggleFavorite}
+                aria-label={isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}
+                title={isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}
+              >
+                {isFavorite ? '♥' : '♡'}
+              </button>
               <span>Нет фотографий</span>
             </div>
           )}

@@ -467,6 +467,10 @@
   min-width: 0;
 }
 
+.product-footer--price-only {
+  justify-content: flex-start;
+}
+
 .product-card-links {
   margin-top: 0.4rem;
   display: flex;

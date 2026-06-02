@@ -5,6 +5,7 @@ import { api } from '../services/api'
 import { getOrderStatusColor } from '../constants/orderStatusColors'
 import { useCart } from '../contexts/CartContext'
 import ProductDetail from '../components/ProductDetail'
+import CatalogProductCard from '../components/CatalogProductCard'
 import PageShell from '../components/PageShell'
 import SizeMultiSelect, { parseSizeValue, joinSizeValue } from '../components/SizeMultiSelect'
 import { buildCatalogFilterSearch, readAutoFilterEnabled } from '../utils/catalogFilters'
@@ -17,6 +18,7 @@ import {
 } from '../constants/paymentContacts'
 import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
 import './Profile.css'
+import './Home.css'
 
 const payAvitoHref = PAYMENT_AVITO_URL
 
@@ -37,7 +39,7 @@ function formatReferralInviteDate(iso) {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('ru-RU')
 }
 
-function ReferralInvitedTable({ rows, myCode }) {
+function ReferralInvitedTable({ rows }) {
   if (!rows?.length) return null
   return (
     <div className="profile-referral-invited-table-wrap">
@@ -46,8 +48,7 @@ function ReferralInvitedTable({ rows, myCode }) {
           <tr>
             <th>Имя</th>
             <th>Дата</th>
-            <th>Код</th>
-            <th aria-label="Скидка" />
+            <th>Скидка</th>
           </tr>
         </thead>
         <tbody>
@@ -56,14 +57,7 @@ function ReferralInvitedTable({ rows, myCode }) {
               <td>{row.referredName?.trim() || '—'}</td>
               <td>{formatReferralInviteDate(row.registeredAt ?? row.createdAt)}</td>
               <td>
-                <code className="profile-referral-invited-table__code">{myCode || '—'}</code>
-              </td>
-              <td>
-                {row.referrerDiscountUsed && (
-                  <span className="profile-referral-used-mark" title="Скидка за приглашение использована">
-                    скидка
-                  </span>
-                )}
+                {row.referrerDiscountUsed ? 'недоступна' : 'доступна'}
               </td>
             </tr>
           ))}
@@ -337,7 +331,7 @@ function Profile() {
   const location = useLocation()
   const navigate = useNavigate()
   const orderPlacedState = location.state?.orderPlaced ? location.state : null
-  const { sessionId } = useCart()
+  const { sessionId, cartItems } = useCart()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -501,6 +495,14 @@ function Profile() {
   const goToCatalogFilter = (key, value) => {
     navigate(buildCatalogFilterSearch({ [key]: key === 'size' ? [value] : value }))
     setDetailProduct(null)
+  }
+
+  const getAvailableQuantity = (product) =>
+    product.availableQuantity !== undefined ? product.availableQuantity : (product.quantityInStock || 0)
+
+  const getCartQuantity = (productId) => {
+    const cartItem = cartItems.find((item) => item.productId === productId)
+    return cartItem ? cartItem.quantity : 0
   }
 
   const startReceiveFlow = (orderId) => {
@@ -1151,7 +1153,7 @@ function Profile() {
                       <span className="profile-my-referral-code__label">
                         Кого вы пригласили ({referralInfo.invitedCount})
                       </span>
-                      <ReferralInvitedTable rows={referralInfo.invited} myCode={referralInfo.myCode} />
+                      <ReferralInvitedTable rows={referralInfo.invited} />
                     </div>
                   )}
                 </>
@@ -1381,34 +1383,22 @@ function Profile() {
             ) : favoriteProducts.length === 0 ? (
               <p className="profile-muted">Товары из избранного сейчас недоступны.</p>
             ) : (
-              <ul className="profile-favorites-list">
-                {favoriteProducts.map((p) => (
-                  <li key={p.id} className="profile-favorite-card">
-                    <button
-                      type="button"
-                      className="profile-favorite-open"
-                      onClick={() => openProductDetail(p.id)}
-                      disabled={detailLoadingId === p.id}
-                      title="Открыть карточку товара"
-                    >
-                      <div className="profile-favorite-thumb">
-                        <img src={getImageUrl(p.images?.[0])} alt={p.name} loading="lazy" />
-                      </div>
-                      <div className="profile-favorite-main">
-                        <strong>{p.name}</strong>
-                        <span>{p.brand || 'Без бренда'}</span>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      className="profile-btn-icon-action profile-btn-icon-action--danger profile-favorite-remove"
-                      onClick={() => handleToggleFavorite(p.id)}
-                    >
-                      Убрать
-                    </button>
-                  </li>
+              <div className="products-grid profile-favorites-grid">
+                {favoriteProducts.map((p, index) => (
+                  <CatalogProductCard
+                    key={p.id}
+                    product={p}
+                    isFavorite
+                    onToggleFavorite={handleToggleFavorite}
+                    onOpen={() => openProductDetail(p.id)}
+                    onFilterSelect={goToCatalogFilter}
+                    showBuyButton={false}
+                    available={getAvailableQuantity(p)}
+                    inCart={getCartQuantity(p.id)}
+                    imagePriority={index === 0}
+                  />
                 ))}
-              </ul>
+              </div>
             )}
           </section>
         )}
@@ -1731,7 +1721,7 @@ function Profile() {
                 {referralInfo?.invited?.length > 0 && (
                   <div className="profile-referral-block">
                     <h4>Кого вы пригласили ({referralInfo.invitedCount})</h4>
-                    <ReferralInvitedTable rows={referralInfo.invited} myCode={referralInfo.myCode} />
+                    <ReferralInvitedTable rows={referralInfo.invited} />
                   </div>
                 )}
               </>
