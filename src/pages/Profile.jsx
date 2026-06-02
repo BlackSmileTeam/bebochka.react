@@ -17,6 +17,7 @@ import {
   PAYMENT_VK_URL
 } from '../constants/paymentContacts'
 import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
+import { readProfileTab, saveProfileTab } from '../utils/profileTabStorage'
 import './Profile.css'
 import './Home.css'
 
@@ -368,7 +369,7 @@ function Profile() {
   const [referralLoading, setReferralLoading] = useState(false)
   const [referrerCodeInput, setReferrerCodeInput] = useState('')
   const [referralBusy, setReferralBusy] = useState(false)
-  const [activeTab, setActiveTab] = useState('orders')
+  const [activeTab, setActiveTab] = useState(() => readProfileTab())
   const [favoriteProductIds, setFavoriteProductIds] = useState(() => readFavoriteProductIds())
   const [favoriteProducts, setFavoriteProducts] = useState([])
   const [favoritesLoading, setFavoritesLoading] = useState(false)
@@ -456,6 +457,10 @@ function Profile() {
     })()
     return () => { cancelled = true }
   }, [loadFavoriteProducts])
+
+  useEffect(() => {
+    saveProfileTab(activeTab)
+  }, [activeTab])
 
   useEffect(() => {
     let cancelled = false
