@@ -1,9 +1,24 @@
+/** Иконка «%» для скидки на товар. */
 export default function DiscountIcon({ className = '', width = 18, height = 18 }) {
   return (
-    <svg className={className} width={width} height={height} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg
+      className={className}
+      width={width}
+      height={height}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
       <path
+        d="M7.5 4C5.57 4 4 5.57 4 7.5S5.57 11 7.5 11 11 9.43 11 7.5 9.43 4 7.5 4zM16.5 13c-1.93 0-3.5 1.57-3.5 3.5s1.57 3.5 3.5 3.5 3.5-1.57 3.5-3.5-1.57-3.5-3.5-3.5z"
         fill="currentColor"
-        d="M21 5H3a1 1 0 0 0-1 1v3a1 1 0 0 0 .29.71l7.29 7.3V19l4 2v-8.59l7.29-7.3A1 1 0 0 0 22 9V6a1 1 0 0 0-1-1z"
+      />
+      <path
+        d="M5.41 20 20 5.41"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
       />
     </svg>
   )

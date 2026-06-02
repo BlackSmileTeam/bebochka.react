@@ -23,7 +23,7 @@ export default function ProductImage({
       sizes={sizes}
       loading={priority ? 'eager' : 'lazy'}
       decoding="async"
-      fetchPriority={priority ? 'high' : undefined}
+      fetchpriority={priority ? 'high' : undefined}
       title={title}
       onClick={onClick}
       onError={onError}

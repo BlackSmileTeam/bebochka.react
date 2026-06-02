@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
@@ -15,6 +15,7 @@ import {
   PAYMENT_TELEGRAM_URL,
   PAYMENT_VK_URL
 } from '../constants/paymentContacts'
+import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
 import './Profile.css'
 
 const payAvitoHref = PAYMENT_AVITO_URL
@@ -373,6 +374,10 @@ function Profile() {
   const [referralLoading, setReferralLoading] = useState(false)
   const [referrerCodeInput, setReferrerCodeInput] = useState('')
   const [referralBusy, setReferralBusy] = useState(false)
+  const [activeTab, setActiveTab] = useState('orders')
+  const [favoriteProductIds, setFavoriteProductIds] = useState(() => readFavoriteProductIds())
+  const [favoriteProducts, setFavoriteProducts] = useState([])
+  const [favoritesLoading, setFavoritesLoading] = useState(false)
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -418,6 +423,29 @@ function Profile() {
     setOrders(Array.isArray(data) ? data : [])
   }
 
+  const loadFavoriteProducts = useCallback(async () => {
+    const token = localStorage.getItem('authToken')
+    const ids = token ? await api.getMyFavoriteProductIds() : readFavoriteProductIds()
+    setFavoriteProductIds(ids)
+    if (!ids.length) {
+      setFavoriteProducts([])
+      return
+    }
+    setFavoritesLoading(true)
+    try {
+      const allProducts = await api.getProducts(sessionId)
+      const byId = new Map((Array.isArray(allProducts) ? allProducts : []).map((p) => [p.id, p]))
+      const list = ids
+        .map((id) => byId.get(id))
+        .filter(Boolean)
+      setFavoriteProducts(list)
+    } catch {
+      setFavoriteProducts([])
+    } finally {
+      setFavoritesLoading(false)
+    }
+  }, [sessionId])
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -428,9 +456,12 @@ function Profile() {
       } finally {
         if (!cancelled) setLoading(false)
       }
+      if (!cancelled) {
+        loadFavoriteProducts().catch(() => {})
+      }
     })()
     return () => { cancelled = true }
-  }, [])
+  }, [loadFavoriteProducts])
 
   useEffect(() => {
     let cancelled = false
@@ -855,9 +886,50 @@ function Profile() {
     }
   }
 
+  const handleToggleFavorite = (productId) => {
+    const token = localStorage.getItem('authToken')
+    ;(async () => {
+      try {
+        if (token) {
+          await api.removeProductFromFavorites(productId)
+          setFavoriteProductIds((prev) => prev.filter((id) => id !== productId))
+        } else {
+          const { ids } = toggleFavoriteProductId(productId)
+          setFavoriteProductIds(ids)
+        }
+        setFavoriteProducts((prev) => prev.filter((p) => p.id !== productId))
+        showToast('Товар убран из избранного', 'success')
+      } catch (error) {
+        showToast(error?.message || 'Не удалось обновить избранное')
+      }
+    })()
+  }
+
+  const profileTabs = useMemo(() => ([
+    { key: 'orders', label: `Заказы${orders.length ? ` (${orders.length})` : ''}` },
+    { key: 'favorites', label: `Избранное${favoriteProductIds.length ? ` (${favoriteProductIds.length})` : ''}` },
+    { key: 'settings', label: 'Профиль' },
+  ]), [orders.length, favoriteProductIds.length])
+
   return (
     <>
       <PageShell title="Профиль" className="page-shell--catalog" subtitle={profileUserInfo}>
+        <div className="profile-modern-tabs" role="tablist" aria-label="Разделы профиля">
+          {profileTabs.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={`profile-modern-tab${activeTab === tab.key ? ' profile-modern-tab--active' : ''}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'settings' && (
         <div className="profile-top-grid">
           <section className="profile-panel profile-panel--children">
             <div className="profile-panel-head">
@@ -1098,7 +1170,10 @@ function Profile() {
             </div>
           </section>
         </div>
+        )}
 
+        {activeTab === 'orders' && (
+        <>
         <h2 className="profile-section-title">История заказов</h2>
         {orderPlacedState?.orderNumber && (
           <div className="profile-order-placed" role="status">
@@ -1291,6 +1366,54 @@ function Profile() {
             })}
           </ul>
         )}
+        </>
+        )}
+
+        {activeTab === 'favorites' && (
+          <section className="profile-panel profile-panel--favorites">
+            <div className="profile-panel-head">
+              <h2 className="profile-section-title">Избранное</h2>
+            </div>
+            {favoritesLoading ? (
+              <p className="profile-muted">Загрузка…</p>
+            ) : favoriteProductIds.length === 0 ? (
+              <p className="profile-muted">Пока ничего нет. Нажмите сердечко на карточке товара в каталоге.</p>
+            ) : favoriteProducts.length === 0 ? (
+              <p className="profile-muted">Товары из избранного сейчас недоступны.</p>
+            ) : (
+              <ul className="profile-favorites-list">
+                {favoriteProducts.map((p) => (
+                  <li key={p.id} className="profile-favorite-card">
+                    <button
+                      type="button"
+                      className="profile-favorite-open"
+                      onClick={() => openProductDetail(p.id)}
+                      disabled={detailLoadingId === p.id}
+                      title="Открыть карточку товара"
+                    >
+                      <div className="profile-favorite-thumb">
+                        <img src={getImageUrl(p.images?.[0])} alt={p.name} loading="lazy" />
+                      </div>
+                      <div className="profile-favorite-main">
+                        <strong>{p.name}</strong>
+                        <span>{p.brand || 'Без бренда'}</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className="profile-btn-icon-action profile-btn-icon-action--danger profile-favorite-remove"
+                      onClick={() => handleToggleFavorite(p.id)}
+                    >
+                      Убрать
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {activeTab === 'settings' && (
         <div className="profile-actions profile-actions--bottom">
           <button
             type="button"
@@ -1300,6 +1423,7 @@ function Profile() {
             Выйти из профиля
           </button>
         </div>
+        )}
       </PageShell>
 
       {detailProduct && (

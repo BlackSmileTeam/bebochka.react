@@ -17,6 +17,7 @@ import { usePageSeo } from '../utils/seo'
 import { catalogFiltersFromSearchParams, countActiveCatalogFilters, toggleSizeFilter, buildFiltersFromChildren, readAutoFilterEnabled, productMatchesCatalogFilters, normalizeGender } from '../utils/catalogFilters'
 import { DEFAULT_CATALOG_FILTERS, readCatalogStateFromSession, saveCatalogStateToSession, hasStoredCatalogFilters } from '../utils/catalogFilterStorage'
 import { getProductPriceInfo } from '../utils/productPrice'
+import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
 import './Home.css'
 
 const CONDITION_PRIORITY = {
@@ -59,6 +60,7 @@ function Home() {
     return stored?.priceSort ?? ''
   })
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [favoriteProductIds, setFavoriteProductIds] = useState(() => new Set(readFavoriteProductIds()))
   const { addToCart, sessionId, cartItems } = useCart()
 
   usePageSeo({
@@ -253,6 +255,56 @@ function Home() {
     }
   }
 
+  const handleToggleFavorite = (productId) => {
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      const { ids, isFavorite } = toggleFavoriteProductId(productId)
+      setFavoriteProductIds(new Set(ids))
+      setToast({
+        type: 'success',
+        message: isFavorite ? 'Товар добавлен в избранное' : 'Товар убран из избранного'
+      })
+      return
+    }
+
+    const isFavoriteNow = favoriteProductIds.has(productId)
+    ;(async () => {
+      try {
+        if (isFavoriteNow) {
+          await api.removeProductFromFavorites(productId)
+          setFavoriteProductIds((prev) => {
+            const next = new Set(prev)
+            next.delete(productId)
+            return next
+          })
+          setToast({ type: 'success', message: 'Товар убран из избранного' })
+        } else {
+          await api.addProductToFavorites(productId)
+          setFavoriteProductIds((prev) => new Set([...prev, productId]))
+          setToast({ type: 'success', message: 'Товар добавлен в избранное' })
+        }
+      } catch (error) {
+        setToast({ type: 'error', message: error.message || 'Не удалось обновить избранное' })
+      }
+    })()
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      setFavoriteProductIds(new Set(readFavoriteProductIds()))
+      return
+    }
+    ;(async () => {
+      try {
+        const ids = await api.getMyFavoriteProductIds()
+        setFavoriteProductIds(new Set(ids))
+      } catch {
+        setFavoriteProductIds(new Set())
+      }
+    })()
+  }, [])
+
   const filterOptions = useMemo(() => {
     const collect = (key) =>
       [...new Set(products.map((p) => p[key]).filter(Boolean))].sort((a, b) =>
@@ -396,6 +448,7 @@ function Home() {
             ))}
           </select>
           <SizeMultiSelect
+              className="catalog-filter-size-select"
               value={filters.size.join(',')}
               onChange={(val) => setFilters((prev) => ({ ...prev, size: parseSizeValue(val) }))}
               options={filterOptions.sizes}
@@ -466,6 +519,18 @@ function Home() {
               key={product.id} 
               className="product-card"
             >
+              <button
+                type="button"
+                className={`product-favorite-btn${favoriteProductIds.has(product.id) ? ' product-favorite-btn--active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleToggleFavorite(product.id)
+                }}
+                aria-label={favoriteProductIds.has(product.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                title={favoriteProductIds.has(product.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+              >
+                {favoriteProductIds.has(product.id) ? '♥' : '♡'}
+              </button>
               <div 
                 className="product-image-container"
                 onClick={() => setSelectedProduct(product)}

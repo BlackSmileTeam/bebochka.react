@@ -154,10 +154,12 @@ export default function SizeMultiSelect({
     setOpen(true)
   }
 
+  const catalogFilterDropdown = className.includes('catalog-filter-size-select')
+
   const dropdownNode = open && dropdownStyle ? (
     <div
       ref={dropdownRef}
-      className="size-multi-select__dropdown size-multi-select__dropdown--portal"
+      className={`size-multi-select__dropdown size-multi-select__dropdown--portal${catalogFilterDropdown ? ' size-multi-select__dropdown--catalog-filter' : ''}`}
       style={{
         top: dropdownStyle.top,
         left: dropdownStyle.left,

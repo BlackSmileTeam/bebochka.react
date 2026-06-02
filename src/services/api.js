@@ -1,5 +1,9 @@
 import axios from 'axios'
 import { getApiBaseUrl } from '../utils/apiBase'
+import {
+  readFavoriteProductIds,
+  toggleFavoriteProductId,
+} from '../utils/favoritesStorage'
 
 const API_BASE_URL = getApiBaseUrl()
 
@@ -101,6 +105,11 @@ function extractApiError(error, fallback) {
     || error?.message
     || fallback
   )
+}
+
+function isFavoritesApiUnavailable(error) {
+  const status = error?.response?.status
+  return status === 404 || status === 405
 }
 
 /**
@@ -935,6 +944,50 @@ export const api = {
 
   async deleteMyChild(id) {
     await apiClient.delete(`/profile/children/${id}`)
+  },
+
+  async getMyFavoriteProductIds() {
+    if (!localStorage.getItem('authToken')) return readFavoriteProductIds()
+    try {
+      const response = await apiClient.get('/profile/favorites')
+      const rows = Array.isArray(response.data) ? response.data : []
+      return rows
+        .map((x) => Number(x))
+        .filter((x) => Number.isFinite(x) && x > 0)
+    } catch (error) {
+      if (isFavoritesApiUnavailable(error)) return readFavoriteProductIds()
+      return []
+    }
+  },
+
+  async addProductToFavorites(productId) {
+    if (!localStorage.getItem('authToken')) {
+      throw new Error('Войдите в аккаунт, чтобы сохранять избранное')
+    }
+    try {
+      await apiClient.post(`/profile/favorites/${productId}`)
+    } catch (error) {
+      if (isFavoritesApiUnavailable(error)) {
+        toggleFavoriteProductId(productId)
+        return
+      }
+      throw new Error(extractApiError(error, 'Не удалось добавить в избранное'))
+    }
+  },
+
+  async removeProductFromFavorites(productId) {
+    if (!localStorage.getItem('authToken')) {
+      throw new Error('Войдите в аккаунт, чтобы менять избранное')
+    }
+    try {
+      await apiClient.delete(`/profile/favorites/${productId}`)
+    } catch (error) {
+      if (isFavoritesApiUnavailable(error)) {
+        toggleFavoriteProductId(productId)
+        return
+      }
+      throw new Error(extractApiError(error, 'Не удалось убрать из избранного'))
+    }
   },
 
   _normalizeCartReferralDiscounts(data) {

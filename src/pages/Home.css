@@ -84,6 +84,9 @@
 }
 
 .catalog-filters {
+  --catalog-filter-font-size: 0.8125rem;
+  --catalog-filter-line-height: 1.25;
+  --catalog-filter-font-weight: 400;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.35rem;
@@ -92,6 +95,9 @@
   max-width: 100%;
   overflow-x: hidden;
   align-items: stretch;
+  font-family: inherit;
+  font-size: var(--catalog-filter-font-size);
+  line-height: var(--catalog-filter-line-height);
 }
 
 .catalog-filters > * {
@@ -109,8 +115,10 @@
   padding: 0.2rem 0.35rem;
   background: #fff;
   color: #2d3748;
-  font-size: 0.78rem;
-  line-height: 1.2;
+  font-family: inherit;
+  font-size: var(--catalog-filter-font-size);
+  font-weight: var(--catalog-filter-font-weight);
+  line-height: var(--catalog-filter-line-height);
   background-image:
     linear-gradient(45deg, transparent 50%, #718096 50%),
     linear-gradient(135deg, #718096 50%, transparent 50%);
@@ -130,14 +138,40 @@
 .catalog-filters .size-multi-select {
   min-width: 0;
   width: 100%;
-  font-size: 0.78rem;
+  font-family: inherit;
+  font-size: var(--catalog-filter-font-size);
+  line-height: var(--catalog-filter-line-height);
+}
+
+.catalog-filters .size-multi-select__control,
+.catalog-filters .size-multi-select__placeholder,
+.catalog-filters .size-multi-select__values,
+.catalog-filters .size-multi-select__tag {
+  font-family: inherit;
+  font-size: var(--catalog-filter-font-size);
+  font-weight: var(--catalog-filter-font-weight);
+  line-height: var(--catalog-filter-line-height);
 }
 
 .catalog-filters .size-multi-select__control {
   min-height: 30px;
   padding: 0.15rem 0.35rem;
-  font-size: 0.78rem;
   border-radius: 6px;
+}
+
+.catalog-filters .size-multi-select__tag-remove {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.size-multi-select__dropdown--catalog-filter,
+.size-multi-select__dropdown--catalog-filter .size-multi-select__search,
+.size-multi-select__dropdown--catalog-filter .size-multi-select__option,
+.size-multi-select__dropdown--catalog-filter .size-multi-select__empty {
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  font-weight: 400;
 }
 
 .catalog-filter-sizes__list {
@@ -225,6 +259,7 @@
 }
 
 .product-card {
+  position: relative;
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -236,6 +271,31 @@
   min-width: 0;
   height: auto;
   align-self: stretch;
+}
+
+.product-favorite-btn {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  z-index: 2;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #718096;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.product-favorite-btn--active {
+  color: #e53e3e;
+  background: rgba(255, 245, 245, 0.96);
 }
 
 .product-card:hover {

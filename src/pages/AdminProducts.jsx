@@ -13,6 +13,10 @@ import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl.js'
 import { TELEGRAM_UI_ENABLED } from '../constants/featureFlags.js'
+import {
+  readAdminProductsFilters,
+  saveAdminProductsFilters,
+} from '../utils/adminProductsFilterStorage.js'
 import './AdminProducts.css'
 
 function getProductId(product) {
@@ -63,20 +67,8 @@ function AdminProducts() {
   const [discountBusy, setDiscountBusy] = useState(false)
   const hasCheckedOngoingOperation = useRef(false)
   
-  // Фильтры
-  const [filters, setFilters] = useState({
-    name: '',
-    brand: '',
-    size: '',
-    color: '',
-    gender: '',
-    condition: '',
-    priceMin: '',
-    priceMax: '',
-    publishedStatus: 'all', // all, published, scheduled
-    stockState: 'availableRegular', // availableRegular, reserved, all, purchased
-    sortByBox: 'none' // none, asc, desc
-  })
+  // Фильтры (сохраняются в localStorage)
+  const [filters, setFilters] = useState(() => readAdminProductsFilters())
 
   const CHANNEL_EMOJIS = useMemo(() => [
     { id: '5411324292317085002', label: 'Коричневая звёздочка', image: '/channel-emoji-1.svg' },
@@ -94,6 +86,10 @@ function AdminProducts() {
       setDiscountPercentInput('')
     }
   }, [selectedProductIds.size])
+
+  useEffect(() => {
+    saveAdminProductsFilters(filters)
+  }, [filters])
 
   useEffect(() => {
     loadProducts()
@@ -621,7 +617,7 @@ function AdminProducts() {
   }
   
   const clearFilters = () => {
-    setFilters({
+    const cleared = {
       name: '',
       brand: '',
       size: '',
@@ -632,8 +628,10 @@ function AdminProducts() {
       priceMax: '',
       publishedStatus: 'all',
       stockState: 'all',
-      sortByBox: 'none'
-    })
+      sortByBox: 'none',
+    }
+    setFilters(cleared)
+    saveAdminProductsFilters(cleared)
   }
 
   const clearFilter = (field) => {
@@ -866,65 +864,69 @@ function AdminProducts() {
       title="Управление товарами"
       actions={(
         <div className={`admin-page-header-actions${selectedProductIds.size > 0 ? ' admin-page-header-actions--with-send' : ''}`}>
-          {selectedProductIds.size > 0 && (
-            <div className="admin-discount-toolbar">
-              {allSelectedHaveDiscount ? (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-discount-remove"
-                  onClick={handleRemoveDiscount}
-                  disabled={discountBusy}
-                >
-                  Убрать скидку
-                </button>
-              ) : !showDiscountForm ? (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-discount-open btn-toolbar-icon"
-                  onClick={() => setShowDiscountForm(true)}
-                  disabled={discountBusy}
-                  title="Задать скидку выбранным товарам"
-                >
-                  <DiscountIcon className="btn-toolbar-icon__icon" />
-                  <span className="btn-toolbar-icon__label">Скидка</span>
-                </button>
-              ) : (
-                <div className="admin-discount-form">
-                  <input
-                    type="number"
-                    className="admin-discount-input"
-                    min={1}
-                    max={99}
-                    placeholder="%"
-                    value={discountPercentInput}
-                    onChange={(e) => setDiscountPercentInput(e.target.value)}
-                    disabled={discountBusy}
-                    aria-label="Процент скидки"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleApplyDiscount}
-                    disabled={discountBusy}
-                  >
-                    Применить
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      setShowDiscountForm(false)
-                      setDiscountPercentInput('')
-                    }}
-                    disabled={discountBusy}
-                  >
-                    Отмена
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
           <div className="admin-page-toolbar">
+            {selectedProductIds.size > 0 && (
+              <div className="admin-discount-toolbar">
+                {allSelectedHaveDiscount ? (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-discount-remove btn-toolbar-icon"
+                    onClick={handleRemoveDiscount}
+                    disabled={discountBusy}
+                    title="Убрать скидку с выбранных товаров"
+                  >
+                    <DiscountIcon className="btn-toolbar-icon__icon" />
+                    <span className="btn-toolbar-icon__label">Убрать скидку</span>
+                  </button>
+                ) : !showDiscountForm ? (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-discount-open btn-toolbar-icon"
+                    onClick={() => setShowDiscountForm(true)}
+                    disabled={discountBusy}
+                    title="Задать скидку выбранным товарам"
+                    aria-label="Задать скидку выбранным товарам"
+                  >
+                    <DiscountIcon className="btn-toolbar-icon__icon" />
+                    <span className="btn-toolbar-icon__label">Задать скидку</span>
+                  </button>
+                ) : (
+                  <div className="admin-discount-form">
+                    <DiscountIcon className="admin-discount-form__icon" width={16} height={16} />
+                    <input
+                      type="number"
+                      className="admin-discount-input"
+                      min={1}
+                      max={99}
+                      placeholder="%"
+                      value={discountPercentInput}
+                      onChange={(e) => setDiscountPercentInput(e.target.value)}
+                      disabled={discountBusy}
+                      aria-label="Процент скидки"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleApplyDiscount}
+                      disabled={discountBusy}
+                    >
+                      Применить
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setShowDiscountForm(false)
+                        setDiscountPercentInput('')
+                      }}
+                      disabled={discountBusy}
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             <button
               type="button"
               className={`btn btn-secondary btn-filters btn-toolbar-icon btn-toolbar-icon--square ${showFiltersPopup ? 'active' : ''}`}
@@ -1219,9 +1221,9 @@ function AdminProducts() {
                 value={filters.stockState}
                 onChange={(e) => handleFilterChange('stockState', e.target.value)}
               >
+                <option value="all">Все</option>
                 <option value="availableRegular">Не купленные / не забронированные</option>
                 <option value="reserved">Забронированные</option>
-                <option value="all">Все</option>
                 <option value="purchased">Купленные</option>
               </select>
             </div>
