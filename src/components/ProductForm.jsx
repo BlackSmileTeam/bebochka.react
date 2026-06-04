@@ -105,8 +105,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     return () => { mounted = false }
   }, [])
 
-  const isNuanceCondition = (formData.condition || '').trim().toLowerCase() === 'нюанс'
-
   // Load brands when brand search changes
   useEffect(() => {
     const query = brandSearch.trim()
@@ -141,11 +139,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   }, [brandSearch])
 
   useEffect(() => {
-    if (!isNuanceCondition) {
-      setNuances([])
-      setShowNuanceDropdown(false)
-      return
-    }
     const query = nuanceSearch.trim()
     if (!query) {
       setNuances([])
@@ -169,7 +162,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       setNuances([])
       setShowNuanceDropdown(false)
     })
-  }, [nuanceSearch, isNuanceCondition])
+  }, [nuanceSearch])
 
   useEffect(() => {
     let mounted = true
@@ -309,15 +302,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => {
-      const next = { ...prev, [name]: value }
-      if (name === 'condition' && value.trim().toLowerCase() !== 'нюанс') {
-        next.nuance = ''
-        setNuanceSearch('')
-        nuanceLockedRef.current = false
-      }
-      return next
-    })
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   const handleImageChange = (e) => {
@@ -356,8 +341,9 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('quantityInStock', formData.quantityInStock || 1)
       formDataToSend.append('gender', formData.gender || '')
       formDataToSend.append('condition', formData.condition || '')
-      if ((formData.condition || '').trim().toLowerCase() === 'нюанс' && (formData.nuance || nuanceSearch).trim()) {
-        formDataToSend.append('nuance', (formData.nuance || nuanceSearch).trim())
+      const nuanceValue = (formData.nuance || nuanceSearch).trim()
+      if (nuanceValue) {
+        formDataToSend.append('nuance', nuanceValue)
       }
       formDataToSend.append('boxNumber', formData.boxNumber || '')
       formDataToSend.append('owner', formData.owner || '')
@@ -838,6 +824,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 'очень хорошее',
                 'отличное',
                 'хорошее',
+                'нормальное',
                 'нюанс',
               ]).map((name) => (
                 <option key={name} value={name}>
@@ -847,9 +834,8 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </select>
           </div>
 
-          {isNuanceCondition && (
-            <div className="form-group">
-              <label htmlFor="nuance">Нюансы</label>
+          <div className="form-group">
+              <label htmlFor="nuance">Нюанс</label>
               <div ref={nuanceDropdownRef} style={{ position: 'relative', width: '100%' }}>
                 <input
                   type="text"
@@ -910,7 +896,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                 )}
               </div>
             </div>
-          )}
 
           <div className="form-group">
             <label htmlFor="description">Краткое описание</label>
