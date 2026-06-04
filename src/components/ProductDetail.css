@@ -1,3 +1,17 @@
+.product-detail-page {
+  width: 100%;
+}
+
+.product-detail-modal--page {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  max-height: none;
+  overflow: visible;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.12);
+  border: 1px solid #e2e8f0;
+}
+
 .product-detail-overlay {
   position: fixed;
   top: 0;

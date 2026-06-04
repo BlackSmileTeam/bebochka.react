@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageShell from '../components/PageShell'
+import ProductDetail from '../components/ProductDetail'
+import RouteFallback from '../components/RouteFallback'
 import { api } from '../services/api'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import { getSessionId } from '../utils/sessionId'
 import { usePageSeo, getProductStockCount } from '../utils/seo'
-import ProductPriceDisplay from '../components/ProductPriceDisplay'
-import './InfoPages.css'
+import { buildCatalogFilterSearch } from '../utils/catalogFilters'
+import { DEFAULT_CATALOG_FILTERS } from '../utils/catalogFilterStorage'
+import './ProductPage.css'
 
 const SITE_URL = 'https://bebochka.ru'
 
@@ -16,7 +19,19 @@ function extractProductId(raw) {
   return m ? Number(m[1]) : null
 }
 
+function getAvailableQuantity(product) {
+  const stock = product.quantityInStock ?? product.QuantityInStock ?? 0
+  if (product.availableQuantity !== undefined) return product.availableQuantity
+  if (product.AvailableQuantity !== undefined) return product.AvailableQuantity
+  return stock
+}
+
+function catalogHomePath() {
+  return localStorage.getItem('authToken') ? '/' : '/welcome'
+}
+
 export default function ProductPage() {
+  const navigate = useNavigate()
   const { productIdSlug } = useParams()
   const productId = extractProductId(productIdSlug)
   const [product, setProduct] = useState(null)
@@ -92,59 +107,59 @@ export default function ProductPage() {
             priceCurrency: 'RUB',
             price: Number(product.price || 0),
             availability: 'https://schema.org/InStock',
-            url: canonical
-          }
+            url: canonical,
+          },
         }
-      : null
+      : null,
   })
 
-  return (
-    <PageShell title={product?.name || 'Карточка товара'} subtitle="Описание товара, характеристики и условия заказа">
-      <section className="info-block">
-        <p>
-          <Link to="/welcome">В каталог</Link> · <Link to="/faq">FAQ</Link> · <Link to="/delivery">Доставка</Link>
-        </p>
-      </section>
+  const handleFilterSelect = useCallback(
+    (field, value) => {
+      const filters = { ...DEFAULT_CATALOG_FILTERS }
+      if (field === 'size') {
+        filters.size = value ? [String(value).trim()] : []
+      } else if (field in filters) {
+        filters[field] = value || ''
+      }
+      const target = buildCatalogFilterSearch(filters)
+      navigate(localStorage.getItem('authToken') ? target : catalogHomePath())
+    },
+    [navigate]
+  )
 
-      {loading && <section className="info-block"><p>Загрузка товара…</p></section>}
+  return (
+    <PageShell className="page-shell--product-page">
+      <nav className="product-page-nav" aria-label="Навигация">
+        <Link to={catalogHomePath()} className="product-page-back">
+          ← В каталог
+        </Link>
+        <span className="product-page-nav-links">
+          <Link to="/faq">FAQ</Link>
+          <Link to="/delivery">Доставка</Link>
+        </span>
+      </nav>
+
+      {loading && <RouteFallback />}
 
       {!loading && notFound && (
-        <section className="info-block">
-          <h2>Товар не найден</h2>
+        <section className="product-page-message">
+          <h1>Товар не найден</h1>
           <p>Такой страницы нет или товар уже снят с продажи.</p>
+          <Link to={catalogHomePath()} className="product-page-back-link">
+            Перейти в каталог
+          </Link>
         </section>
       )}
 
-      {!loading && !notFound && product && !inStock && (
-        <section className="info-block">
-          <h2>Товар продан</h2>
-          <p>Эта вещь уже куплена. Посмотрите актуальные поступления на главной.</p>
-          <p><Link to="/welcome">Перейти к каталогу</Link></p>
-        </section>
-      )}
-
-      {!loading && !notFound && product && inStock && (
-        <>
-          <section className="info-block">
-            <h2>О товаре</h2>
-            {product.description && <p>{product.description}</p>}
-            <p>
-              Этот товар относится к категории «одежда для всей семьи»: секонд хенд/сэконд, сток одежда и
-              новая одежда для детей и взрослых.
-            </p>
-          </section>
-          <section className="info-block">
-            <h2>Характеристики</h2>
-            <p><strong>Бренд:</strong> {product.brand || '—'}</p>
-            <p><strong>Размер:</strong> {product.size || '—'}</p>
-            <p><strong>Состояние:</strong> {formatCondition(product.condition)}</p>
-            <p><strong>Цвет:</strong> {product.color || '—'}</p>
-            {product.nuance && (
-              <p><strong>Нюанс:</strong> {product.nuance}</p>
-            )}
-            <p><strong>Цена:</strong> <ProductPriceDisplay product={product} /></p>
-          </section>
-        </>
+      {!loading && !notFound && product && (
+        <ProductDetail
+          variant="page"
+          product={product}
+          onClose={() => navigate(catalogHomePath())}
+          onAddedToCart={() => navigate('/cart')}
+          getAvailableQuantity={getAvailableQuantity}
+          onFilterSelect={handleFilterSelect}
+        />
       )}
     </PageShell>
   )

@@ -11,7 +11,15 @@ import ProductMetaFilter from './ProductMetaFilter'
 import Toast from './Toast'
 import './ProductDetail.css'
 
-function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect }) {
+function ProductDetail({
+  product,
+  onClose,
+  getAvailableQuantity,
+  onFilterSelect,
+  onAddedToCart,
+  variant = 'modal',
+}) {
+  const isPageLayout = variant === 'page'
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isAdding, setIsAdding] = useState(false)
   const [queueLoading, setQueueLoading] = useState(false)
@@ -85,7 +93,8 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
     setIsAdding(true)
     try {
       await addToCart(product)
-      onClose()
+      if (onAddedToCart) onAddedToCart()
+      else onClose()
     } catch (error) {
       setToast({ type: 'error', message: error.message || 'Не удалось добавить товар в корзину' })
       console.error('Error adding to cart:', error)
@@ -210,12 +219,18 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
   }
 
-  return (
-    <div className="product-detail-overlay" onClick={onClose}>
-      <div className="product-detail-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="product-detail-close" onClick={onClose}>×</button>
-        
-        <div className="product-detail-content">
+  const panel = (
+    <div
+      className={`product-detail-modal${isPageLayout ? ' product-detail-modal--page' : ''}`}
+      onClick={isPageLayout ? undefined : (e) => e.stopPropagation()}
+    >
+      {!isPageLayout ? (
+        <button type="button" className="product-detail-close" onClick={onClose} aria-label="Закрыть">
+          ×
+        </button>
+      ) : null}
+
+      <div className="product-detail-content">
           {/* Галерея изображений */}
           {images.length > 0 ? (
             <div className="product-detail-gallery">
@@ -312,7 +327,11 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
             )}
 
             <div className="product-detail-title-row">
-              <h2 className="product-detail-name">{product.name}</h2>
+              {isPageLayout ? (
+                <h1 className="product-detail-name">{product.name}</h1>
+              ) : (
+                <h2 className="product-detail-name">{product.name}</h2>
+              )}
               <span className={`product-detail-stock-badge product-detail-stock-badge--${stockClass}`}>
                 {stockLabel}
               </span>
@@ -430,7 +449,6 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
             </div>
           </div>
         </div>
-      </div>
       {toast && (
         <Toast
           message={toast.message}
@@ -438,6 +456,20 @@ function ProductDetail({ product, onClose, getAvailableQuantity, onFilterSelect 
           onClose={() => setToast(null)}
         />
       )}
+    </div>
+  )
+
+  if (isPageLayout) {
+    return (
+      <div className="product-detail-page">
+        {panel}
+      </div>
+    )
+  }
+
+  return (
+    <div className="product-detail-overlay" onClick={onClose}>
+      {panel}
     </div>
   )
 }

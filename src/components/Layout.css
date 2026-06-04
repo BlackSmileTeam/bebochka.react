@@ -233,7 +233,6 @@
   display: block;
   min-height: auto;
   padding: 2rem 0;
-  align-items: stretch;
   overflow-x: clip;
   overflow-y: visible;
 }
