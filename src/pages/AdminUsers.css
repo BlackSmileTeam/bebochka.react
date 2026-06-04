@@ -729,3 +729,132 @@
   text-decoration: underline;
 }
 
+.admin-users-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-users-search {
+  flex: 1;
+  min-width: min(100%, 220px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-users-search__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.admin-users-search input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.admin-users-count-hint {
+  font-size: 0.9rem;
+  color: #718096;
+  padding-bottom: 0.35rem;
+}
+
+.admin-users-filters-panel {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.admin-users-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.admin-users-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  color: #4a5568;
+}
+
+.admin-users-filter-field input,
+.admin-users-filter-field select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.admin-users-filters-reset {
+  margin-top: 0.75rem;
+}
+
+.children-count-cell {
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.user-account-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.user-account-badge--vk {
+  background: #ebf8ff;
+  color: #2b6cb0;
+}
+
+.user-account-badge--link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.user-account-badge--link:hover {
+  background: #bee3f8;
+  color: #2c5282;
+}
+
+.children-count-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: #667eea;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.children-count-btn:hover {
+  color: #5a67d8;
+}
+
+.modal-content--children {
+  max-width: 720px;
+  width: calc(100% - 2rem);
+}
+
+.admin-page-toolbar .btn.active {
+  background: #667eea;
+  color: #fff;
+  border-color: #667eea;
+}
+

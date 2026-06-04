@@ -45,9 +45,14 @@ function getDeleteProductErrorMessage(err) {
   return null
 }
 
+const ADMIN_PRODUCTS_PAGE_SIZE = 40
+
 function AdminProducts() {
   const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
+  const [listPage, setListPage] = useState(1)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const loadMoreRef = useRef(null)
   const [loading, setLoading] = useState(true)
   const [editingProduct, setEditingProduct] = useState(null)
   const [viewingProduct, setViewingProduct] = useState(null)
@@ -251,7 +256,37 @@ function AdminProducts() {
   useEffect(() => {
     // Применяем фильтры при изменении товаров или фильтров
     applyFilters()
+    setListPage(1)
   }, [products, filters])
+
+  const visibleProducts = useMemo(
+    () => filteredProducts.slice(0, listPage * ADMIN_PRODUCTS_PAGE_SIZE),
+    [filteredProducts, listPage]
+  )
+
+  const hasMoreProducts = visibleProducts.length < filteredProducts.length
+
+  useEffect(() => {
+    if (!hasMoreProducts || loading) return undefined
+    const el = loadMoreRef.current
+    if (!el) return undefined
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setLoadingMore(true)
+          setListPage((prev) => prev + 1)
+        }
+      },
+      { root: null, rootMargin: '300px 0px', threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasMoreProducts, loading, visibleProducts.length])
+
+  useEffect(() => {
+    if (loadingMore) setLoadingMore(false)
+  }, [visibleProducts.length])
   
   useEffect(() => {
     // Close menu when clicking outside
@@ -1280,7 +1315,12 @@ function AdminProducts() {
       ) : (
         <div className="products-table-container">
           <div className="table-info">
-            <span>Показано: {filteredProducts.length} из {products.length} товаров</span>
+            <span>
+              Показано: {visibleProducts.length}
+              {filteredProducts.length !== visibleProducts.length ? ` из ${filteredProducts.length}` : ''}
+              {' '}
+              (всего {products.length})
+            </span>
             {filteredProducts.length > 0 && (
               <button 
                 className="btn btn-secondary btn-select-all" 
@@ -1321,7 +1361,7 @@ function AdminProducts() {
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product) => {
+              {visibleProducts.map((product) => {
                 const published = isPublished(product)
                 const productId = getProductId(product)
                 return (
@@ -1468,6 +1508,11 @@ function AdminProducts() {
               )})}
             </tbody>
           </table>
+          {hasMoreProducts && (
+            <div ref={loadMoreRef} className="admin-products-load-sentinel" aria-hidden="true">
+              {loadingMore && <p className="admin-products-load-hint">Загрузка…</p>}
+            </div>
+          )}
         </div>
       )}
       <ConfirmDialog

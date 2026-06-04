@@ -1417,3 +1417,14 @@
     font-size: 1.25rem;
   }
 }
+
+.admin-products-load-sentinel {
+  padding: 0.75rem 1rem 1rem;
+  text-align: center;
+}
+
+.admin-products-load-hint {
+  margin: 0;
+  color: #718096;
+  font-size: 0.9rem;
+}

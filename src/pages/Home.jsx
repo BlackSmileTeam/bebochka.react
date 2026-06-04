@@ -14,22 +14,11 @@ import ProductPriceDisplay from '../components/ProductPriceDisplay'
 import ProductMetaFilter from '../components/ProductMetaFilter'
 import SizeMultiSelect, { parseSizeValue } from '../components/SizeMultiSelect'
 import { usePageSeo } from '../utils/seo'
-import { catalogFiltersFromSearchParams, countActiveCatalogFilters, toggleSizeFilter, buildFiltersFromChildren, readAutoFilterEnabled, productMatchesCatalogFilters, normalizeGender } from '../utils/catalogFilters'
+import { catalogFiltersFromSearchParams, countActiveCatalogFilters, toggleSizeFilter, buildFiltersFromChildren, readAutoFilterEnabled, normalizeGender } from '../utils/catalogFilters'
 import { DEFAULT_CATALOG_FILTERS, readCatalogStateFromSession, saveCatalogStateToSession, hasStoredCatalogFilters } from '../utils/catalogFilterStorage'
-import { getProductPriceInfo } from '../utils/productPrice'
 import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
 import './Home.css'
 
-const CONDITION_PRIORITY = {
-  'состояние новой вещи': 0,
-  'новая вещь': 0,
-  'новая': 0,
-  'очень хорошее': 1,
-  'отличное': 2,
-  'хорошее': 3,
-  'нюанс': 4,
-  'недостаток': 4
-}
 const ITEMS_PER_PAGE = 24
 
 const catalogIntro = (
@@ -50,6 +39,15 @@ function Home() {
   const [myQueueProductIds, setMyQueueProductIds] = useState(new Set())
   const [toast, setToast] = useState(null)
   const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [filterOptions, setFilterOptions] = useState({
+    brands: [],
+    sizes: [],
+    colors: [],
+    genders: [],
+    conditions: [],
+  })
   const loadMoreRef = useRef(null)
   const [filters, setFilters] = useState(() => {
     const stored = readCatalogStateFromSession()
@@ -67,7 +65,7 @@ function Home() {
     title: 'Каталог одежды для всей семьи | bebochka',
     description:
       'Каталог bebochka: секонд хенд, сэконд, сток одежда и новая одежда для всей семьи и детей. Покупка одежды онлайн, доставка одежды по России.',
-    canonical: 'https://bebochka.ru/welcome',
+    canonical: 'https://bebochka.ru/',
     keywords:
       'одежда для всей семьи, сток одежда, новая одежда, новая одежда для всей семьи, одежда для детей, для детей секонд, секонд хенд, сэконд, доставка одежды, покупка одежды'
   })
@@ -147,32 +145,85 @@ function Home() {
     return cartItem ? cartItem.quantity : 0
   }
 
-  useEffect(() => {
-    loadProducts()
-  }, [sessionId])
+  const filtersKey = useMemo(
+    () => JSON.stringify({ filters, priceSort }),
+    [filters, priceSort]
+  )
 
   useEffect(() => {
     loadMyQueue()
   }, [])
 
-  const loadProducts = async () => {
-    try {
-      setLoading(true)
-      const data = await api.getProducts(sessionId)
-      // Показываем товары, которые еще есть на складе (даже если временно зарезервированы в чужой корзине)
-      const visibleProducts = data.filter(product => {
-        const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
-        return quantityInStock > 0
-      })
-      setProducts(visibleProducts)
-      setError(null)
-    } catch (err) {
-      setError('Не удалось загрузить товары')
-      console.error(err)
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    let cancelled = false
+    setPage(1)
+
+    ;(async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await api.getCatalogProducts({
+          page: 1,
+          pageSize: ITEMS_PER_PAGE,
+          sessionId,
+          filters,
+          priceSort,
+          includeFacets: true,
+        })
+        if (cancelled) return
+        setProducts(data.items)
+        setHasMore(data.hasMore)
+        if (data.facets) setFilterOptions(data.facets)
+      } catch (err) {
+        if (cancelled) return
+        setError('Не удалось загрузить товары')
+        console.error(err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
     }
-  }
+  }, [sessionId, filtersKey])
+
+  useEffect(() => {
+    if (page <= 1 || loading) return undefined
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        setLoadingMore(true)
+        const data = await api.getCatalogProducts({
+          page,
+          pageSize: ITEMS_PER_PAGE,
+          sessionId,
+          filters,
+          priceSort,
+          includeFacets: false,
+        })
+        if (cancelled) return
+        setProducts((prev) => {
+          const seen = new Set(prev.map((p) => p.id))
+          const next = [...prev]
+          for (const item of data.items) {
+            if (!seen.has(item.id)) next.push(item)
+          }
+          return next
+        })
+        setHasMore(data.hasMore)
+      } catch (err) {
+        if (!cancelled) console.error(err)
+      } finally {
+        if (!cancelled) setLoadingMore(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [page, sessionId, filtersKey, loading])
 
   const loadMyQueue = async () => {
     const token = localStorage.getItem('authToken')
@@ -305,72 +356,22 @@ function Home() {
     })()
   }, [])
 
-  const filterOptions = useMemo(() => {
-    const collect = (key) =>
-      [...new Set(products.map((p) => p[key]).filter(Boolean))].sort((a, b) =>
-        String(a).localeCompare(String(b), 'ru')
-      )
-
-    const conditions = [...new Set(products.map((p) => p.condition).filter(Boolean))]
-      .sort((a, b) => {
-        const av = String(a).trim().toLowerCase()
-        const bv = String(b).trim().toLowerCase()
-        const ap = CONDITION_PRIORITY[av] ?? 999
-        const bp = CONDITION_PRIORITY[bv] ?? 999
-        if (ap !== bp) return ap - bp
-        return String(a).localeCompare(String(b), 'ru')
-      })
-
-    return {
-      brands: collect('brand'),
-      sizes: collect('size'),
-      colors: collect('color'),
-      genders: collect('gender'),
-      conditions
-    }
-  }, [products])
-
-  const filteredProducts = useMemo(() => {
-    const list = products.filter((product) => productMatchesCatalogFilters(product, filters))
-    if (priceSort !== 'asc' && priceSort !== 'desc') return list
-    const dir = priceSort === 'asc' ? 1 : -1
-    return [...list].sort((a, b) => {
-      const pa = getProductPriceInfo(a).finalPrice
-      const pb = getProductPriceInfo(b).finalPrice
-      if (pa !== pb) return (pa - pb) * dir
-      return String(a.name || '').localeCompare(String(b.name || ''), 'ru')
-    })
-  }, [products, filters, priceSort])
-
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE))
-  const hasMoreProducts = page < totalPages
-
-  const visibleProducts = useMemo(
-    () => filteredProducts.slice(0, page * ITEMS_PER_PAGE),
-    [filteredProducts, page]
-  )
-
   useEffect(() => {
-    setPage(1)
-  }, [filters, priceSort, products.length])
-
-  useEffect(() => {
-    if (!hasMoreProducts) return
+    if (!hasMore || loading || loadingMore) return undefined
     const el = loadMoreRef.current
-    if (!el) return
+    if (!el) return undefined
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0]
-        if (entry?.isIntersecting) {
-          setPage((prev) => Math.min(prev + 1, totalPages))
+        if (entries[0]?.isIntersecting) {
+          setPage((prev) => prev + 1)
         }
       },
       { root: null, rootMargin: '400px 0px', threshold: 0 }
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMoreProducts, totalPages, page, filteredProducts.length])
+  }, [hasMore, loading, loadingMore, products.length])
 
   const formatGender = (gender) => {
     if (!gender) return ''
@@ -488,14 +489,14 @@ function Home() {
         </div>
       </div>
 
-      {filteredProducts.length === 0 ? (
+      {products.length === 0 ? (
         <div className="empty-state">
-          <p>{products.length === 0 ? 'Товары пока не добавлены' : 'По фильтрам ничего не найдено'}</p>
+          <p>{activeFilterCount > 0 ? 'По фильтрам ничего не найдено' : 'Товары пока не добавлены'}</p>
         </div>
       ) : (
         <div className="catalog-main">
         <div className="products-grid">
-          {visibleProducts.map((product, index) => {
+          {products.map((product, index) => {
             const available = getAvailableQuantity(product)
             const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
             const inCart = getCartQuantity(product.id)
@@ -541,7 +542,7 @@ function Home() {
                       src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
                       alt={product.name}
                       className="product-image"
-                      priority={index === 0}
+                      priority={index < 4}
                       width={400}
                       height={220}
                       sizes="(max-width: 480px) 46vw, (max-width: 768px) 31vw, 280px"
@@ -636,8 +637,10 @@ function Home() {
             )
           })}
         </div>
-        {hasMoreProducts && (
-          <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true" />
+        {hasMore && (
+          <div ref={loadMoreRef} className="catalog-load-sentinel" aria-hidden="true">
+            {loadingMore && <p className="catalog-load-more-hint">Загрузка…</p>}
+          </div>
         )}
         </div>
       )}

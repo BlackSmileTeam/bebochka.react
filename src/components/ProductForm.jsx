@@ -15,6 +15,24 @@ const DEFAULT_PRODUCT_NAME_SUGGESTIONS = [
   'Плащ', 'Жакет', 'Парка', 'Анорак', 'Спортивный костюм', 'Кроп-топ', 'Топ'
 ]
 
+const PHOTO_ORDER_HINT = 'Перетаскивайте фото, чтобы изменить порядок. Первое фото будет главным в карточке.'
+const CART_LATER_HINT = 'Карточка может быть уже на сайте (после превью), а кнопка корзины активируется в это время.'
+
+function FormFieldHint({ text }) {
+  return (
+    <button
+      type="button"
+      className="form-field-hint"
+      aria-label={text}
+      title={text}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      ?
+    </button>
+  )
+}
+
 function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -444,9 +462,14 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           {error && <div className="form-error">{error}</div>}
 
           <div className="form-group form-group-photos-first">
-            <label htmlFor="images">
-              {product ? 'Добавить новые фотографии' : 'Фотографии *'}
-            </label>
+            <div className="form-label-row">
+              <label htmlFor="images">
+                {product ? 'Добавить новые фотографии' : 'Фотографии *'}
+              </label>
+              {(images.length > 0 || existingImages.length > 0) && (
+                <FormFieldHint text={PHOTO_ORDER_HINT} />
+              )}
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -543,11 +566,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                   ))}
                 </div>
               </div>
-            )}
-            {(images.length > 1 || existingImages.length > 1) && (
-              <small style={{ color: '#666', display: 'block', marginTop: '8px' }}>
-                Перетаскивайте фото, чтобы изменить порядок. Первое фото будет главным в карточке.
-              </small>
             )}
           </div>
 
@@ -952,34 +970,29 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
           )}
 
           <div className="form-group">
-            <label
-              className="form-checkbox-inline form-checkbox-inline--cart-schedule"
-              title="Открыть «В корзину» позже (МСК)"
-            >
-              <input
-                type="checkbox"
-                checked={scheduleCartUnlock}
-                onChange={(e) => setScheduleCartUnlock(e.target.checked)}
-              />
-              <span className="form-checkbox-inline__text">
-                <span className="form-checkbox-inline__text-full">Открыть «В корзину» позже (МСК)</span>
-                <span className="form-checkbox-inline__text-short">В корзину позже (МСК)</span>
-              </span>
-            </label>
-            {scheduleCartUnlock && (
-              <>
+            <div className="form-label-row form-label-row--checkbox">
+              <label className="form-checkbox-inline form-checkbox-inline--cart-schedule">
                 <input
-                  type="datetime-local"
-                  id="cartAvailableAt"
-                  name="cartAvailableAt"
-                  value={formData.cartAvailableAt}
-                  onChange={handleChange}
-                  style={{ marginTop: '8px' }}
+                  type="checkbox"
+                  checked={scheduleCartUnlock}
+                  onChange={(e) => setScheduleCartUnlock(e.target.checked)}
                 />
-                <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-                  Карточка может быть уже на сайте (после превью), а кнопка корзины активируется в это время.
-                </small>
-              </>
+                <span className="form-checkbox-inline__text">
+                  <span className="form-checkbox-inline__text-full">Открыть «В корзину» позже (МСК)</span>
+                  <span className="form-checkbox-inline__text-short">В корзину позже (МСК)</span>
+                </span>
+              </label>
+              <FormFieldHint text={CART_LATER_HINT} />
+            </div>
+            {scheduleCartUnlock && (
+              <input
+                type="datetime-local"
+                id="cartAvailableAt"
+                name="cartAvailableAt"
+                value={formData.cartAvailableAt}
+                onChange={handleChange}
+                style={{ marginTop: '8px' }}
+              />
             )}
           </div>
 

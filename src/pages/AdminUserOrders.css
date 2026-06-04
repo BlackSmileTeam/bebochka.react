@@ -79,6 +79,12 @@
   }
 }
 
+.admin-user-orders-user-info .admin-user-children-panel {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
 .admin-user-orders-user-info-links {
   display: flex;
   flex-wrap: wrap;

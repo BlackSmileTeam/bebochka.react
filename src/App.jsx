@@ -47,8 +47,8 @@ function RootRedirect() {
 
 function App() {
   return (
-    <AppErrorBoundary>
-      <Router>
+    <Router>
+      <AppErrorBoundary>
         <CartProvider>
           <Routes>
             <Route path="/login" element={<Navigate to="/account" replace />} />
@@ -108,8 +108,8 @@ function App() {
             </Route>
           </Routes>
         </CartProvider>
-      </Router>
-    </AppErrorBoundary>
+      </AppErrorBoundary>
+    </Router>
   )
 }
 

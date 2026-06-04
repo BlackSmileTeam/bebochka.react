@@ -7,6 +7,7 @@ import { useCart } from '../contexts/CartContext'
 import { getOrderStatusColor } from '../constants/orderStatusColors'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import VkProfileLink from '../components/VkProfileLink'
+import AdminUserChildrenPanel from '../components/AdminUserChildrenPanel'
 import { AdminUserEmailLink, AdminUserPhoneLink } from '../utils/adminUserContact'
 import './AdminUserOrders.css'
 
@@ -58,7 +59,7 @@ function formatBool(value) {
   return '—'
 }
 
-function AdminUserInfo({ user, userId }) {
+function AdminUserInfo({ user, userId, children, childrenLoading, childrenError }) {
   if (!user) {
     return (
       <div className="admin-user-orders-user-info">
@@ -110,6 +111,11 @@ function AdminUserInfo({ user, userId }) {
       <div className="admin-user-orders-user-info-links">
         <VkProfileLink user={user} />
       </div>
+      <AdminUserChildrenPanel
+        loading={childrenLoading}
+        error={childrenError}
+        children={children}
+      />
     </div>
   )
 }
@@ -248,6 +254,9 @@ export default function AdminUserOrders() {
   const highlightOrderId = highlightOrderIdRaw != null && highlightOrderIdRaw !== '' ? Number(highlightOrderIdRaw) : null
 
   const [user, setUser] = useState(null)
+  const [children, setChildren] = useState([])
+  const [childrenLoading, setChildrenLoading] = useState(false)
+  const [childrenError, setChildrenError] = useState('')
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -289,18 +298,35 @@ export default function AdminUserOrders() {
       }
       try {
         setLoading(true)
+        setChildrenLoading(true)
+        setChildrenError('')
         setError('')
         const [u, allUsers, list] = await Promise.all([
           api.getUserById(userId),
           api.getUsers(),
-          api.getOrdersByUserForAdmin(userId)
+          api.getOrdersByUserForAdmin(userId),
         ])
         if (cancelled) return
         const fromList = Array.isArray(allUsers)
           ? allUsers.find((x) => (x.id ?? x.Id) === userId)
           : null
-        setUser(fromList ? { ...fromList, ...u } : u)
+        const mergedUser = fromList ? { ...fromList, ...u } : u
+        setUser(mergedUser)
         setOrders(Array.isArray(list) ? list : [])
+        try {
+          const childList = await api.getUserChildren(userId)
+          if (!cancelled) {
+            setChildren(Array.isArray(childList) ? childList : [])
+            setChildrenError('')
+          }
+        } catch (e) {
+          if (!cancelled) {
+            setChildren(mergedUser?.children ?? [])
+            setChildrenError(e?.message || 'Не удалось загрузить детей')
+          }
+        } finally {
+          if (!cancelled) setChildrenLoading(false)
+        }
       } catch (e) {
         if (!cancelled) setError(e?.message || 'Не удалось загрузить данные')
       } finally {
@@ -367,7 +393,6 @@ export default function AdminUserOrders() {
       subtitle={userLabel}
       actions={(
         <div className="admin-user-orders-header-actions">
-          {user && <VkProfileLink user={user} />}
           <Link to="/admin/orders" className="admin-user-orders-back">
             ← Все заказы
           </Link>
@@ -376,7 +401,13 @@ export default function AdminUserOrders() {
     >
       <div className="admin-user-orders-page">
         {!loading && !error && (
-          <AdminUserInfo user={user} userId={userId} />
+          <AdminUserInfo
+            user={user}
+            userId={userId}
+            children={children}
+            childrenLoading={childrenLoading}
+            childrenError={childrenError}
+          />
         )}
         {loading && <p className="admin-user-orders-muted">Загрузка…</p>}
         {!loading && error && <p className="admin-user-orders-error">{error}</p>}

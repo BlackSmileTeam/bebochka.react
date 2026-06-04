@@ -4,6 +4,8 @@ import {
   readFavoriteProductIds,
   toggleFavoriteProductId,
 } from '../utils/favoritesStorage'
+import { buildCatalogPageFromProducts } from '../utils/catalogClientPage'
+import { normalizeUserChildren } from '../utils/adminUserChildren'
 
 const API_BASE_URL = getApiBaseUrl()
 
@@ -190,6 +192,36 @@ export const api = {
     }
   },
 
+  normalizeProduct(product) {
+    return {
+      ...product,
+      id: product.id || product.Id,
+      name: product.name || product.Name,
+      brand: product.brand || product.Brand,
+      description: product.description || product.Description,
+      price: product.price || product.Price,
+      size: product.size || product.Size,
+      color: product.color || product.Color,
+      images: product.images || product.Images || [],
+      quantityInStock: product.quantityInStock !== undefined ? product.quantityInStock : (product.QuantityInStock !== undefined ? product.QuantityInStock : 1),
+      availableQuantity: product.availableQuantity !== undefined ? product.availableQuantity : (product.AvailableQuantity !== undefined ? product.AvailableQuantity : product.quantityInStock || product.QuantityInStock || 1),
+      gender: product.gender || product.Gender || null,
+      condition: product.condition || product.Condition || null,
+      nuance: product.nuance ?? product.Nuance ?? null,
+      discountPercent: product.discountPercent ?? product.DiscountPercent ?? null,
+      finalPrice: product.finalPrice ?? product.FinalPrice ?? null,
+      boxNumber: product.boxNumber ?? product.BoxNumber ?? null,
+      owner: product.owner ?? product.Owner ?? null,
+      incomingShipmentId: product.incomingShipmentId ?? product.IncomingShipmentId ?? null,
+      incomingShipmentName: product.incomingShipmentName ?? product.IncomingShipmentName ?? null,
+      createdAt: product.createdAt || product.CreatedAt,
+      updatedAt: product.updatedAt || product.UpdatedAt,
+      publishedAt: product.publishedAt || product.PublishedAt || null,
+      cartAvailableAt: product.cartAvailableAt ?? product.CartAvailableAt ?? null,
+      cartUnlocked: product.cartUnlocked !== undefined ? product.cartUnlocked : (product.CartUnlocked !== undefined ? product.CartUnlocked : true),
+    }
+  },
+
   /**
    * Gets all products
    * @param {string} sessionId - Optional session ID for cart reservation calculation
@@ -197,52 +229,127 @@ export const api = {
    */
   async getProducts(sessionId = null) {
     try {
-      console.log('[API] Fetching products...', sessionId ? `sessionId: ${sessionId}` : '')
       const params = sessionId ? { sessionId } : {}
       const response = await apiClient.get('/products', { params })
-      
+
       if (!validateArray(response.data, 'products')) {
         console.error('[API] Products response is not an array:', response.data)
         return []
       }
-      
-      // Нормализуем данные - конвертируем Id в id для совместимости
-      const normalizedProducts = response.data.map(product => ({
-        ...product,
-        id: product.id || product.Id,
-        name: product.name || product.Name,
-        brand: product.brand || product.Brand,
-        description: product.description || product.Description,
-        price: product.price || product.Price,
-        size: product.size || product.Size,
-        color: product.color || product.Color,
-        images: product.images || product.Images || [],
-        quantityInStock: product.quantityInStock !== undefined ? product.quantityInStock : (product.QuantityInStock !== undefined ? product.QuantityInStock : 1),
-        availableQuantity: product.availableQuantity !== undefined ? product.availableQuantity : (product.AvailableQuantity !== undefined ? product.AvailableQuantity : product.quantityInStock || product.QuantityInStock || 1),
-        gender: product.gender || product.Gender || null,
-        condition: product.condition || product.Condition || null,
-        nuance: product.nuance ?? product.Nuance ?? null,
-        discountPercent: product.discountPercent ?? product.DiscountPercent ?? null,
-        finalPrice: product.finalPrice ?? product.FinalPrice ?? null,
-        boxNumber: product.boxNumber ?? product.BoxNumber ?? null,
-        owner: product.owner ?? product.Owner ?? null,
-        incomingShipmentId: product.incomingShipmentId ?? product.IncomingShipmentId ?? null,
-        incomingShipmentName: product.incomingShipmentName ?? product.IncomingShipmentName ?? null,
-        createdAt: product.createdAt || product.CreatedAt,
-        updatedAt: product.updatedAt || product.UpdatedAt,
-        publishedAt: product.publishedAt || product.PublishedAt || null,
-        cartAvailableAt: product.cartAvailableAt ?? product.CartAvailableAt ?? null,
-        cartUnlocked: product.cartUnlocked !== undefined ? product.cartUnlocked : (product.CartUnlocked !== undefined ? product.CartUnlocked : true)
-      }))
-      
-      console.log(`[API] Successfully loaded ${normalizedProducts.length} products`)
-      return normalizedProducts
+
+      return response.data.map((product) => this.normalizeProduct(product))
     } catch (error) {
       console.error('[API] Error fetching products:', error)
-      if (error.response) {
-        console.error('[API] Server error:', error.response.status, error.response.data)
-      } else if (error.request) {
-        console.error('[API] No response received:', error.request)
+      throw error
+    }
+  },
+
+  _parseCatalogApiResponse(data, page, pageSize) {
+    const rawItems = data.items ?? data.Items ?? []
+    const items = Array.isArray(rawItems)
+      ? rawItems.map((p) => this.normalizeProduct(p))
+      : []
+    const facets = data.facets ?? data.Facets
+
+    return {
+      items,
+      total: data.total ?? data.Total ?? items.length,
+      page: data.page ?? data.Page ?? page,
+      pageSize: data.pageSize ?? data.PageSize ?? pageSize,
+      hasMore: data.hasMore ?? data.HasMore ?? false,
+      facets: facets
+        ? {
+            brands: facets.brands ?? facets.Brands ?? [],
+            sizes: facets.sizes ?? facets.Sizes ?? [],
+            colors: facets.colors ?? facets.Colors ?? [],
+            genders: facets.genders ?? facets.Genders ?? [],
+            conditions: facets.conditions ?? facets.Conditions ?? [],
+          }
+        : null,
+    }
+  },
+
+  _catalogFallbackCache: null,
+  _catalogFallbackSessionKey: null,
+  _catalogApiMode: null,
+
+  _readCatalogApiMode() {
+    return this._catalogApiMode
+  },
+
+  _setCatalogApiMode(mode) {
+    this._catalogApiMode = mode
+  },
+
+  async _getCatalogProductsLegacyPage(options) {
+    const { page, pageSize, sessionId, filters, priceSort, includeFacets } = options
+    const sessionKey = sessionId || ''
+
+    if (
+      !this._catalogFallbackCache ||
+      this._catalogFallbackSessionKey !== sessionKey
+    ) {
+      const all = await this.getProducts(sessionId)
+      this._catalogFallbackCache = all.map((p) => this.normalizeProduct(p))
+      this._catalogFallbackSessionKey = sessionKey
+    }
+
+    return buildCatalogPageFromProducts(this._catalogFallbackCache, {
+      page,
+      pageSize,
+      filters,
+      priceSort,
+      includeFacets,
+    })
+  },
+
+  /**
+   * Paginated catalog: /api/products/catalog when available, else legacy /api/products + client paging.
+   */
+  async getCatalogProducts({
+    page = 1,
+    pageSize = 24,
+    sessionId = null,
+    filters = {},
+    priceSort = '',
+    includeFacets = false,
+  } = {}) {
+    const params = { page, pageSize, includeFacets }
+    if (sessionId) params.sessionId = sessionId
+    if (filters.brand) params.brand = filters.brand
+    if (filters.color) params.color = filters.color
+    if (filters.gender) params.gender = filters.gender
+    if (filters.condition) params.condition = filters.condition
+    if (Array.isArray(filters.size) && filters.size.length > 0) {
+      params.size = filters.size.join(',')
+    }
+    if (priceSort === 'asc') params.sort = 'price_asc'
+    else if (priceSort === 'desc') params.sort = 'price_desc'
+
+    const legacyOptions = {
+      page,
+      pageSize,
+      sessionId,
+      filters,
+      priceSort,
+      includeFacets,
+    }
+
+    if (this._readCatalogApiMode() === 'legacy') {
+      return this._getCatalogProductsLegacyPage(legacyOptions)
+    }
+
+    try {
+      const response = await apiClient.get('/products/catalog', { params })
+      this._setCatalogApiMode('paged')
+      this._catalogFallbackCache = null
+      this._catalogFallbackSessionKey = null
+      return this._parseCatalogApiResponse(response.data || {}, page, pageSize)
+    } catch (error) {
+      const status = error.response?.status
+      if (status === 400 || status === 404 || status === 405) {
+        this._setCatalogApiMode('legacy')
+        return this._getCatalogProductsLegacyPage(legacyOptions)
       }
       throw error
     }
@@ -1220,7 +1327,8 @@ export const api = {
             telegramUserId: user.telegramUserId ?? user.TelegramUserId ?? null,
             createdAt: user.createdAt || user.CreatedAt || null,
             lastLoginAt: user.lastLoginAt || user.LastLoginAt || null,
-            isAdmin: !!(user.isAdmin ?? user.IsAdmin)
+            isAdmin: !!(user.isAdmin ?? user.IsAdmin),
+            childrenCount: user.childrenCount ?? user.ChildrenCount ?? 0,
           }))
         : []
       
@@ -1236,10 +1344,22 @@ export const api = {
    * Пользователь по id (админка).
    * @param {number} userId
    */
+  async getUserChildren(userId) {
+    try {
+      const response = await apiClient.get(`/users/${userId}/children`)
+      return normalizeUserChildren(response.data)
+    } catch (error) {
+      if (error?.response?.status !== 404) throw error
+      const user = await api.getUserById(userId)
+      return user?.children ?? []
+    }
+  },
+
   async getUserById(userId) {
     const response = await apiClient.get(`/users/${userId}`)
     const u = response.data
     if (!u) return null
+    const children = normalizeUserChildren(u.children ?? u.Children ?? [])
     return {
       id: u.id ?? u.Id,
       username: u.username ?? u.Username ?? '',
@@ -1255,6 +1375,8 @@ export const api = {
       autoFilterByChildren: u.autoFilterByChildren ?? u.AutoFilterByChildren,
       dateOfBirth: u.dateOfBirth ?? u.DateOfBirth ?? null,
       telegramUserId: u.telegramUserId ?? u.TelegramUserId ?? null,
+      childrenCount: u.childrenCount ?? u.ChildrenCount ?? children.length,
+      children,
     }
   },
 

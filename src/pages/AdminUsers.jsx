@@ -4,10 +4,32 @@ import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import PersonAddIcon from '../components/PersonAddIcon.jsx'
 import StatsIcon from '../components/StatsIcon.jsx'
+import FilterIcon from '../components/FilterIcon.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import AdminUserChildrenPanel from '../components/AdminUserChildrenPanel'
 import { getVkProfileUrl } from '../utils/vkProfile'
+import { userDisplayName } from '../utils/adminUserChildren'
 import { AdminUserEmailLink, AdminUserPhoneLink } from '../utils/adminUserContact'
 import './AdminUsers.css'
+
+function parseUserDate(value) {
+  if (!value) return null
+  const d = new Date(value)
+  if (!Number.isNaN(d.getTime())) return d
+
+  const m = String(value).match(/^(\d{2})\.(\d{2})\.(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/)
+  if (!m) return null
+  const [, dd, mm, yyyy, hh = '00', min = '00', ss = '00'] = m
+  const parsed = new Date(
+    Number(yyyy),
+    Number(mm) - 1,
+    Number(dd),
+    Number(hh),
+    Number(min),
+    Number(ss)
+  )
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
 
 function AdminUsers() {
   const navigate = useNavigate()
@@ -32,7 +54,71 @@ function AdminUsers() {
   const [deleteConfirmUserId, setDeleteConfirmUserId] = useState(null)
   const [deleteUserBusy, setDeleteUserBusy] = useState(false)
   const [showStatsModal, setShowStatsModal] = useState(false)
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState({
+    accountType: '',
+    registeredFrom: '',
+    registeredTo: '',
+  })
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
+  const [childrenModal, setChildrenModal] = useState(null)
+
+  const isVkUser = (user) => {
+    const vk = user.vkUserId ?? user.VkUserId
+    if (vk == null || vk === '') return false
+    const n = Number(vk)
+    return Number.isFinite(n) && n > 0
+  }
+
+  const matchesDateRange = (user) => {
+    const d = parseUserDate(user.createdAt || user.CreatedAt)
+    if (!d) return !filters.registeredFrom && !filters.registeredTo
+
+    if (filters.registeredFrom) {
+      const from = new Date(`${filters.registeredFrom}T00:00:00`)
+      if (!Number.isNaN(from.getTime()) && d < from) return false
+    }
+    if (filters.registeredTo) {
+      const to = new Date(`${filters.registeredTo}T23:59:59.999`)
+      if (!Number.isNaN(to.getTime()) && d > to) return false
+    }
+    return true
+  }
+
+  const activeFiltersCount = useMemo(() => {
+    let n = 0
+    if (filters.accountType) n += 1
+    if (filters.registeredFrom) n += 1
+    if (filters.registeredTo) n += 1
+    return n
+  }, [filters])
+
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return users.filter((user) => {
+      if (filters.accountType === 'vk' && !isVkUser(user)) return false
+      if (filters.accountType === 'regular' && isVkUser(user)) return false
+      if (!matchesDateRange(user)) return false
+
+      if (!q) return true
+      const haystack = [
+        user.username,
+        user.Username,
+        user.fullName,
+        user.FullName,
+        user.email,
+        user.Email,
+        user.phone,
+        user.Phone,
+        String(user.id ?? user.Id ?? ''),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(q)
+    })
+  }, [users, searchQuery, filters])
 
   const formatDate = (value) => {
     if (!value) return '—'
@@ -63,26 +149,6 @@ function AdminUsers() {
     } catch {
       return String(value)
     }
-  }
-
-  const parseUserDate = (value) => {
-    if (!value) return null
-    const d = new Date(value)
-    if (!Number.isNaN(d.getTime())) return d
-
-    // Fallback for values like "28.05.2026" or "28.05.2026 13:45:00"
-    const m = String(value).match(/^(\d{2})\.(\d{2})\.(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/)
-    if (!m) return null
-    const [, dd, mm, yyyy, hh = '00', min = '00', ss = '00'] = m
-    const parsed = new Date(
-      Number(yyyy),
-      Number(mm) - 1,
-      Number(dd),
-      Number(hh),
-      Number(min),
-      Number(ss)
-    )
-    return Number.isNaN(parsed.getTime()) ? null : parsed
   }
 
   const formatDayLabel = (date) => date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
@@ -174,13 +240,15 @@ function AdminUsers() {
         const d = parseUserDate(user.lastLoginAt || user.LastLoginAt)
         return d ? d.getTime() : 0
       }
+      case 'childrenCount':
+        return Number(user.childrenCount ?? user.ChildrenCount ?? 0)
       default:
         return ''
     }
   }
 
   const sortedUsers = useMemo(() => {
-    const copy = [...users]
+    const copy = [...filteredUsers]
     copy.sort((a, b) => {
       const av = getSortValue(a, sortConfig.key)
       const bv = getSortValue(b, sortConfig.key)
@@ -189,7 +257,7 @@ function AdminUsers() {
       return sortConfig.direction === 'asc' ? cmp : -cmp
     })
     return copy
-  }, [users, sortConfig])
+  }, [filteredUsers, sortConfig])
 
   const handleSort = (key) => {
     setSortConfig((prev) => {
@@ -322,6 +390,46 @@ function AdminUsers() {
 
   const ordersPathForUser = (user) => `/admin/users/${user.id ?? user.Id}/orders`
 
+  const openChildrenModal = async (user) => {
+    const uid = Number(user.id ?? user.Id)
+    if (!Number.isFinite(uid) || uid <= 0) return
+    setChildrenModal({
+      userId: uid,
+      userLabel: userDisplayName(user),
+      loading: true,
+      error: '',
+      children: [],
+    })
+    try {
+      const children = await api.getUserChildren(uid)
+      setChildrenModal((prev) =>
+        prev && prev.userId === uid
+          ? { ...prev, loading: false, children: Array.isArray(children) ? children : [] }
+          : prev
+      )
+    } catch (err) {
+      setChildrenModal((prev) =>
+        prev && prev.userId === uid
+          ? { ...prev, loading: false, error: err.message || 'Не удалось загрузить детей' }
+          : prev
+      )
+    }
+  }
+
+  const renderChildrenCount = (user, count) => {
+    if (count <= 0) return '—'
+    return (
+      <button
+        type="button"
+        className="children-count-btn"
+        onClick={() => openChildrenModal(user)}
+        title="Показать данные о детях"
+      >
+        {count}
+      </button>
+    )
+  }
+
   if (loading) {
     return (
       <PageShell className="page-shell--admin-toolbar" title="Управление пользователями">
@@ -338,6 +446,19 @@ function AdminUsers() {
       title="Управление пользователями"
       actions={(
         <div className="admin-page-toolbar">
+          <button
+            type="button"
+            className={`btn btn-secondary btn-toolbar-icon btn-toolbar-icon--square${showFiltersPanel ? ' active' : ''}`}
+            onClick={() => setShowFiltersPanel((v) => !v)}
+            title="Фильтры"
+            aria-label="Фильтры"
+            aria-expanded={showFiltersPanel}
+          >
+            <FilterIcon className="btn-toolbar-icon__icon" />
+            <span className="btn-toolbar-icon__label">
+              Фильтры{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
+            </span>
+          </button>
           <button
             type="button"
             className="btn btn-secondary btn-toolbar-icon btn-toolbar-icon--square"
@@ -366,6 +487,69 @@ function AdminUsers() {
       {(error || success) && (
         <div className={`message ${error ? 'message-error' : 'message-success'}`}>
           {error || success}
+        </div>
+      )}
+
+      <div className="admin-users-toolbar">
+        <label className="admin-users-search">
+          <span className="admin-users-search__label">Поиск</span>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Имя, email, телефон, логин…"
+            aria-label="Поиск пользователей"
+          />
+        </label>
+        {filteredUsers.length !== users.length && (
+          <span className="admin-users-count-hint">
+            Найдено: {filteredUsers.length} из {users.length}
+          </span>
+        )}
+      </div>
+
+      {showFiltersPanel && (
+        <div className="admin-users-filters-panel">
+          <div className="admin-users-filters-grid">
+            <label className="admin-users-filter-field">
+              <span>Тип аккаунта</span>
+              <select
+                value={filters.accountType}
+                onChange={(e) => setFilters((f) => ({ ...f, accountType: e.target.value }))}
+              >
+                <option value="">Все</option>
+                <option value="vk">ВКонтакте</option>
+                <option value="regular">Обычный</option>
+              </select>
+            </label>
+            <label className="admin-users-filter-field">
+              <span>Регистрация с</span>
+              <input
+                type="date"
+                value={filters.registeredFrom}
+                onChange={(e) => setFilters((f) => ({ ...f, registeredFrom: e.target.value }))}
+              />
+            </label>
+            <label className="admin-users-filter-field">
+              <span>Регистрация по</span>
+              <input
+                type="date"
+                value={filters.registeredTo}
+                onChange={(e) => setFilters((f) => ({ ...f, registeredTo: e.target.value }))}
+              />
+            </label>
+          </div>
+          {activeFiltersCount > 0 && (
+            <button
+              type="button"
+              className="btn btn-secondary admin-users-filters-reset"
+              onClick={() =>
+                setFilters({ accountType: '', registeredFrom: '', registeredTo: '' })
+              }
+            >
+              Сбросить фильтры
+            </button>
+          )}
         </div>
       )}
 
@@ -449,6 +633,10 @@ function AdminUsers() {
         <div className="empty-state">
           <p>Пользователи не найдены</p>
         </div>
+      ) : filteredUsers.length === 0 ? (
+        <div className="empty-state">
+          <p>По поиску и фильтрам ничего не найдено</p>
+        </div>
       ) : (
         <div className="users-table-container">
           <table className="users-table">
@@ -457,6 +645,7 @@ function AdminUsers() {
                 <th>{renderSortHeader('Имя пользователя', 'username')}</th>
                 <th>{renderSortHeader('Email', 'email')}</th>
                 <th>{renderSortHeader('Телефон', 'phone')}</th>
+                <th>{renderSortHeader('Дети', 'childrenCount')}</th>
                 <th>{renderSortHeader('Создан', 'createdAt')}</th>
                 <th>{renderSortHeader('Последний вход', 'lastLoginAt')}</th>
                 <th aria-label="Действия">&nbsp;</th>
@@ -466,6 +655,8 @@ function AdminUsers() {
               {sortedUsers.map((user) => {
                 const vkProfileUrl = getVkProfileUrl(user)
                 const isAdmin = !!(user.isAdmin ?? user.IsAdmin)
+                const childrenCount = Number(user.childrenCount ?? user.ChildrenCount ?? 0)
+                const showVkBadge = isVkUser(user) && vkProfileUrl
                 return (
                     <tr
                       key={user.id || user.Id}
@@ -481,11 +672,25 @@ function AdminUsers() {
                                 onClick={() => setOpenActionsFor(null)}
                                 title="Заказы пользователя"
                               >
-                                {user.fullName || user.FullName || user.username || user.Username || '-'}
+                                {userDisplayName(user)}
                               </Link>
+                              {showVkBadge && (
+                                <a
+                                  href={vkProfileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="user-account-badge user-account-badge--vk user-account-badge--link"
+                                  title="Открыть профиль ВКонтакте"
+                                >
+                                  ВК
+                                </a>
+                              )}
                             </span>
                           </div>
                           <div className="user-mobile-head__right">
+                            <span className="user-mobile-meta">
+                              Дети: {renderChildrenCount(user, childrenCount)}
+                            </span>
                             <span className="user-mobile-meta">Создан: {formatDate(user.createdAt || user.CreatedAt)}</span>
                             <span className="user-mobile-meta">Вход: {formatDateTime(user.lastLoginAt || user.LastLoginAt)}</span>
                           </div>
@@ -496,6 +701,9 @@ function AdminUsers() {
                       </td>
                       <td data-label="Телефон" className="phone-cell">
                         <AdminUserPhoneLink user={user} className="admin-user-contact-link" />
+                      </td>
+                      <td data-label="Дети" className="children-count-cell">
+                        {renderChildrenCount(user, childrenCount)}
                       </td>
                       <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
                       <td data-label="Последний вход" className="last-login-cell">{formatDateTime(user.lastLoginAt || user.LastLoginAt)}</td>
@@ -694,6 +902,27 @@ function AdminUsers() {
                   ))}
                 </div>
               </section>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {childrenModal && (
+        <div className="modal-overlay" onClick={() => setChildrenModal(null)}>
+          <div className="modal-content modal-content--children" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Дети — {childrenModal.userLabel}</h2>
+              <button type="button" className="modal-close" onClick={() => setChildrenModal(null)} aria-label="Закрыть">
+                ×
+              </button>
+            </div>
+            <div className="admin-children-modal-body">
+              <AdminUserChildrenPanel
+                title={null}
+                loading={childrenModal.loading}
+                error={childrenModal.error}
+                children={childrenModal.children}
+              />
             </div>
           </div>
         </div>

@@ -136,7 +136,7 @@ function Layout() {
                   width={50}
                   height={50}
                   decoding="async"
-                  fetchPriority="low"
+                  fetchpriority="low"
                 />
               </picture>
               <span className="logo-text">bebochka</span>
