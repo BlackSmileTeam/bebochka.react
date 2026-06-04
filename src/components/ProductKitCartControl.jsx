@@ -216,6 +216,18 @@ export default function ProductKitCartControl({
 
 
 
+  const kitParts = useMemo(() => {
+
+    const fromOptions = normalizeKitParts(kitOptions?.parts ?? kitOptions?.Parts)
+
+    if (fromOptions.length > 0) return fromOptions
+
+    return normalizeKitParts(product?.kitParts ?? product?.KitParts)
+
+  }, [kitOptions, product])
+
+
+
   const isFullKitInCart = useMemo(() => {
 
     if (productId == null) return false
@@ -247,18 +259,6 @@ export default function ProductKitCartControl({
     return data
 
   }
-
-
-
-  const kitParts = useMemo(() => {
-
-    const fromOptions = normalizeKitParts(kitOptions?.parts ?? kitOptions?.Parts)
-
-    if (fromOptions.length > 0) return fromOptions
-
-    return normalizeKitParts(product?.kitParts ?? product?.KitParts)
-
-  }, [kitOptions, product])
 
 
 
