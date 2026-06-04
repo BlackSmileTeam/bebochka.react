@@ -17,6 +17,8 @@ import { setPendingCartProduct } from './pendingCartIntent'
 import './Landing.css'
 
 const LANDING_RETURN = '/welcome'
+const LANDING_CATALOG_PAGE_SIZE = 12
+const LANDING_PRODUCT_IMAGE_SIZES = '(max-width: 480px) 50vw, (max-width: 900px) 33vw, 320px'
 
 function formatGender(gender) {
   if (!gender) return ''
@@ -42,28 +44,43 @@ export default function Landing() {
 
   useEffect(() => {
     let cancelled = false
+    const catalogEl = document.getElementById('catalog')
+    if (!catalogEl) {
+      setLoading(false)
+      return undefined
+    }
+
     const loadCatalog = async () => {
       try {
-        const data = await api.getProducts(sessionId)
+        const data = await api.getCatalogProducts({
+          page: 1,
+          pageSize: LANDING_CATALOG_PAGE_SIZE,
+          sessionId,
+          includeFacets: false,
+        })
         if (cancelled) return
-        const visible = (data || []).filter((p) => (p.quantityInStock ?? p.QuantityInStock ?? 0) > 0)
-        setProducts(visible.slice(0, 12))
+        const items = Array.isArray(data?.items) ? data.items : []
+        const visible = items.filter((p) => (p.quantityInStock ?? p.QuantityInStock ?? 0) > 0)
+        setProducts(visible.slice(0, LANDING_CATALOG_PAGE_SIZE))
       } catch (e) {
         console.error(e)
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
-    const schedule = () => {
-      if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(() => loadCatalog(), { timeout: 2500 })
-      } else {
-        window.setTimeout(loadCatalog, 200)
-      }
-    }
-    schedule()
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return
+        observer.disconnect()
+        loadCatalog()
+      },
+      { root: null, rootMargin: '200px 0px', threshold: 0 }
+    )
+    observer.observe(catalogEl)
     return () => {
       cancelled = true
+      observer.disconnect()
     }
   }, [sessionId])
 
@@ -96,15 +113,6 @@ export default function Landing() {
   return (
     <div className="landing">
       <section className="landing-hero landing-hero--lcp">
-        <img
-          className="landing-hero-bg"
-          src="/background.png"
-          alt=""
-          width={1200}
-          height={800}
-          fetchPriority="high"
-          decoding="async"
-        />
         <div className="landing-hero-content">
           <h1>
             <span className="landing-hero-title-line">Качественная одежда для всей семьи</span>
@@ -210,7 +218,10 @@ export default function Landing() {
                         src={toAbsoluteMediaUrl(img) || '/logo.jpg'}
                         alt={product.name}
                         className="landing-product-image"
-                        priority={index < 4}
+                        width={320}
+                        height={320}
+                        sizes={LANDING_PRODUCT_IMAGE_SIZES}
+                        priority={index === 0}
                       />
                     ) : (
                       <div className="landing-product-placeholder">Нет фото</div>

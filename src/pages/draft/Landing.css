@@ -139,14 +139,8 @@
 .landing-section--pattern::before {
   content: '';
   position: absolute;
-  inset: -8px;
-  background-color: #fcfbfa;
-  background-image: url('/background.png');
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center center;
-  filter: blur(4px);
-  transform: scale(1.02);
+  inset: 0;
+  background: linear-gradient(160deg, #f0f4ff 0%, #faf5ff 45%, #fff8fb 100%);
   z-index: 0;
 }
 
@@ -168,15 +162,11 @@
   overflow: hidden;
 }
 
-.landing-hero-bg {
+.landing-hero--lcp::before {
+  content: '';
   position: absolute;
-  inset: -8px;
-  width: calc(100% + 16px);
-  height: calc(100% + 16px);
-  object-fit: cover;
-  object-position: center;
-  filter: blur(4px);
-  transform: scale(1.02);
+  inset: 0;
+  background: linear-gradient(145deg, #e8eeff 0%, #f3efff 42%, #fff6f8 100%);
   z-index: 0;
   pointer-events: none;
 }
@@ -502,6 +492,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  content-visibility: auto;
 }
 
 .landing-product-placeholder {

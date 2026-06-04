@@ -44,6 +44,14 @@ function isShopCoreModule(id) {
   )
 }
 
+/** Admin chunk only for /admin/* pages — not AdminReviews (/reviews) or Landing. */
+function isAdminPageModule(id) {
+  if (!id.includes('/src/pages/')) return false
+  if (id.includes('/src/pages/draft/')) return false
+  if (id.includes('/src/pages/AdminReviews')) return false
+  return /\/src\/pages\/Admin/.test(id)
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -63,6 +71,7 @@ export default defineConfig({
     cssCodeSplit: true,
     sourcemap: false,
     modulePreload: {
+      polyfill: false,
       resolveDependencies: (_filename, deps) =>
         deps.filter((dep) => !dep.includes('admin-pages')),
     },
@@ -75,8 +84,9 @@ export default defineConfig({
             if (id.includes('axios')) return 'axios'
             return 'vendor'
           }
+          if (id.includes('/src/pages/draft/Landing')) return 'landing-page'
           if (isShopCoreModule(id)) return 'shop-core'
-          if (id.includes('/src/pages/Admin')) return 'admin-pages'
+          if (isAdminPageModule(id)) return 'admin-pages'
           return undefined
         }
       }
