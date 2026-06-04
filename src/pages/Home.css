@@ -83,6 +83,14 @@
   background: #e2e8f0;
 }
 
+.page-shell--catalog .page-shell__inner,
+.page-shell--catalog .page-shell__body,
+.catalog-main,
+.products-grid {
+  overflow-y: visible;
+  max-height: none;
+}
+
 .catalog-filters {
   --catalog-filter-font-size: 0.8125rem;
   --catalog-filter-line-height: 1.25;
@@ -93,7 +101,8 @@
   margin: 0.35rem 0 0.8rem;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   align-items: stretch;
   font-family: inherit;
   font-size: var(--catalog-filter-font-size);
@@ -231,13 +240,15 @@
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   align-items: start;
   grid-auto-rows: minmax(min-content, auto);
 }
 
 .page-shell--catalog {
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .catalog-intro {
@@ -580,6 +591,14 @@
 }
 
 @media (max-width: 768px) {
+  .page-shell--catalog,
+  .page-shell--catalog .page-shell__body,
+  .catalog-main,
+  .products-grid {
+    overflow-y: visible;
+    max-height: none;
+  }
+
   .page-shell--catalog .page-shell__body > .empty-state,
   .page-shell--catalog .page-shell__body > .loading,
   .page-shell--catalog .page-shell__body > .error {
@@ -790,6 +809,8 @@
   .products-grid {
     grid-template-columns: 1fr;
     gap: 0.75rem;
+    overflow-y: visible;
+    max-height: none;
   }
 
   .product-card {
