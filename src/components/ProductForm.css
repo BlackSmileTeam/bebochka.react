@@ -178,6 +178,20 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* Поле нюансов — всегда видно, не зависит от выбранного состояния */
+.product-form-nuance-field {
+  display: block !important;
+}
+
+.product-form-nuance-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.product-form-nuance-input-wrap input {
+  width: 100%;
+}
+
 .form-checkbox-inline {
   display: inline-flex !important;
   align-items: flex-start;

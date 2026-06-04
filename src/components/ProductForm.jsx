@@ -138,30 +138,44 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     })
   }, [brandSearch])
 
-  useEffect(() => {
-    const query = nuanceSearch.trim()
-    if (!query) {
-      setNuances([])
-      setShowNuanceDropdown(false)
-      return
-    }
-    setFormData(prev => ({ ...prev, nuance: nuanceSearch }))
+  const loadNuanceSuggestions = (query, showDropdown = true) => {
+    const trimmed = (query || '').trim()
     if (nuanceLockedRef.current) {
       setNuances([])
       setShowNuanceDropdown(false)
       return
     }
-    api.getProductNuances(query).then((rows) => {
-      const filtered = rows.filter((row) => {
-        const name = row.name || ''
-        return name.trim().toLowerCase() !== query.toLowerCase()
+    api.getProductNuances(trimmed || null)
+      .then((rows) => {
+        const filtered = trimmed
+          ? rows.filter((row) => {
+            const name = row.name || ''
+            return name.trim().toLowerCase() !== trimmed.toLowerCase()
+          })
+          : rows
+        setNuances(filtered)
+        setShowNuanceDropdown(showDropdown && filtered.length > 0)
       })
-      setNuances(filtered)
-      setShowNuanceDropdown(filtered.length > 0)
-    }).catch(() => {
+      .catch(() => {
+        setNuances([])
+        setShowNuanceDropdown(false)
+      })
+  }
+
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, nuance: nuanceSearch }))
+    if (nuanceLockedRef.current) {
       setNuances([])
       setShowNuanceDropdown(false)
-    })
+      return
+    }
+    const trimmed = nuanceSearch.trim()
+    if (!trimmed) {
+      setNuances([])
+      setShowNuanceDropdown(false)
+      return
+    }
+    loadNuanceSuggestions(nuanceSearch, false)
   }, [nuanceSearch])
 
   useEffect(() => {
@@ -834,26 +848,26 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </select>
           </div>
 
-          <div className="form-group">
-              <label htmlFor="nuance">Нюанс</label>
-              <div ref={nuanceDropdownRef} style={{ position: 'relative', width: '100%' }}>
-                <input
-                  type="text"
-                  id="nuance"
-                  name="nuance"
-                  value={nuanceSearch}
-                  onChange={(e) => {
-                    nuanceLockedRef.current = false
-                    setNuanceSearch(e.target.value)
-                  }}
-                  onFocus={() => {
-                    if (!nuanceLockedRef.current && nuanceSearch && nuances.length > 0) {
-                      setShowNuanceDropdown(true)
-                    }
-                  }}
-                  placeholder="Выберите или введите нюанс"
-                  style={{ width: '100%' }}
-                />
+          <div className="form-group product-form-nuance-field">
+            <label htmlFor="productNuance">Нюансы</label>
+            <div ref={nuanceDropdownRef} className="product-form-nuance-input-wrap">
+              <input
+                type="text"
+                id="productNuance"
+                name="productNuance"
+                value={nuanceSearch}
+                onChange={(e) => {
+                  nuanceLockedRef.current = false
+                  setNuanceSearch(e.target.value)
+                }}
+                onFocus={() => {
+                  if (!nuanceLockedRef.current) {
+                    loadNuanceSuggestions(nuanceSearch, true)
+                  }
+                }}
+                placeholder="Выберите или введите нюанс"
+                autoComplete="off"
+              />
                 {showNuanceDropdown && nuances.length > 0 && (
                   <div style={{
                     position: 'absolute',
@@ -894,8 +908,8 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                     ))}
                   </div>
                 )}
-              </div>
             </div>
+          </div>
 
           <div className="form-group">
             <label htmlFor="description">Краткое описание</label>
