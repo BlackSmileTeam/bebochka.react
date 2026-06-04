@@ -1401,13 +1401,21 @@ function AdminProducts() {
                           Нет фото
                         </div>
                       )}
-                      <div className="product-name-below">{product.name}</div>
+                      <div className="product-name-below">
+                        {product.name}
+                        {(product.isTestProduct ?? product.IsTestProduct) && (
+                          <span className="product-test-badge" title="Виден только администраторам в каталоге">тест</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td data-label="Информация" className="product-info-wrapper">
                     <div className="product-info-mobile">
                       <div className="product-name-mobile" data-brand={product.brand ? ` • ${product.brand}` : ''}>
                         {product.name}
+                        {(product.isTestProduct ?? product.IsTestProduct) && (
+                          <span className="product-test-badge" title="Виден только администраторам в каталоге">тест</span>
+                        )}
                       </div>
                       <div className="product-details-mobile">
                         <span className="size-cell">{product.size || '-'}</span>

@@ -17,6 +17,7 @@ const DEFAULT_PRODUCT_NAME_SUGGESTIONS = [
 
 const PHOTO_ORDER_HINT = 'Перетаскивайте фото, чтобы изменить порядок. Первое фото будет главным в карточке.'
 const CART_LATER_HINT = 'Карточка может быть уже на сайте (после превью), а кнопка корзины активируется в это время.'
+const KIT_PARTS_HINT = 'Нажмите «+», чтобы добавить вещь комплекта.'
 
 function FormFieldHint({ text }) {
   return (
@@ -53,6 +54,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   })
   const [scheduleSend, setScheduleSend] = useState(false)
   const [scheduleCartUnlock, setScheduleCartUnlock] = useState(false)
+  const [isTestProduct, setIsTestProduct] = useState(false)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [images, setImages] = useState([])
   const [existingImages, setExistingImages] = useState([])
@@ -78,6 +80,8 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [draggingImage, setDraggingImage] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
   const [toast, setToast] = useState(null)
+  const [isKit, setIsKit] = useState(false)
+  const [kitParts, setKitParts] = useState([])
 
   const moveImage = (kind, fromIndex, toIndex) => {
     if (fromIndex === toIndex || fromIndex == null || toIndex == null) return
@@ -299,14 +303,28 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       })
       setScheduleSend(TELEGRAM_UI_ENABLED && !!(product.publishedAt || product.PublishedAt))
       setScheduleCartUnlock(!!(product.cartAvailableAt || product.CartAvailableAt))
+      setIsTestProduct(!!(product.isTestProduct ?? product.IsTestProduct))
       setBrandSearch(product.brand || '')
       brandLockedRef.current = !!(product.brand || '').trim()
+      const kit = !!(product.isKit ?? product.IsKit)
+      setIsKit(kit)
+      const parts = product.kitParts ?? product.KitParts
+      setKitParts(
+        Array.isArray(parts)
+          ? parts.map((p) => ({
+              id: p.productId ?? p.ProductId ?? p.id ?? p.Id ?? null,
+              name: p.partName ?? p.PartName ?? p.name ?? '',
+              price: String(p.price ?? p.Price ?? ''),
+            }))
+          : []
+      )
       setNuanceSearch(product.nuance || '')
       nuanceLockedRef.current = !!(product.nuance || '').trim()
       setExistingImages(product.images || [])
     } else {
       setScheduleSend(false)
       setScheduleCartUnlock(false)
+      setIsTestProduct(false)
       setFormData({
         name: '',
         brand: '',
@@ -329,6 +347,8 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       setNuanceSearch('')
       nuanceLockedRef.current = false
       setExistingImages([])
+      setIsKit(false)
+      setKitParts([])
     }
   }, [product])
 
@@ -360,6 +380,13 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       setError('Добавьте хотя бы одно фото')
       return
     }
+    if (isKit) {
+      const validParts = kitParts.filter((p) => (p.name || '').trim() && Number(p.price) > 0)
+      if (validParts.length === 0) {
+        setError('Добавьте хотя бы одну вещь в состав комплекта с названием и ценой')
+        return
+      }
+    }
     setLoading(true)
 
     try {
@@ -380,6 +407,22 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       formDataToSend.append('boxNumber', formData.boxNumber || '')
       formDataToSend.append('owner', formData.owner || '')
       formDataToSend.append('incomingShipmentId', formData.incomingShipmentId === '' ? '' : formData.incomingShipmentId)
+      formDataToSend.append('isKit', isKit ? 'true' : 'false')
+      formDataToSend.append('isTestProduct', isTestProduct ? 'true' : 'false')
+      if (isKit) {
+        formDataToSend.append(
+          'kitParts',
+          JSON.stringify(
+            kitParts
+              .filter((p) => (p.name || '').trim() && Number(p.price) > 0)
+              .map((p) => ({
+                id: p.id || undefined,
+                name: p.name.trim(),
+                price: Number(p.price),
+              }))
+          )
+        )
+      }
       
       // Add PublishedAt if "отправить ко времени" is checked
       // datetime-local gives "YYYY-MM-DDTHH:mm" (interpreted as Moscow time)
@@ -460,6 +503,32 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit} className="product-form">
           {error && <div className="form-error">{error}</div>}
+
+          <div className="form-group form-group--kit-flag">
+            <div className="form-group--kit-flag__row">
+              <label className="checkbox-label checkbox-label--text-first">
+                <span>Комплект</span>
+                <input
+                  type="checkbox"
+                  checked={isKit}
+                  onChange={(e) => {
+                    setIsKit(e.target.checked)
+                    if (!e.target.checked) setKitParts([])
+                  }}
+                  disabled={loading}
+                />
+              </label>
+              <label className="checkbox-label checkbox-label--text-first">
+                <span>Тестовый товар</span>
+                <input
+                  type="checkbox"
+                  checked={isTestProduct}
+                  onChange={(e) => setIsTestProduct(e.target.checked)}
+                  disabled={loading}
+                />
+              </label>
+            </div>
+          </div>
 
           <div className="form-group form-group-photos-first">
             <div className="form-label-row">
@@ -718,6 +787,62 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </div>
           </div>
 
+          {isKit && (
+            <div className="form-group product-kit-parts">
+              <div className="product-kit-parts__head">
+                <div className="product-kit-parts__head-title">
+                  <label>Состав комплекта</label>
+                  <FormFieldHint text={KIT_PARTS_HINT} />
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm product-kit-parts__add"
+                  onClick={() => setKitParts((prev) => [...prev, { name: '', price: '' }])}
+                  disabled={loading}
+                  title="Добавить вещь"
+                >
+                  +
+                </button>
+              </div>
+              {kitParts.map((part, index) => (
+                <div key={part.id ?? `new-${index}`} className="product-kit-parts__row">
+                  <input
+                    type="text"
+                    placeholder="Название вещи"
+                    value={part.name}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setKitParts((prev) => prev.map((row, i) => (i === index ? { ...row, name: v } : row)))
+                    }}
+                    disabled={loading}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Цена за вещь"
+                    value={part.price}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setKitParts((prev) => prev.map((row, i) => (i === index ? { ...row, price: v } : row)))
+                    }}
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    className="product-kit-parts__remove"
+                    onClick={() => setKitParts((prev) => prev.filter((_, i) => i !== index))}
+                    disabled={loading}
+                    title="Удалить вещь"
+                    aria-label="Удалить вещь"
+                  >
+                    🗑
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="size">Размер</label>
@@ -732,7 +857,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
             </div>
 
             <div className="form-group">
-              <label htmlFor="price">Цена (₽) *</label>
+              <label htmlFor="price">{isKit ? 'Цена за комплект (₽) *' : 'Цена (₽) *'}</label>
               <input
                 type="number"
                 id="price"

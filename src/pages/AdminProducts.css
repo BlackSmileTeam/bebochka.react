@@ -714,6 +714,20 @@
   background-color: #fff5f5;
 }
 
+.product-test-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #6b46c1;
+  background: #ede9fe;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
 /* Action menu styles */
 .action-menu-wrapper {
   position: relative;

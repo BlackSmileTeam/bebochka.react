@@ -1,6 +1,15 @@
+.page-shell--error .page-shell__body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: min(70vh, 640px);
+  padding: 1.5rem 0 3rem;
+}
+
 .error-page {
+  width: 100%;
   max-width: 32rem;
-  margin: 2rem auto 3rem;
+  margin: 0 auto;
   padding: 2rem 1.5rem;
   text-align: center;
   background: #fff;
@@ -9,18 +18,20 @@
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08);
 }
 
+.error-page__title {
+  margin: 0 0 1rem;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #2d3748;
+}
+
 .error-page__code {
-  margin: 0 0 0.75rem;
+  margin: 0 0 1rem;
   font-size: clamp(2.5rem, 8vw, 3.5rem);
   font-weight: 800;
   line-height: 1;
   color: #667eea;
-}
-
-.error-page__title {
-  margin: 0 0 0.75rem;
-  font-size: 1.25rem;
-  color: #2d3748;
 }
 
 .error-page__text {
@@ -33,31 +44,48 @@
 .error-page__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
+  gap: 0.75rem;
   justify-content: center;
   align-items: center;
 }
 
-.error-page__link {
-  color: #667eea;
+.error-page__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
   font-weight: 600;
-  font-size: 0.98rem;
+  line-height: 1.2;
   text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
 }
 
-.error-page__link:hover {
-  color: #5a67d8;
-  border-bottom-color: #5a67d8;
+.error-page__btn--primary {
+  background: #667eea;
+  color: #fff;
 }
 
-.error-page__link--primary {
+.error-page__btn--primary:hover {
+  background: #5568d3;
+}
+
+.error-page__btn--secondary {
+  background: #edf2f7;
   color: #2d3748;
-  border-bottom-color: #cbd5e0;
 }
 
-.error-page__link--primary:hover {
-  color: #667eea;
-  border-bottom-color: #667eea;
+.error-page__btn--secondary:hover {
+  background: #e2e8f0;
+  color: #2d3748;
+}
+
+.error-page__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.35);
 }

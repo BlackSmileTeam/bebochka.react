@@ -27,6 +27,87 @@
   position: relative;
 }
 
+.form-group--kit-flag {
+  margin-bottom: 0.5rem;
+}
+
+.form-group--kit-flag__row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.form-group--kit-flag label.checkbox-label {
+  display: inline-flex;
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.form-group--kit-flag input[type='checkbox'] {
+  width: 1.125rem;
+  height: 1.125rem;
+  min-width: 1.125rem;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #667eea;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkbox-label--text-first {
+  white-space: nowrap;
+}
+
+.product-kit-parts__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-kit-parts__head label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.product-kit-parts__head-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.product-kit-parts__add {
+  min-width: 2.25rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.product-kit-parts__row {
+  display: grid;
+  grid-template-columns: 1fr 120px auto;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+
+.product-kit-parts__remove {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.35rem;
+}
+
 /* Оверлей и колесо загрузки при сохранении карточки */
 .product-form-loading-overlay {
   position: absolute;

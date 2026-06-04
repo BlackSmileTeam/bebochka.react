@@ -4,6 +4,29 @@ import { getSessionId } from '../utils/sessionId'
 
 export const CartContext = createContext()
 
+function formatCartItem(item) {
+  const isKitBundle = item.isKitDisplayLine
+    || item.cartAddMode === 'bundle'
+  return {
+    id: item.productId,
+    productId: item.productId,
+    name: item.productName || '',
+    brand: item.productBrand,
+    size: isKitBundle ? null : item.productSize,
+    color: isKitBundle ? null : item.productColor,
+    images: item.productImages || [],
+    price: item.productPrice ?? 0,
+    quantity: item.quantity ?? 1,
+    cartItemId: item.id,
+    createdAt: item.createdAt ?? null,
+    kitId: item.kitId ?? null,
+    cartAddMode: item.cartAddMode ?? null,
+    kitPartName: item.kitPartName ?? null,
+    isKitDisplayLine: !!item.isKitDisplayLine,
+    kitDisplayProductId: item.kitDisplayProductId ?? null,
+  }
+}
+
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -42,20 +65,7 @@ export function CartProvider({ children }) {
       const items = await api.getCartItems(sessionId)
       console.log('[CartContext] Received cart items:', items)
       
-      // Преобразуем формат для совместимости
-      const formattedItems = items.map(item => ({
-        id: item.productId || item.productId,
-        productId: item.productId,
-        name: item.productName || item.productName,
-        brand: item.productBrand,
-        size: item.productSize,
-        color: item.productColor,
-        images: item.productImages || [],
-        price: item.productPrice || item.productPrice,
-        quantity: item.quantity || item.quantity,
-        cartItemId: item.id, // ID элемента корзины на сервере
-        createdAt: item.createdAt ?? item.CreatedAt ?? null,
-      }))
+      const formattedItems = items.map(formatCartItem)
       console.log('[CartContext] Formatted cart items:', formattedItems)
       setCartItems(formattedItems)
     } catch (error) {
@@ -73,32 +83,48 @@ export function CartProvider({ children }) {
   }, [loadCart])
 
   const mergeCartLineFromAddResponse = useCallback((result, product) => {
-    const id = result?.Id ?? result?.id
-    const productId = result?.ProductId ?? result?.productId ?? product?.id
-    const qty = result?.Quantity ?? result?.quantity ?? 1
-    if (productId == null) return
+    const normalized = formatCartItem({
+      id: result?.Id ?? result?.id,
+      productId: result?.ProductId ?? result?.productId ?? product?.id,
+      productName: result?.ProductName ?? result?.productName ?? product?.name ?? '',
+      productBrand: result?.ProductBrand ?? result?.productBrand ?? product?.brand,
+      productSize: result?.ProductSize ?? result?.productSize ?? product?.size,
+      productColor: result?.ProductColor ?? result?.productColor ?? product?.color,
+      productImages: result?.ProductImages ?? result?.productImages ?? product?.images ?? [],
+      productPrice: result?.ProductPrice ?? result?.productPrice ?? product?.price ?? 0,
+      quantity: result?.Quantity ?? result?.quantity ?? 1,
+      createdAt: result?.CreatedAt ?? result?.createdAt ?? new Date().toISOString(),
+      kitId: result?.KitId ?? result?.kitId ?? null,
+      cartAddMode: result?.CartAddMode ?? result?.cartAddMode ?? null,
+      kitPartName: result?.KitPartName ?? result?.kitPartName ?? null,
+      isKitDisplayLine: result?.IsKitDisplayLine ?? result?.isKitDisplayLine ?? false,
+      kitDisplayProductId: result?.KitDisplayProductId ?? result?.kitDisplayProductId ?? null,
+    })
+    if (normalized.productId == null) return
 
     setCartItems((prev) => {
-      const idx = prev.findIndex((i) => i.productId === productId)
-      const line = {
-        id: productId,
-        productId,
-        name: result?.ProductName ?? result?.productName ?? product?.name ?? '',
-        brand: result?.ProductBrand ?? result?.productBrand ?? product?.brand,
-        size: result?.ProductSize ?? result?.productSize ?? product?.size,
-        color: result?.ProductColor ?? result?.productColor ?? product?.color,
-        images: result?.ProductImages ?? result?.productImages ?? product?.images ?? [],
-        price: result?.ProductPrice ?? result?.productPrice ?? product?.price ?? 0,
-        quantity: qty,
-        cartItemId: id,
-        createdAt: result?.CreatedAt ?? result?.createdAt ?? new Date().toISOString(),
+      const kitId = normalized.kitId
+      const becameFullKit = normalized.isKitDisplayLine || normalized.cartAddMode === 'bundle'
+      let next = prev
+
+      if (kitId != null && becameFullKit) {
+        next = prev.filter((i) => i.kitId !== kitId)
+      } else {
+        const idx = prev.findIndex((i) => i.productId === normalized.productId)
+        if (idx >= 0) {
+          next = [...prev]
+          next[idx] = { ...next[idx], ...normalized, createdAt: next[idx].createdAt ?? normalized.createdAt }
+          return next
+        }
       }
+
+      const idx = next.findIndex((i) => i.productId === normalized.productId)
       if (idx >= 0) {
-        const next = [...prev]
-        next[idx] = { ...next[idx], ...line, createdAt: next[idx].createdAt ?? line.createdAt }
-        return next
+        const updated = [...next]
+        updated[idx] = { ...updated[idx], ...normalized, createdAt: updated[idx].createdAt ?? normalized.createdAt }
+        return updated
       }
-      return [...prev, line]
+      return [...next, normalized]
     })
   }, [])
 

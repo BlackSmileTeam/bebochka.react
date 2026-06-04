@@ -185,13 +185,16 @@ function Cart() {
             Товары в корзине и в очереди хранятся до 24 часов. Если за это время не поступила оплата, бронь снимается автоматически.
           </div>
           <div className="cart-items">
-            {cartItems.length > 0 ? cartItems.map((item) => (
-              <div key={`cart-${item.id}`} className="cart-item">
+            {cartItems.length > 0 ? cartItems.map((item) => {
+              const isKitBundle = item.isKitDisplayLine || item.cartAddMode === 'bundle'
+              const detailProductId = item.kitDisplayProductId ?? item.productId ?? item.id
+              return (
+              <div key={`cart-${item.cartItemId ?? item.productId}`} className="cart-item">
                 <button
                   type="button"
                   className="cart-item-image cart-item-image--open"
-                  onClick={() => openProductDetail(item.productId)}
-                  disabled={detailLoadingId === item.productId}
+                  onClick={() => openProductDetail(detailProductId)}
+                  disabled={detailLoadingId === detailProductId}
                   title="Открыть карточку товара"
                   aria-label={`Открыть карточку: ${item.name}`}
                 >
@@ -210,19 +213,26 @@ function Cart() {
                   <button
                     type="button"
                     className="cart-item-name cart-item-name--open"
-                    onClick={() => openProductDetail(item.productId)}
-                    disabled={detailLoadingId === item.productId}
+                    onClick={() => openProductDetail(detailProductId)}
+                    disabled={detailLoadingId === detailProductId}
                     title="Открыть карточку товара"
                   >
                     {item.name}
                   </button>
+                  {isKitBundle ? (
+                    <p className="cart-item-detail cart-item-detail--kit">Комплект</p>
+                  ) : item.kitPartName ? (
+                    <p className="cart-item-detail cart-item-detail--kit-part">
+                      Из комплекта · {item.kitPartName}
+                    </p>
+                  ) : null}
                   {item.brand && (
                     <p className="cart-item-brand">Бренд: {item.brand}</p>
                   )}
-                  {item.size && (
+                  {!isKitBundle && item.size && (
                     <p className="cart-item-detail">Размер: {item.size}</p>
                   )}
-                  {item.color && (
+                  {!isKitBundle && item.color && (
                     <p className="cart-item-detail">Цвет: {item.color}</p>
                   )}
                 </div>
@@ -243,7 +253,7 @@ function Cart() {
                   ×
                 </button>
               </div>
-            )) : (
+            )}) : (
               <div className="cart-empty-inline">В корзине пока нет товаров</div>
             )}
           </div>

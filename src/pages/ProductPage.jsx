@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import ErrorPageLayout from '../components/ErrorPageLayout'
 import PageShell from '../components/PageShell'
 import ProductDetail from '../components/ProductDetail'
 import RouteFallback from '../components/RouteFallback'
@@ -127,6 +128,22 @@ export default function ProductPage() {
     [navigate]
   )
 
+  if (!loading && notFound) {
+    return (
+      <ErrorPageLayout
+        className="page-shell--product-page"
+        title="Товар не найден"
+        code="404"
+        text="Такой страницы нет или товар уже снят с продажи."
+        actions={(
+          <Link to={catalogHomePath()} className="error-page__btn error-page__btn--primary">
+            Перейти в каталог
+          </Link>
+        )}
+      />
+    )
+  }
+
   return (
     <PageShell className="page-shell--product-page">
       <nav className="product-page-nav" aria-label="Навигация">
@@ -136,16 +153,6 @@ export default function ProductPage() {
       </nav>
 
       {loading && <RouteFallback />}
-
-      {!loading && notFound && (
-        <section className="product-page-message">
-          <h1>Товар не найден</h1>
-          <p>Такой страницы нет или товар уже снят с продажи.</p>
-          <Link to={catalogHomePath()} className="product-page-back-link">
-            Перейти в каталог
-          </Link>
-        </section>
-      )}
 
       {!loading && !notFound && product && (
         <ProductDetail

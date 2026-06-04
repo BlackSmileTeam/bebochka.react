@@ -1,0 +1,229 @@
+.kit-cart-control {
+  position: relative;
+  width: 100%;
+}
+
+.kit-cart-control__main {
+  width: 100%;
+}
+
+.kit-cart-control__btn {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.kit-cart-control__btn-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  min-width: 0;
+}
+
+.kit-cart-control__btn-main:disabled {
+  cursor: not-allowed;
+}
+
+.kit-cart-control__btn-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.kit-cart-control__btn-label {
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.kit-cart-control__chevron {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  padding: 0 0.55rem;
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.kit-cart-control__chevron:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.kit-cart-control__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  bottom: auto;
+  min-width: min(100%, 280px);
+  max-width: 320px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+  overflow: hidden;
+}
+
+.kit-cart-control__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  border-bottom: 1px solid #edf2f7;
+  background: #fff;
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.kit-cart-control__option:last-child {
+  border-bottom: none;
+}
+
+.kit-cart-control__option:hover:not(:disabled) {
+  background: #f7fafc;
+}
+
+.kit-cart-control__option--reserved {
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.kit-cart-control__option--in-cart {
+  background: #edf2f7;
+  color: #718096;
+  cursor: not-allowed;
+}
+
+.kit-cart-control__option--in-cart .kit-cart-control__option-price {
+  color: #a0aec0;
+}
+
+.kit-cart-control__option--in-cart:hover:not(:disabled) {
+  background: #edf2f7;
+}
+
+.kit-cart-control__option--bundle {
+  font-weight: 600;
+  background: #f0f4ff;
+}
+
+.kit-cart-control__option-price {
+  white-space: nowrap;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+.kit-cart-control__menu--portal {
+  position: fixed;
+  right: auto;
+  top: auto;
+  bottom: auto;
+}
+
+.kit-cart-control__menu-empty {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  font-size: 0.88rem;
+  color: #718096;
+  text-align: center;
+}
+
+.kit-cart-control__error {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #c53030;
+}
+
+.kit-cart-control--catalog {
+  flex: 1 1 168px;
+  margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.kit-cart-control--catalog .kit-cart-control__btn {
+  min-height: 44px;
+  max-height: 44px;
+}
+
+.kit-cart-control--catalog .kit-cart-control__btn-main {
+  padding: 0 0.25rem 0 0.5rem;
+  font-size: 0.92rem;
+}
+
+.kit-cart-control--catalog .kit-cart-control__btn-label {
+  font-size: 0.92rem;
+}
+
+.kit-cart-control--catalog .kit-cart-control__chevron {
+  padding: 0 0.45rem;
+}
+
+.kit-cart-control--catalog .kit-cart-control__menu {
+  left: 0;
+  right: 0;
+  min-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .kit-cart-control--catalog {
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+    margin-left: 0;
+  }
+
+  .kit-cart-control--catalog .kit-cart-control__btn {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .kit-cart-control--catalog .kit-cart-control__btn-main {
+    padding: 0 0.35rem 0 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .kit-cart-control--catalog .kit-cart-control__btn-label {
+    font-size: 0.85rem;
+  }
+}
+
+.kit-cart-control__btn--in-cart {
+  width: 100%;
+  cursor: not-allowed;
+  background: #a0aec0 !important;
+  color: #fff !important;
+}
+
+.kit-cart-control__btn--in-cart:hover,
+.kit-cart-control__btn--in-cart:active {
+  background: #a0aec0 !important;
+  transform: none;
+  box-shadow: none;
+}
+
+.kit-cart-control--catalog .kit-cart-control__btn--in-cart {
+  min-height: 44px;
+  max-height: 44px;
+}
+
+.kit-cart-control--menu-open {
+  z-index: 25;
+}

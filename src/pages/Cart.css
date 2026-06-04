@@ -525,6 +525,15 @@
   margin: 0;
 }
 
+.cart-item-detail--kit {
+  color: #5a67d8;
+  font-weight: 600;
+}
+
+.cart-item-detail--kit-part {
+  color: #4a5568;
+}
+
 .cart-item-price {
   display: flex;
   flex-direction: column;

@@ -219,6 +219,10 @@ export const api = {
       publishedAt: product.publishedAt || product.PublishedAt || null,
       cartAvailableAt: product.cartAvailableAt ?? product.CartAvailableAt ?? null,
       cartUnlocked: product.cartUnlocked !== undefined ? product.cartUnlocked : (product.CartUnlocked !== undefined ? product.CartUnlocked : true),
+      isKit: !!(product.isKit ?? product.IsKit ?? product.kitId ?? product.KitId),
+      kitId: product.kitId ?? product.KitId ?? null,
+      kitPrice: product.kitPrice ?? product.KitPrice ?? null,
+      kitParts: product.kitParts ?? product.KitParts ?? null,
     }
   },
 
@@ -399,6 +403,10 @@ export const api = {
         ,owner: d.owner ?? d.Owner ?? null
         ,incomingShipmentId: d.incomingShipmentId ?? d.IncomingShipmentId ?? null
         ,incomingShipmentName: d.incomingShipmentName ?? d.IncomingShipmentName ?? null
+        ,isKit: !!(d.isKit ?? d.IsKit ?? d.kitId ?? d.KitId)
+        ,kitId: d.kitId ?? d.KitId ?? null
+        ,kitPrice: d.kitPrice ?? d.KitPrice ?? null
+        ,kitParts: d.kitParts ?? d.KitParts ?? null
       }
 
       console.log('[API] Successfully loaded product:', normalizedProduct)
@@ -473,6 +481,9 @@ export const api = {
         boxNumber: formData.get('boxNumber') || null,
         owner: formData.get('owner') || null,
         incomingShipmentId: formData.get('incomingShipmentId') === '' ? null : parseInt(formData.get('incomingShipmentId') || 0),
+        isKit: formData.get('isKit') === 'true',
+        kitParts: formData.get('kitParts') ? JSON.parse(formData.get('kitParts')) : null,
+        isTestProduct: formData.get('isTestProduct') === 'true',
         images: []
       }
       
@@ -529,7 +540,11 @@ export const api = {
         incomingShipmentId: response.data.incomingShipmentId ?? response.data.IncomingShipmentId ?? null,
         incomingShipmentName: response.data.incomingShipmentName ?? response.data.IncomingShipmentName ?? null,
         createdAt: response.data.createdAt || response.data.CreatedAt,
-        updatedAt: response.data.updatedAt || response.data.UpdatedAt
+        updatedAt: response.data.updatedAt || response.data.UpdatedAt,
+        isKit: !!(response.data.isKit ?? response.data.IsKit),
+        kitId: response.data.kitId ?? response.data.KitId ?? null,
+        kitPrice: response.data.kitPrice ?? response.data.KitPrice ?? null,
+        kitParts: response.data.kitParts ?? response.data.KitParts ?? null,
       }
       
       return normalizedProduct
@@ -594,6 +609,9 @@ export const api = {
         boxNumber: formData.get('boxNumber') || null,
         owner: formData.get('owner') || null,
         incomingShipmentId: formData.get('incomingShipmentId') === '' ? null : parseInt(formData.get('incomingShipmentId') || 0),
+        isKit: formData.get('isKit') === 'true',
+        kitParts: formData.get('kitParts') ? JSON.parse(formData.get('kitParts')) : null,
+        isTestProduct: formData.get('isTestProduct') === 'true',
         images: []
       }
       
@@ -1497,7 +1515,13 @@ export const api = {
         productImages: item.ProductImages || item.productImages || [],
         productPrice: item.ProductPrice ?? item.productPrice ?? 0,
         quantity: item.Quantity ?? item.quantity ?? 0,
-        createdAt: item.CreatedAt || item.createdAt
+        createdAt: item.CreatedAt || item.createdAt,
+        kitId: item.KitId ?? item.kitId ?? null,
+        cartAddMode: item.CartAddMode ?? item.cartAddMode ?? null,
+        kitBundleKey: item.KitBundleKey ?? item.kitBundleKey ?? null,
+        kitPartName: item.KitPartName ?? item.kitPartName ?? null,
+        isKitDisplayLine: item.IsKitDisplayLine ?? item.isKitDisplayLine ?? false,
+        kitDisplayProductId: item.KitDisplayProductId ?? item.kitDisplayProductId ?? null,
       }))
     } catch (error) {
       console.error('[API] Error fetching cart items:', error)
@@ -1517,7 +1541,31 @@ export const api = {
    * @param {number} quantity - Quantity to add
    * @returns {Promise<Object>} Cart item
    */
-  async addToCart(sessionId, productId, quantity = 1) {
+  async getProductKitOptions(productId, sessionId) {
+    const params = sessionId ? { sessionId } : {}
+    const response = await apiClient.get(`/products/${productId}/kit-options`, { params })
+    const d = response.data ?? {}
+    const parts = d.parts ?? d.Parts ?? []
+    return {
+      ...d,
+      kitId: d.kitId ?? d.KitId,
+      kitPrice: d.kitPrice ?? d.KitPrice,
+      partCount: d.partCount ?? d.PartCount ?? parts.length,
+      hasKitReservation: d.hasKitReservation ?? d.HasKitReservation ?? false,
+      canAddFullKit: d.canAddFullKit ?? d.CanAddFullKit ?? false,
+      parts: parts.map((part) => ({
+        productId: part.productId ?? part.ProductId,
+        partName: part.partName ?? part.PartName ?? '',
+        price: part.price ?? part.Price,
+        sortOrder: part.sortOrder ?? part.SortOrder ?? 0,
+        isReservedByOthers: part.isReservedByOthers ?? part.IsReservedByOthers ?? false,
+        inMyCart: part.inMyCart ?? part.InMyCart ?? false,
+        quantityInMyCart: part.quantityInMyCart ?? part.QuantityInMyCart ?? 0,
+      })),
+    }
+  },
+
+  async addToCart(sessionId, productId, quantity = 1, addMode = null) {
     try {
       if (!sessionId) {
         throw new Error('SessionId is required')
@@ -1526,12 +1574,13 @@ export const api = {
         throw new Error('ProductId is required')
       }
       
-      console.log('[API] Adding to cart:', { sessionId, productId, quantity })
+      console.log('[API] Adding to cart:', { sessionId, productId, quantity, addMode })
       const payload = {
         sessionId: String(sessionId),
         productId: Number(productId),
         quantity: Number(quantity)
       }
+      if (addMode) payload.addMode = addMode
       console.log('[API] Payload:', payload)
       
       const response = await apiClient.post('/cart', payload, {

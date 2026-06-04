@@ -9,6 +9,9 @@ import ProductImage from './ProductImage'
 import ProductPriceDisplay from './ProductPriceDisplay'
 import ProductMetaFilter from './ProductMetaFilter'
 import Toast from './Toast'
+import ProductKitCartControl from './ProductKitCartControl'
+import { isKitProduct, formatKitPartPrice } from '../utils/productKit'
+import { getSessionId } from '../utils/sessionId'
 import './ProductDetail.css'
 
 function ProductDetail({
@@ -48,6 +51,29 @@ function ProductDetail({
   const available = getAvailable()
   
   const productId = product.id ?? product.Id ?? product.productId ?? product.ProductId
+  const kit = isKitProduct(product)
+  const [kitParts, setKitParts] = useState(() => product.kitParts ?? product.KitParts ?? [])
+
+  useEffect(() => {
+    if (!kit) {
+      setKitParts([])
+      return undefined
+    }
+    const fromProduct = product.kitParts ?? product.KitParts
+    if (Array.isArray(fromProduct) && fromProduct.length > 0) {
+      setKitParts(fromProduct)
+      return undefined
+    }
+    let active = true
+    api.getProductKitOptions(productId, getSessionId())
+      .then((data) => {
+        if (active && data?.parts) setKitParts(data.parts)
+      })
+      .catch(() => {
+        if (active) setKitParts([])
+      })
+    return () => { active = false }
+  }, [kit, productId, product.kitParts, product.KitParts])
 
   // Получаем количество товара в корзине
   const getCartQuantity = () => {
@@ -373,6 +399,30 @@ function ProductDetail({
               />
             </div>
 
+            {kit && kitParts.length > 0 && (
+              <div className="product-detail-kit">
+                <h3 className="product-detail-kit__title">Состав комплекта</h3>
+                <ul className="product-detail-kit__list">
+                  {kitParts.map((part) => {
+                    const partId = part.productId ?? part.ProductId ?? part.id ?? part.Id
+                    const partName = part.partName ?? part.PartName ?? part.name ?? part.Name ?? '—'
+                    const partPrice = part.price ?? part.Price
+                    return (
+                      <li key={partId ?? partName} className="product-detail-kit__item">
+                        <span className="product-detail-kit__name">{partName}</span>
+                        <span className="product-detail-kit__price">{formatKitPartPrice(partPrice)}</span>
+                      </li>
+                    )
+                  })}
+                </ul>
+                {(product.kitPrice ?? product.KitPrice ?? product.price) != null && (
+                  <p className="product-detail-kit__bundle-price">
+                    Цена за комплект: {formatKitPartPrice(product.kitPrice ?? product.KitPrice ?? product.price)}
+                  </p>
+                )}
+              </div>
+            )}
+
             {isAdminUser && (
               <div className="product-detail-dates product-detail-dates--below">
                 {product.boxNumber && (
@@ -403,7 +453,17 @@ function ProductDetail({
               <div className="product-detail-price">
                 <ProductPriceDisplay product={product} className="product-detail-price-display" />
               </div>
-              {showPrimaryCartButton && (
+              {showPrimaryCartButton && kit && (
+                <ProductKitCartControl
+                  product={product}
+                  cartItems={cartItems}
+                  cartUnlocked={cartUnlocked}
+                  cartAvailableRaw={cartAvailableRaw}
+                  onAddedToCart={onAddedToCart}
+                  onClose={onClose}
+                />
+              )}
+              {showPrimaryCartButton && !kit && (
                 <button
                   className={`btn-buy-detail${!cartUnlocked ? ' btn-buy--locked' : ''}`}
                   onClick={handleAddToCart}

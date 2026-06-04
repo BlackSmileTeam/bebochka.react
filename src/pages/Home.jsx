@@ -9,6 +9,8 @@ import FilterIcon from '../components/FilterIcon'
 import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CatalogBuyButton from '../components/CatalogBuyButton'
+import ProductKitCartControl from '../components/ProductKitCartControl'
+import { isKitProduct } from '../utils/productKit'
 import ProductImage from '../components/ProductImage'
 import ProductPriceDisplay from '../components/ProductPriceDisplay'
 import ProductMetaFilter from '../components/ProductMetaFilter'
@@ -502,6 +504,9 @@ function Home() {
             const inCart = getCartQuantity(product.id)
             const isInMyCart = inCart > 0
             const isReservedByAnotherUser = available <= 0 && quantityInStock > 0 && !isInMyCart
+            const isKit = isKitProduct(product)
+            const cartUnlockedApi = product.cartUnlocked !== false && product.CartUnlocked !== false
+            const cartAvailableRaw = product.cartAvailableAt ?? product.CartAvailableAt
             let stockClass = 'available'
             let stockLabel = '✓ В наличии'
             if (isInMyCart) {
@@ -571,6 +576,11 @@ function Home() {
                   >
                     {product.name}
                   </h3>
+                  {isKit && (
+                    <span className="product-kit-badge" title="Можно купить комплект или отдельные вещи">
+                      Комплект
+                    </span>
+                  )}
                   <span className={`product-meta-item product-meta-stock product-meta-stock--${stockClass}`}>
                     {stockLabel}
                   </span>
@@ -621,6 +631,22 @@ function Home() {
                   <div className="product-price">
                     <ProductPriceDisplay product={product} />
                   </div>
+                {isKit ? (
+                  <div
+                    className="product-footer-kit"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    role="presentation"
+                  >
+                    <ProductKitCartControl
+                      variant="catalog"
+                      product={product}
+                      cartItems={cartItems}
+                      cartUnlocked={cartUnlockedApi}
+                      cartAvailableRaw={cartAvailableRaw}
+                    />
+                  </div>
+                ) : (
                 <CatalogBuyButton
                   product={product}
                   available={getAvailableQuantity(product)}
@@ -631,6 +657,7 @@ function Home() {
                   onAddToCart={handleAddToCart}
                   onJoinQueue={handleJoinQueue}
                 />
+                )}
                 </div>
               </div>
             </div>

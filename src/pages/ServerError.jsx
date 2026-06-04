@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
-import PageShell from '../components/PageShell'
+import ErrorPageLayout, { getErrorPageCatalogPath } from '../components/ErrorPageLayout'
 import { usePageSeo } from '../utils/seo'
-import './ErrorPages.css'
 
 export default function ServerError({ onRetry }) {
   usePageSeo({
@@ -17,24 +16,23 @@ export default function ServerError({ onRetry }) {
     window.location.reload()
   }
 
+  const catalogPath = getErrorPageCatalogPath()
+
   return (
-    <PageShell title="Ошибка сервера">
-      <div className="error-page">
-        <p className="error-page__code" aria-hidden="true">
-          500
-        </p>
-        <p className="error-page__text">
-          Что-то пошло не так на нашей стороне. Попробуйте обновить страницу или зайти позже.
-        </p>
-        <div className="error-page__actions">
-          <button type="button" className="btn btn-primary" onClick={handleRetry}>
+    <ErrorPageLayout
+      title="Ошибка сервера"
+      code="500"
+      text="Что-то пошло не так на нашей стороне. Попробуйте обновить страницу или зайти позже."
+      actions={(
+        <>
+          <button type="button" className="error-page__btn error-page__btn--primary" onClick={handleRetry}>
             Попробовать снова
           </button>
-          <Link to="/" className="btn btn-secondary">
+          <Link to={catalogPath} className="error-page__btn error-page__btn--secondary">
             В каталог
           </Link>
-        </div>
-      </div>
-    </PageShell>
+        </>
+      )}
+    />
   )
 }
