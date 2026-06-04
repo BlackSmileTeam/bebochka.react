@@ -169,6 +169,108 @@
   font-weight: 700;
 }
 
+.stats-count-btn {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.stats-count-btn.stats-card__value {
+  text-align: left;
+}
+
+.stats-count-btn.stats-card__value:hover,
+.stats-count-btn.stats-card__value:focus-visible {
+  color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.35);
+}
+
+.stats-count-btn.stats-bar-value:hover,
+.stats-count-btn.stats-bar-value:focus-visible {
+  color: #667eea;
+  outline: none;
+}
+
+.stats-bar--clickable {
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.stats-bar--clickable:hover,
+.stats-bar--clickable:focus-visible {
+  filter: brightness(1.08);
+  outline: 2px solid rgba(102, 126, 234, 0.45);
+  outline-offset: 1px;
+}
+
+.modal-overlay--nested {
+  z-index: 1100;
+}
+
+.modal-content--stats-users {
+  max-width: 520px;
+  width: calc(100% - 2rem);
+}
+
+.stats-users-list-body {
+  padding: 0 1.5rem 1.25rem;
+}
+
+.stats-users-list-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.stats-users-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.stats-users-list__item {
+  border-bottom: 1px solid #edf2f7;
+}
+
+.stats-users-list__item:last-child {
+  border-bottom: none;
+}
+
+.stats-users-list__link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.85rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.stats-users-list__link:hover {
+  background: #f7fafc;
+}
+
+.stats-users-list__name {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.stats-users-list__meta {
+  font-size: 0.82rem;
+  color: #718096;
+}
+
 .stats-section {
   margin-top: 1rem;
 }

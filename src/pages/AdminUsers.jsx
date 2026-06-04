@@ -63,6 +63,7 @@ function AdminUsers() {
   })
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' })
   const [childrenModal, setChildrenModal] = useState(null)
+  const [statsUsersModal, setStatsUsersModal] = useState(null)
 
   const isVkUser = (user) => {
     const vk = user.vkUserId ?? user.VkUserId
@@ -226,6 +227,102 @@ function AdminUsers() {
   }
 
   const stats = buildStats()
+
+  const getUserCreatedDate = (user) => parseUserDate(user.createdAt || user.CreatedAt)
+
+  const sortUsersByCreatedDesc = (list) =>
+    [...list].sort((a, b) => {
+      const ta = getUserCreatedDate(a)?.getTime() ?? 0
+      const tb = getUserCreatedDate(b)?.getTime() ?? 0
+      return tb - ta
+    })
+
+  const statsUserLists = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setHours(0, 0, 0, 0)
+    weekStart.setDate(weekStart.getDate() - 6)
+
+    const byDay = (dayKey) =>
+      sortUsersByCreatedDesc(
+        users.filter((u) => {
+          const d = getUserCreatedDate(u)
+          return d && toDisplayDayKey(d) === dayKey
+        })
+      )
+
+    const byMonth = (monthKey) =>
+      sortUsersByCreatedDesc(
+        users.filter((u) => {
+          const d = getUserCreatedDate(u)
+          return d && toLocalMonthKey(d) === monthKey
+        })
+      )
+
+    return {
+      all: () => sortUsersByCreatedDesc(users),
+      week: () =>
+        sortUsersByCreatedDesc(
+          users.filter((u) => {
+            const d = getUserCreatedDate(u)
+            return d && d >= weekStart
+          })
+        ),
+      today: () =>
+        sortUsersByCreatedDesc(
+          users.filter((u) => {
+            const d = getUserCreatedDate(u)
+            return d && isSameLocalDay(d, now)
+          })
+        ),
+      month: () =>
+        sortUsersByCreatedDesc(
+          users.filter((u) => {
+            const d = getUserCreatedDate(u)
+            return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+          })
+        ),
+      byDay,
+      byMonth,
+    }
+  }, [users])
+
+  const openStatsUsersList = (title, list) => {
+    if (!list?.length) return
+    setStatsUsersModal({ title, users: list })
+  }
+
+  const renderStatsCountButton = (count, title, list) => {
+    if (count <= 0) {
+      return <div className="stats-card__value">{count}</div>
+    }
+    return (
+      <button
+        type="button"
+        className="stats-count-btn stats-card__value"
+        onClick={() => openStatsUsersList(title, list)}
+        title="Показать список пользователей"
+      >
+        {count}
+      </button>
+    )
+  }
+
+  const renderChartCountButton = (count, title, list) => {
+    if (count <= 0) {
+      return <div className="stats-bar-value">{count}</div>
+    }
+    return (
+      <button
+        type="button"
+        className="stats-count-btn stats-bar-value"
+        onClick={() => openStatsUsersList(title, list)}
+        title="Показать список пользователей"
+      >
+        {count}
+      </button>
+    )
+  }
 
   const getSortValue = (user, key) => {
     switch (key) {
@@ -870,55 +967,154 @@ function AdminUsers() {
               <div className="stats-cards">
                 <div className="stats-card">
                   <div className="stats-card__label">Всего пользователей</div>
-                  <div className="stats-card__value">{stats.totalCount}</div>
+                  {renderStatsCountButton(
+                    stats.totalCount,
+                    'Все пользователи',
+                    statsUserLists.all()
+                  )}
                 </div>
                 <div className="stats-card">
                   <div className="stats-card__label">Новых за неделю</div>
-                  <div className="stats-card__value">{stats.weekCount}</div>
+                  {renderStatsCountButton(
+                    stats.weekCount,
+                    'Новые за неделю',
+                    statsUserLists.week()
+                  )}
                 </div>
                 <div className="stats-card">
                   <div className="stats-card__label">Новых за сегодня</div>
-                  <div className="stats-card__value">{stats.todayCount}</div>
+                  {renderStatsCountButton(
+                    stats.todayCount,
+                    'Новые за сегодня',
+                    statsUserLists.today()
+                  )}
                 </div>
                 <div className="stats-card">
                   <div className="stats-card__label">Новых за текущий месяц</div>
-                  <div className="stats-card__value">{stats.currentMonthCount}</div>
+                  {renderStatsCountButton(
+                    stats.currentMonthCount,
+                    'Новые за текущий месяц',
+                    statsUserLists.month()
+                  )}
                 </div>
               </div>
 
               <section className="stats-section">
                 <h3>Новые пользователи по дням (7 дней)</h3>
                 <div className="stats-chart">
-                  {stats.daily.map((item) => (
-                    <div key={item.key} className="stats-bar-item">
-                      <div
-                        className="stats-bar"
-                        style={{ height: `${Math.max(8, Math.round((item.count / stats.maxDay) * 100))}%` }}
-                        title={`${item.label}: ${item.count}`}
-                      />
-                      <div className="stats-bar-value">{item.count}</div>
-                      <div className="stats-bar-label">{item.label}</div>
-                    </div>
-                  ))}
+                  {stats.daily.map((item) => {
+                    const dayUsers = statsUserLists.byDay(item.key)
+                    return (
+                      <div key={item.key} className="stats-bar-item">
+                        {item.count > 0 ? (
+                          <button
+                            type="button"
+                            className="stats-bar stats-bar--clickable"
+                            style={{ height: `${Math.max(8, Math.round((item.count / stats.maxDay) * 100))}%` }}
+                            title={`${item.label}: ${item.count}`}
+                            onClick={() => openStatsUsersList(`Новые за ${item.label}`, dayUsers)}
+                            aria-label={`Новые за ${item.label}: ${item.count}`}
+                          />
+                        ) : (
+                          <div
+                            className="stats-bar"
+                            style={{ height: `${Math.max(8, Math.round((item.count / stats.maxDay) * 100))}%` }}
+                            aria-hidden="true"
+                          />
+                        )}
+                        {renderChartCountButton(
+                          item.count,
+                          `Новые за ${item.label}`,
+                          dayUsers
+                        )}
+                        <div className="stats-bar-label">{item.label}</div>
+                      </div>
+                    )
+                  })}
                 </div>
               </section>
 
               <section className="stats-section">
                 <h3>Новые пользователи по месяцам (6 месяцев)</h3>
                 <div className="stats-chart">
-                  {stats.monthly.map((item) => (
-                    <div key={item.key} className="stats-bar-item">
-                      <div
-                        className="stats-bar stats-bar--month"
-                        style={{ height: `${Math.max(8, Math.round((item.count / stats.maxMonth) * 100))}%` }}
-                        title={`${item.label}: ${item.count}`}
-                      />
-                      <div className="stats-bar-value">{item.count}</div>
-                      <div className="stats-bar-label">{item.label}</div>
-                    </div>
-                  ))}
+                  {stats.monthly.map((item) => {
+                    const monthUsers = statsUserLists.byMonth(item.key)
+                    return (
+                      <div key={item.key} className="stats-bar-item">
+                        {item.count > 0 ? (
+                          <button
+                            type="button"
+                            className="stats-bar stats-bar--month stats-bar--clickable"
+                            style={{ height: `${Math.max(8, Math.round((item.count / stats.maxMonth) * 100))}%` }}
+                            title={`${item.label}: ${item.count}`}
+                            onClick={() => openStatsUsersList(`Новые за ${item.label}`, monthUsers)}
+                            aria-label={`Новые за ${item.label}: ${item.count}`}
+                          />
+                        ) : (
+                          <div
+                            className="stats-bar stats-bar--month"
+                            style={{ height: `${Math.max(8, Math.round((item.count / stats.maxMonth) * 100))}%` }}
+                            aria-hidden="true"
+                          />
+                        )}
+                        {renderChartCountButton(
+                          item.count,
+                          `Новые за ${item.label}`,
+                          monthUsers
+                        )}
+                        <div className="stats-bar-label">{item.label}</div>
+                      </div>
+                    )
+                  })}
                 </div>
               </section>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {statsUsersModal && (
+        <div className="modal-overlay modal-overlay--nested" onClick={() => setStatsUsersModal(null)}>
+          <div className="modal-content modal-content--stats-users" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{statsUsersModal.title}</h2>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setStatsUsersModal(null)}
+                aria-label="Закрыть"
+              >
+                ×
+              </button>
+            </div>
+            <div className="stats-users-list-body">
+              <p className="stats-users-list-hint">
+                {statsUsersModal.users.length}{' '}
+                {statsUsersModal.users.length === 1
+                  ? 'пользователь'
+                  : statsUsersModal.users.length < 5
+                    ? 'пользователя'
+                    : 'пользователей'}
+              </p>
+              <ul className="stats-users-list">
+                {statsUsersModal.users.map((user) => {
+                  const uid = user.id ?? user.Id
+                  return (
+                    <li key={uid} className="stats-users-list__item">
+                      <Link
+                        to={ordersPathForUser(user)}
+                        className="stats-users-list__link admin-users-orders-link"
+                        onClick={() => setStatsUsersModal(null)}
+                      >
+                        <span className="stats-users-list__name">{userDisplayName(user)}</span>
+                        <span className="stats-users-list__meta">
+                          Создан: {formatDate(user.createdAt || user.CreatedAt)}
+                        </span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
           </div>
         </div>
