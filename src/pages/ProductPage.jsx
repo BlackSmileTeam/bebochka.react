@@ -133,10 +133,6 @@ export default function ProductPage() {
         <Link to={catalogHomePath()} className="product-page-back">
           ← В каталог
         </Link>
-        <span className="product-page-nav-links">
-          <Link to="/faq">FAQ</Link>
-          <Link to="/delivery">Доставка</Link>
-        </span>
       </nav>
 
       {loading && <RouteFallback />}

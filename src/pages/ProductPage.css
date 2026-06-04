@@ -7,11 +7,6 @@
 }
 
 .product-page-nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1rem;
   margin-bottom: 1rem;
 }
 
@@ -22,22 +17,6 @@
 }
 
 .product-page-back:hover {
-  color: #667eea;
-}
-
-.product-page-nav-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  font-size: 0.9rem;
-}
-
-.product-page-nav-links a {
-  color: #718096;
-  text-decoration: none;
-}
-
-.product-page-nav-links a:hover {
   color: #667eea;
 }
 

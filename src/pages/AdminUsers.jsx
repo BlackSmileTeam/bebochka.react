@@ -201,6 +201,13 @@ function AdminUsers() {
       const d = parseUserDate(u.createdAt || u.CreatedAt)
       return d && isSameLocalDay(d, now) ? acc + 1 : acc
     }, 0)
+    const weekStart = new Date(now)
+    weekStart.setHours(0, 0, 0, 0)
+    weekStart.setDate(weekStart.getDate() - 6)
+    const weekCount = users.reduce((acc, u) => {
+      const d = parseUserDate(u.createdAt || u.CreatedAt)
+      return d && d >= weekStart ? acc + 1 : acc
+    }, 0)
     const currentMonthCount = users.reduce((acc, u) => {
       const d = parseUserDate(u.createdAt || u.CreatedAt)
       return d && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() ? acc + 1 : acc
@@ -208,6 +215,8 @@ function AdminUsers() {
 
     return {
       todayCount,
+      weekCount,
+      totalCount: users.length,
       currentMonthCount,
       daily,
       monthly,
@@ -859,6 +868,14 @@ function AdminUsers() {
             </div>
             <div className="stats-body">
               <div className="stats-cards">
+                <div className="stats-card">
+                  <div className="stats-card__label">Всего пользователей</div>
+                  <div className="stats-card__value">{stats.totalCount}</div>
+                </div>
+                <div className="stats-card">
+                  <div className="stats-card__label">Новых за неделю</div>
+                  <div className="stats-card__value">{stats.weekCount}</div>
+                </div>
                 <div className="stats-card">
                   <div className="stats-card__label">Новых за сегодня</div>
                   <div className="stats-card__value">{stats.todayCount}</div>

@@ -18,6 +18,19 @@ function nonBlockingCss() {
   }
 }
 
+/** Public routes must not pull admin CSS/JS in the initial HTML (welcome, catalog guests). */
+function stripAdminFromEntryHtml() {
+  return {
+    name: 'strip-admin-from-entry-html',
+    apply: 'build',
+    transformIndexHtml(html) {
+      return html
+        .replace(/<link[^>]*admin-pages[^>]*>\s*/gi, '')
+        .replace(/<link rel="modulepreload"[^>]*admin-pages[^>]*>\s*/gi, '')
+    },
+  }
+}
+
 /** Локальный dev/preview: запросы /api и /uploads проксируются на production. */
 const REMOTE_API = 'https://bebochka.ru'
 
@@ -39,7 +52,17 @@ function isShopCoreModule(id) {
   return (
     id.includes('/src/contexts/') ||
     id.includes('/src/services/') ||
+    id.includes('/src/constants/') ||
+    id.includes('/src/components/PageShell') ||
+    id.includes('/src/components/RouteFallback') ||
+    id.includes('/src/components/ProductDetail') ||
+    id.includes('/src/components/ProductImage') ||
+    id.includes('/src/components/ProductPriceDisplay') ||
+    id.includes('/src/components/ProductMetaFilter') ||
+    id.includes('/src/components/CatalogBuyButton') ||
+    id.includes('/src/components/CartCountdown') ||
     id.includes('/src/components/Toast') ||
+    id.includes('/src/pages/ServerError') ||
     id.includes('/src/utils/')
   )
 }
@@ -58,6 +81,7 @@ export default defineConfig({
     viteCompression({ algorithm: 'brotliCompress', ext: '.br', deleteOriginFile: false }),
     viteCompression({ algorithm: 'gzip', ext: '.gz', deleteOriginFile: false }),
     nonBlockingCss(),
+    stripAdminFromEntryHtml(),
   ],
   server: {
     port: 5173,
