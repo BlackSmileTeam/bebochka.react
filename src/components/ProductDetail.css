@@ -589,16 +589,25 @@
   .product-detail-footer {
     flex-direction: column;
     gap: 0.75rem;
-    align-items: center;
+    align-items: stretch;
   }
   
   .btn-buy-detail {
-    width: auto;
-    max-width: min(100%, 280px);
+    width: 100%;
+    max-width: 100%;
     padding: 0.55rem 1.1rem;
     font-size: 0.9rem;
     min-height: 40px;
     touch-action: manipulation;
+  }
+
+  .product-detail-price {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .product-detail-footer .kit-cart-control {
+    width: 100%;
   }
 }
 
@@ -646,7 +655,7 @@
     padding: 0.45rem 0.95rem;
     font-size: 0.85rem;
     min-height: 36px;
-    max-width: min(100%, 240px);
+    max-width: 100%;
   }
 }
 

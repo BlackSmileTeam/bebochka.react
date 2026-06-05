@@ -446,7 +446,7 @@ export default function ProductKitCartControl({
 
         ref={rootRef}
 
-        className={`kit-cart-control${variant === 'catalog' ? ' kit-cart-control--catalog' : ''}`}
+        className={`kit-cart-control${variant === 'catalog' ? ' kit-cart-control--catalog' : ' kit-cart-control--detail'}`}
 
       >
 
@@ -646,7 +646,7 @@ export default function ProductKitCartControl({
 
       ref={rootRef}
 
-      className={`kit-cart-control${variant === 'catalog' ? ' kit-cart-control--catalog' : ''}${menuOpen ? ' kit-cart-control--menu-open' : ''}`}
+      className={`kit-cart-control${variant === 'catalog' ? ' kit-cart-control--catalog' : ' kit-cart-control--detail'}${menuOpen ? ' kit-cart-control--menu-open' : ''}`}
 
     >
 
