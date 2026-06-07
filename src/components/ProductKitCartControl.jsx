@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { createPortal } from 'react-dom'
 
@@ -124,55 +124,79 @@ export default function ProductKitCartControl({
 
     const rect = anchor.getBoundingClientRect()
 
+    const menuEl = menuRef.current
+
     const width = Math.max(rect.width, 240)
 
     const maxLeft = window.innerWidth - width - 8
+
+    const gap = 6
+
+    const viewportPad = 8
+
+    const placeAbove = variant === 'detail' && window.matchMedia('(max-width: 768px)').matches
+
+    let top
+
+    let maxHeight
+
+    if (placeAbove) {
+
+      const menuHeight = menuEl?.offsetHeight ?? 0
+
+      maxHeight = Math.max(120, rect.top - gap - viewportPad)
+
+      if (menuHeight > 0) {
+
+        top = rect.top - gap - menuHeight
+
+        if (top < viewportPad) top = viewportPad
+
+      } else {
+
+        top = Math.max(viewportPad, rect.top - gap - maxHeight)
+
+      }
+
+    } else {
+
+      top = rect.bottom + gap
+
+      maxHeight = Math.max(120, window.innerHeight - top - viewportPad)
+
+      const menuHeight = menuEl?.offsetHeight ?? 0
+
+      if (menuHeight > maxHeight && rect.top > window.innerHeight - rect.bottom) {
+
+        maxHeight = Math.max(120, rect.top - gap - viewportPad)
+
+        top = Math.max(viewportPad, rect.top - gap - Math.min(menuHeight, maxHeight))
+
+      }
+
+    }
 
     setMenuStyle({
 
       position: 'fixed',
 
-      top: rect.bottom + 6,
+      top,
 
-      left: Math.max(8, Math.min(rect.left, maxLeft)),
+      left: Math.max(viewportPad, Math.min(rect.left, maxLeft)),
 
       width,
 
       maxWidth: 320,
 
+      maxHeight,
+
+      overflowY: 'auto',
+
       zIndex: 10040,
 
     })
 
-  }, [])
-
-
-
-  useEffect(() => {
-
-    if (!menuOpen) {
-
-      setMenuStyle(null)
-
-      return undefined
-
-    }
-
-    updateMenuPosition()
-
-    window.addEventListener('scroll', updateMenuPosition, true)
-
-    window.addEventListener('resize', updateMenuPosition)
-
-    return () => {
-
-      window.removeEventListener('scroll', updateMenuPosition, true)
-
-      window.removeEventListener('resize', updateMenuPosition)
-
-    }
-
-  }, [menuOpen, updateMenuPosition])
+  }, [variant])
 
 
 
@@ -269,6 +293,54 @@ export default function ProductKitCartControl({
     [kitParts, inCartPartIds],
 
   )
+
+
+
+  const canAddFullKit = !!(kitOptions?.canAddFullKit ?? kitOptions?.CanAddFullKit)
+
+
+
+  useLayoutEffect(() => {
+
+    if (!menuOpen) {
+
+      setMenuStyle(null)
+
+      return undefined
+
+    }
+
+    let raf2 = 0
+
+    const run = () => updateMenuPosition()
+
+    run()
+
+    const raf1 = requestAnimationFrame(() => {
+
+      run()
+
+      raf2 = requestAnimationFrame(run)
+
+    })
+
+    window.addEventListener('scroll', run, true)
+
+    window.addEventListener('resize', run)
+
+    return () => {
+
+      cancelAnimationFrame(raf1)
+
+      cancelAnimationFrame(raf2)
+
+      window.removeEventListener('scroll', run, true)
+
+      window.removeEventListener('resize', run)
+
+    }
+
+  }, [menuOpen, updateMenuPosition, sortedKitParts.length, canAddFullKit])
 
 
 
@@ -612,6 +684,14 @@ export default function ProductKitCartControl({
 
 
 
+  const menuOpensAbove = variant === 'detail'
+
+    && typeof window !== 'undefined'
+
+    && window.matchMedia('(max-width: 768px)').matches
+
+
+
   const menuPortal = menuOpen && unlocked && menuStyle
 
     ? createPortal(
@@ -620,7 +700,7 @@ export default function ProductKitCartControl({
 
         ref={menuRef}
 
-        className="kit-cart-control__menu kit-cart-control__menu--portal"
+        className={`kit-cart-control__menu kit-cart-control__menu--portal${menuOpensAbove ? ' kit-cart-control__menu--above' : ''}`}
 
         style={menuStyle}
 
@@ -721,18 +801,6 @@ export default function ProductKitCartControl({
         </div>
 
       </div>
-
-
-
-      {menuOpen && unlocked && !menuStyle && (
-
-        <div className="kit-cart-control__menu" role="listbox">
-
-          {menuContent}
-
-        </div>
-
-      )}
 
 
 

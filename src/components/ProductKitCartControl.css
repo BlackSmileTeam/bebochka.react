@@ -138,6 +138,10 @@
   bottom: auto;
 }
 
+.kit-cart-control__menu--above {
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+}
+
 .kit-cart-control__menu-empty {
   margin: 0;
   padding: 0.75rem 0.85rem;

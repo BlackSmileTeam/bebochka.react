@@ -9,6 +9,7 @@ import { buildCatalogFilterSearch } from '../utils/catalogFilters'
 import CartReferralDiscountPanel, { ReferralDiscountTotals } from '../components/CartReferralDiscount'
 import { getReferralDiscountSelection } from '../utils/referralDiscountStorage'
 import { mergeCartReferralOptions, resolveReferralSelection } from '../utils/referralCartDiscount'
+import { getApiPublicOrigin } from '../utils/apiBase'
 import './Cart.css'
 import '../components/CartReferralDiscount.css'
 
@@ -26,7 +27,7 @@ function Cart() {
   const [referralProfile, setReferralProfile] = useState(null)
   const [referralSelection, setReferralSelection] = useState(() => getReferralDiscountSelection())
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('authToken'))
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = getApiPublicOrigin()
 
   const getAvailableQuantity = (product) =>
     product.availableQuantity !== undefined
