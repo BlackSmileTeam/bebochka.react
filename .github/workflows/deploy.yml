@@ -1,5 +1,5 @@
-# Деплой SPA + nginx на VPS (:55502). /api и /uploads → host.docker.internal:55501 (контейнер API на хосте).
-# Контейнер: --add-host=host.docker.internal:host-gateway. VITE_API_URL — секрет или https://bebochka.ru.
+# Деплой SPA + nginx на VPS (:55502). /api и /uploads → host.docker.internal:55501.
+# VITE_API_URL не задаём — браузер ходит на тот же origin (страница + nginx /api).
 
 name: Deploy frontend to VPS
 
@@ -63,8 +63,12 @@ jobs:
         id: vite
         run: |
           V='${{ secrets.VITE_API_URL }}'
-          if [ -z "$V" ]; then V='https://bebochka.ru'; fi
           echo "url=$V" >> "$GITHUB_OUTPUT"
+          if [ -z "$V" ]; then
+            echo "Same-origin build: VITE_API_URL empty — API via page origin + nginx /api"
+          else
+            echo "Custom VITE_API_URL=$V (override same-origin)"
+          fi
 
       - name: Docker build (load + GHA layer cache)
         uses: docker/build-push-action@v6
@@ -94,6 +98,7 @@ jobs:
           {
             echo "## Frontend build"
             echo "- Image: \`${{ env.IMAGE_NAME }}:latest\`"
+            echo "- VITE_API_URL: \`${{ steps.vite.outputs.url || '(empty — same origin)' }}\`"
             echo "- Commit: \`${GITHUB_SHA::8}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -149,10 +154,13 @@ jobs:
             docker ps --filter "name=$IMAGE_NAME"
             CODE=$(curl -sS -o /tmp/fe_index.html -w "%{http_code}" --max-time 10 "http://127.0.0.1:${HOST_PORT}/" || echo "000")
             echo "GET / HTTP $CODE"
-            if [ "$CODE" = "200" ]; then head -c 120 /tmp/fe_index.html && echo " ... OK"; else echo "WARN: curl frontend root"; fi
+            API_CODE=$(curl -sS -o /tmp/fe_health.json -w "%{http_code}" --max-time 20 "http://127.0.0.1:${HOST_PORT}/api/health" || echo "000")
+            echo "GET /api/health HTTP $API_CODE"
+            if [ "$API_CODE" = "200" ]; then head -c 200 /tmp/fe_health.json && echo; else echo "WARN: API via frontend proxy failed"; fi
             echo "=== Frontend deploy done (listen :${HOST_PORT}) ==="
 
       - name: Summary
         run: |
           echo "## Frontend deploy" >> "$GITHUB_STEP_SUMMARY"
           echo "- Порт на хосте: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Проверка: \`GET :${{ env.HOST_PORT }}/api/health\`" >> "$GITHUB_STEP_SUMMARY"
