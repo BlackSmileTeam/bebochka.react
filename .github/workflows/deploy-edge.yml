@@ -1,0 +1,169 @@
+# Деплой фронта на edge-VPS (новый провайдер).
+# API и MySQL остаются на LEGACY_API_HOST (FirstVDS 157.22.199.24:55501).
+#
+# GitHub Secrets (репозиторий BlackSmileTeam/bebochka.react):
+#   EDGE_PROD_HOST        — IP нового VPS (добавить после аренды сервера)
+#   EDGE_SSH_PRIVATE_KEY  — приватный ключ (один раз, см. deploy/EDGE_SSH_KEY_SETUP.md)
+# Пользователь SSH: deploy, порт: 22 (зашито в workflow).
+
+name: Deploy frontend to edge VPS
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: deploy-frontend-edge-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: bebochka-frontend
+  HOST_PORT: '55502'
+  CONTAINER_PORT: '80'
+  # API + БД на старом FirstVDS (не менять без миграции БД)
+  LEGACY_API_HOST: '157.22.199.24'
+  LEGACY_API_PORT: '55501'
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate secrets
+        run: |
+          set -e
+          missing=0
+          [ -z "${{ secrets.EDGE_PROD_HOST }}" ] && echo "Missing EDGE_PROD_HOST (IP нового VPS)" && missing=1 || true
+          [ -z "${{ secrets.EDGE_SSH_PRIVATE_KEY }}" ] && echo "Missing EDGE_SSH_PRIVATE_KEY" && missing=1 || true
+          [ "$missing" -ne 0 ] && exit 1
+          echo "Secrets OK (edge host: ${{ secrets.EDGE_PROD_HOST }})"
+
+      - name: SSH preflight
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EDGE_PROD_HOST }}
+          port: 22
+          username: deploy
+          key: ${{ secrets.EDGE_SSH_PRIVATE_KEY }}
+          command_timeout: 2m
+          script: |
+            echo "=== SSH preflight (edge VPS) ==="
+            echo "Docker: $(docker --version 2>/dev/null || echo NOT_INSTALLED)"
+            docker ps -a --format 'table {{.Names}}\t{{.Status}}' | head -10
+            echo "=== OK ==="
+
+  build:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare edge nginx config
+        run: |
+          API_UPSTREAM="${LEGACY_API_HOST}:${LEGACY_API_PORT}"
+          sed "s|@@API_UPSTREAM@@|${API_UPSTREAM}|g" nginx.edge.conf.template > nginx.edge.conf
+          echo "API upstream: ${API_UPSTREAM}"
+          grep "server " nginx.edge.conf | head -1
+
+      - name: Docker build (edge — remote API proxy)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:latest
+          platforms: linux/amd64
+          build-args: |
+            VITE_API_URL=
+            NGINX_CONFIG=nginx.edge.conf
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Save image
+        run: docker save ${{ env.IMAGE_NAME }}:latest | gzip > ${{ env.IMAGE_NAME }}.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-frontend-edge
+          path: ${{ env.IMAGE_NAME }}.tar.gz
+          retention-days: 1
+
+      - name: Job summary
+        run: |
+          {
+            echo "## Edge frontend build"
+            echo "- Target: \`${{ secrets.EDGE_PROD_HOST }}:${{ env.HOST_PORT }}\`"
+            echo "- API upstream: \`${{ env.LEGACY_API_HOST }}:${{ env.LEGACY_API_PORT }}\`"
+            echo "- VITE_API_URL: empty (same-origin via nginx /api)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image-frontend-edge
+          path: .
+
+      - name: Copy image to edge server
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.EDGE_PROD_HOST }}
+          username: deploy
+          key: ${{ secrets.EDGE_SSH_PRIVATE_KEY }}
+          port: 22
+          source: "${{ env.IMAGE_NAME }}.tar.gz"
+          target: "/tmp"
+          overwrite: true
+
+      - name: Load and run container
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EDGE_PROD_HOST }}
+          username: deploy
+          key: ${{ secrets.EDGE_SSH_PRIVATE_KEY }}
+          port: 22
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            IMAGE_NAME="${{ env.IMAGE_NAME }}"
+            HOST_PORT="${{ env.HOST_PORT }}"
+            CONTAINER_PORT="${{ env.CONTAINER_PORT }}"
+            LEGACY_API="${{ env.LEGACY_API_HOST }}:${{ env.LEGACY_API_PORT }}"
+            echo "=== Edge deploy: frontend :${HOST_PORT} → API ${LEGACY_API} ==="
+            docker load < /tmp/$IMAGE_NAME.tar.gz
+            rm -f /tmp/$IMAGE_NAME.tar.gz
+            docker stop $IMAGE_NAME 2>/dev/null || true
+            docker rm -f $IMAGE_NAME 2>/dev/null || true
+            docker run -d \
+              --name $IMAGE_NAME \
+              --restart unless-stopped \
+              -p ${HOST_PORT}:${CONTAINER_PORT} \
+              $IMAGE_NAME:latest
+            sleep 3
+            docker ps --filter "name=$IMAGE_NAME"
+            CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "http://127.0.0.1:${HOST_PORT}/" || echo "000")
+            echo "GET / HTTP $CODE"
+            API_CODE=$(curl -sS -o /tmp/fe_health.json -w "%{http_code}" --max-time 30 "http://127.0.0.1:${HOST_PORT}/api/health" || echo "000")
+            echo "GET /api/health HTTP $API_CODE (proxied to ${LEGACY_API})"
+            if [ "$API_CODE" = "200" ]; then head -c 200 /tmp/fe_health.json && echo; else
+              echo "WARN: API proxy failed — откройте :${{ env.LEGACY_API_PORT }} на FirstVDS для IP edge-сервера"
+              exit 1
+            fi
+            echo "=== Edge frontend deploy done ==="
+
+      - name: Summary
+        run: |
+          echo "## Edge deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Frontend: \`${{ secrets.EDGE_PROD_HOST }}:${{ env.HOST_PORT }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API (legacy): \`${{ env.LEGACY_API_HOST }}:${{ env.LEGACY_API_PORT }}\`" >> "$GITHUB_STEP_SUMMARY"

@@ -1,11 +1,9 @@
-# Деплой SPA + nginx на VPS (:55502). /api и /uploads → host.docker.internal:55501.
-# VITE_API_URL не задаём — браузер ходит на тот же origin (страница + nginx /api).
+# Legacy: фронт + API на одном VPS (FirstVDS). /api → host.docker.internal:55501.
+# Для edge (фронт на новом VPS, API на старом) используйте deploy-edge.yml.
 
-name: Deploy frontend to VPS
+name: Deploy frontend to VPS (legacy single host)
 
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
 
 permissions:
