@@ -1,9 +1,11 @@
-# Legacy: фронт + API на одном VPS (FirstVDS). /api → host.docker.internal:55501.
-# Для edge (фронт на новом VPS, API на старом) используйте deploy-edge.yml.
+# Деплой SPA + nginx на FirstVDS (:55502). /api → host.docker.internal:55501.
+# Edge-VPS (новый провайдер) — см. deploy-edge.yml, пока отключён.
 
-name: Deploy frontend to VPS (legacy single host)
+name: Deploy frontend to VPS
 
 on:
+  push:
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
