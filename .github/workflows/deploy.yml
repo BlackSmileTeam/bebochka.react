@@ -1,5 +1,6 @@
-# Деплой SPA + nginx на FirstVDS (:55502). /api → host.docker.internal:55501.
-# Edge-VPS (новый провайдер) — см. deploy-edge.yml, пока отключён.
+# Деплой фронта на FirstVDS (PROD_*) и опционально на edge-VPS (EDGE_*).
+# FirstVDS: /api → host.docker.internal:55501
+# Edge-VPS: /api → FirstVDS :80 (nginx.edge-legacy.conf)
 
 name: Deploy frontend to VPS
 
@@ -22,10 +23,10 @@ env:
   CONTAINER_PORT: '80'
 
 jobs:
-  preflight:
+  preflight-prod:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate secrets
+      - name: Validate PROD secrets
         run: |
           set -e
           missing=0
@@ -34,9 +35,9 @@ jobs:
           [ -z "${{ secrets.PROD_SSH_PRIVATE_KEY }}" ] && echo "Missing PROD_SSH_PRIVATE_KEY" && missing=1 || true
           [ -z "${{ secrets.PROD_SSH_PORT }}" ] && echo "Missing PROD_SSH_PORT" && missing=1 || true
           [ "$missing" -ne 0 ] && exit 1
-          echo "Secrets OK"
+          echo "PROD secrets OK"
 
-      - name: SSH preflight
+      - name: SSH preflight (FirstVDS)
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -45,13 +46,43 @@ jobs:
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           command_timeout: 2m
           script: |
-            echo "=== SSH preflight (frontend target) ==="
+            echo "=== SSH preflight FirstVDS ==="
+            echo "Docker: $(docker --version 2>/dev/null || echo not installed)"
+            docker ps -a --format 'table {{.Names}}\t{{.Status}}' | head -15
+            echo "=== OK ==="
+
+  preflight-edge:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.edge.outputs.configured }}
+    steps:
+      - id: edge
+        run: |
+          if [ -n "${{ secrets.EDGE_PROD_HOST }}" ] && [ -n "${{ secrets.EDGE_SSH_PRIVATE_KEY }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "Edge secrets found — will deploy to edge VPS"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Edge secrets missing — skip edge deploy"
+          fi
+
+      - name: SSH preflight (edge VPS)
+        if: steps.edge.outputs.configured == 'true'
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EDGE_PROD_HOST }}
+          port: ${{ secrets.EDGE_SSH_PORT || 22 }}
+          username: ${{ secrets.EDGE_PROD_USER || 'deploy' }}
+          key: ${{ secrets.EDGE_SSH_PRIVATE_KEY }}
+          command_timeout: 2m
+          script: |
+            echo "=== SSH preflight edge VPS ==="
             echo "Docker: $(docker --version 2>/dev/null || echo not installed)"
             docker ps -a --format 'table {{.Names}}\t{{.Status}}' | head -15
             echo "=== OK ==="
 
   build:
-    needs: preflight
+    needs: [preflight-prod]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -102,7 +133,7 @@ jobs:
             echo "- Commit: \`${GITHUB_SHA::8}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  deploy:
+  deploy-prod:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -115,7 +146,7 @@ jobs:
       - name: Verify archive
         run: ls -lh ${{ env.IMAGE_NAME }}.tar.gz && test -f ${{ env.IMAGE_NAME }}.tar.gz
 
-      - name: Copy image to server
+      - name: Copy image to FirstVDS
         uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -126,7 +157,7 @@ jobs:
           target: "/tmp"
           overwrite: true
 
-      - name: Load and run container
+      - name: Load and run container (FirstVDS)
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -139,7 +170,7 @@ jobs:
             IMAGE_NAME="${{ env.IMAGE_NAME }}"
             HOST_PORT="${{ env.HOST_PORT }}"
             CONTAINER_PORT="${{ env.CONTAINER_PORT }}"
-            echo "=== Load and run ==="
+            echo "=== Load and run FirstVDS ==="
             docker load < /tmp/$IMAGE_NAME.tar.gz
             rm -f /tmp/$IMAGE_NAME.tar.gz
             docker stop $IMAGE_NAME 2>/dev/null || true
@@ -157,10 +188,81 @@ jobs:
             API_CODE=$(curl -sS -o /tmp/fe_health.json -w "%{http_code}" --max-time 20 "http://127.0.0.1:${HOST_PORT}/api/health" || echo "000")
             echo "GET /api/health HTTP $API_CODE"
             if [ "$API_CODE" = "200" ]; then head -c 200 /tmp/fe_health.json && echo; else echo "WARN: API via frontend proxy failed"; fi
-            echo "=== Frontend deploy done (listen :${HOST_PORT}) ==="
+            echo "=== FirstVDS deploy done (:${HOST_PORT}) ==="
 
       - name: Summary
         run: |
-          echo "## Frontend deploy" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Порт на хосте: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Проверка: \`GET :${{ env.HOST_PORT }}/api/health\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "## FirstVDS deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Host: \`${{ secrets.PROD_HOST }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Port: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-edge:
+    needs: [build, preflight-edge]
+    if: needs.preflight-edge.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image-frontend
+          path: .
+
+      - name: Verify archive
+        run: ls -lh ${{ env.IMAGE_NAME }}.tar.gz && test -f nginx.edge-legacy.conf
+
+      - name: Copy image and nginx config to edge VPS
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.EDGE_PROD_HOST }}
+          username: ${{ secrets.EDGE_PROD_USER || 'deploy' }}
+          key: ${{ secrets.EDGE_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.EDGE_SSH_PORT || 22 }}
+          source: "${{ env.IMAGE_NAME }}.tar.gz,nginx.edge-legacy.conf"
+          target: "/tmp"
+          overwrite: true
+
+      - name: Load and run container (edge VPS)
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EDGE_PROD_HOST }}
+          username: ${{ secrets.EDGE_PROD_USER || 'deploy' }}
+          key: ${{ secrets.EDGE_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.EDGE_SSH_PORT || 22 }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            IMAGE_NAME="${{ env.IMAGE_NAME }}"
+            HOST_PORT="${{ env.HOST_PORT }}"
+            CONTAINER_PORT="${{ env.CONTAINER_PORT }}"
+            EDGE_NGINX_DIR="$HOME/bebochka-edge"
+            mkdir -p "$EDGE_NGINX_DIR"
+            cp /tmp/nginx.edge-legacy.conf "$EDGE_NGINX_DIR/nginx.conf"
+            chmod 644 "$EDGE_NGINX_DIR/nginx.conf"
+            echo "=== Load and run edge VPS ==="
+            docker load < /tmp/$IMAGE_NAME.tar.gz
+            rm -f /tmp/$IMAGE_NAME.tar.gz /tmp/nginx.edge-legacy.conf
+            docker stop $IMAGE_NAME 2>/dev/null || true
+            docker rm -f $IMAGE_NAME 2>/dev/null || true
+            docker run -d \
+              --name $IMAGE_NAME \
+              --restart unless-stopped \
+              -v "$EDGE_NGINX_DIR/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
+              -p ${HOST_PORT}:${CONTAINER_PORT} \
+              $IMAGE_NAME:latest
+            sleep 2
+            docker ps --filter "name=$IMAGE_NAME"
+            CODE=$(curl -sS -o /tmp/fe_index.html -w "%{http_code}" --max-time 10 "http://127.0.0.1:${HOST_PORT}/welcome" || echo "000")
+            echo "GET /welcome HTTP $CODE"
+            API_CODE=$(curl -sS -o /tmp/fe_health.json -w "%{http_code}" --max-time 30 "http://127.0.0.1:${HOST_PORT}/api/health" || echo "000")
+            echo "GET /api/health HTTP $API_CODE"
+            if [ "$API_CODE" = "200" ]; then head -c 200 /tmp/fe_health.json && echo; else echo "WARN: API via legacy FirstVDS failed"; fi
+            echo "=== Edge VPS deploy done (:${HOST_PORT}) ==="
+
+      - name: Summary
+        run: |
+          echo "## Edge VPS deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Host: \`${{ secrets.EDGE_PROD_HOST }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Port: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API: FirstVDS :80 (legacy)" >> "$GITHUB_STEP_SUMMARY"

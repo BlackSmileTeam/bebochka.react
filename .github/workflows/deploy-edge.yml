@@ -1,8 +1,7 @@
-# Edge-VPS: отключено, пока нет нового сервера.
-# Инструкция на будущее: deploy/DEPLOY_EDGE_VPS.md в монорепо bebochka.
-# Активный деплой: deploy.yml → FirstVDS (PROD_HOST, PROD_SSH_PRIVATE_KEY).
+# Edge deploy встроен в deploy.yml (job deploy-edge).
+# Этот файл — заглушка, чтобы не путать со старым отключённым workflow.
 
-name: Deploy frontend to edge VPS (disabled)
+name: Deploy frontend to edge VPS (use deploy.yml)
 
 on:
   workflow_dispatch:
@@ -14,11 +13,8 @@ jobs:
   notice:
     runs-on: ubuntu-latest
     steps:
-      - name: Edge deploy not configured
+      - name: Edge deploy moved
         run: |
-          echo "Новый edge-VPS пока не арендован — этот workflow намеренно выключен."
-          echo "Секреты EDGE_PROD_HOST и EDGE_SSH_PRIVATE_KEY добавлять не нужно."
-          echo ""
-          echo "Деплой на FirstVDS идёт через workflow: Deploy frontend to VPS (push в main)."
-          echo "Когда появится edge-VPS — восстановите полный deploy-edge.yml из коммита ee5843f."
-          exit 1
+          echo "Edge-VPS деплоится вместе с FirstVDS: workflow Deploy frontend to VPS (deploy.yml)."
+          echo "Добавьте секреты EDGE_PROD_HOST и EDGE_SSH_PRIVATE_KEY в GitHub Actions."
+          echo "См. deploy/DEPLOY_EDGE_VPS.md"
