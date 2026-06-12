@@ -7,6 +7,7 @@ import { toAbsoluteMediaUrl } from '../../utils/mediaUrl'
 import { formatCondition } from '../../utils/formatCondition'
 import ProductImage from '../../components/ProductImage'
 import { usePageSeo } from '../../utils/seo'
+import { getPublicSiteUrl } from '../../constants/siteUrl'
 import { showToast } from '../../utils/showToast'
 import {
   CONTACT_TELEGRAM_CHANNEL_URL,
@@ -38,7 +39,7 @@ export default function Landing() {
     title: 'bebochka — качественная одежда для всей семьи с доставкой по России',
     description:
       'Секонд и сток европейских брендов для всей семьи. Честные фото, размеры в карточке, доставка по России через Авито и Ozon.',
-    canonical: 'https://bebochka.ru/welcome',
+    canonical: `${getPublicSiteUrl()}/welcome`,
     keywords:
       'одежда для всей семьи, секонд хенд, сток одежда, доставка по России, bebochka, одежда б/у',
   })

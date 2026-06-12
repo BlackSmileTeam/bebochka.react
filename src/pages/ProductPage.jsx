@@ -9,11 +9,10 @@ import { formatCondition } from '../utils/formatCondition'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import { getSessionId } from '../utils/sessionId'
 import { usePageSeo, getProductStockCount } from '../utils/seo'
+import { getPublicSiteUrl } from '../constants/siteUrl'
 import { buildCatalogFilterSearch } from '../utils/catalogFilters'
 import { DEFAULT_CATALOG_FILTERS } from '../utils/catalogFilterStorage'
 import './ProductPage.css'
-
-const SITE_URL = 'https://bebochka.ru'
 
 function extractProductId(raw) {
   const m = String(raw || '').match(/^(\d+)/)
@@ -72,7 +71,7 @@ export default function ProductPage() {
   const isIndexable = Boolean(product && inStock && !notFound)
 
   const canonical = useMemo(
-    () => `${SITE_URL}/product/${productIdSlug || ''}`,
+    () => `${getPublicSiteUrl()}/product/${productIdSlug || ''}`,
     [productIdSlug]
   )
 

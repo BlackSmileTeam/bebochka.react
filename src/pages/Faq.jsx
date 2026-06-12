@@ -7,6 +7,7 @@ import {
   CONTACT_VK_URL
 } from '../constants/contactLinks'
 import { usePageSeo } from '../utils/seo'
+import { getPublicSiteUrl } from '../constants/siteUrl'
 import './InfoPages.css'
 
 function FaqSection({ title, children }) {
@@ -23,7 +24,7 @@ export default function Faq() {
     title: 'FAQ — покупка одежды и доставка | bebochka',
     description:
       'FAQ bebochka: покупка одежды, доставка одежды, секонд хенд/сэконд, сток одежда, новая одежда для всей семьи и детей.',
-    canonical: 'https://bebochka.ru/faq',
+    canonical: `${getPublicSiteUrl()}/faq`,
     keywords:
       'покупка одежды, доставка одежды, секонд хенд, сэконд, сток одежда, одежда для всей семьи, одежда для детей',
     jsonLd: {

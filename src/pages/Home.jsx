@@ -16,6 +16,7 @@ import ProductPriceDisplay from '../components/ProductPriceDisplay'
 import ProductMetaFilter from '../components/ProductMetaFilter'
 import SizeMultiSelect, { parseSizeValue } from '../components/SizeMultiSelect'
 import { usePageSeo } from '../utils/seo'
+import { getPublicSiteUrl } from '../constants/siteUrl'
 import { catalogFiltersFromSearchParams, countActiveCatalogFilters, toggleSizeFilter, buildFiltersFromChildren, readAutoFilterEnabled, normalizeGender } from '../utils/catalogFilters'
 import { DEFAULT_CATALOG_FILTERS, readCatalogStateFromSession, saveCatalogStateToSession, hasStoredCatalogFilters } from '../utils/catalogFilterStorage'
 import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
@@ -68,7 +69,7 @@ function Home() {
     title: 'Каталог одежды для всей семьи | bebochka',
     description:
       'Каталог bebochka: секонд хенд, сэконд, сток одежда и новая одежда для всей семьи и детей. Покупка одежды онлайн, доставка одежды по России.',
-    canonical: 'https://bebochka.ru/',
+    canonical: `${getPublicSiteUrl()}/`,
     keywords:
       'одежда для всей семьи, сток одежда, новая одежда, новая одежда для всей семьи, одежда для детей, для детей секонд, секонд хенд, сэконд, доставка одежды, покупка одежды'
   })

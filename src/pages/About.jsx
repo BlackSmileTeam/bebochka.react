@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import PageShell from '../components/PageShell'
 import { usePageSeo } from '../utils/seo'
+import { getPublicSiteUrl } from '../constants/siteUrl'
 import './InfoPages.css'
 
 const BrandName = () => <strong>«bebochka»</strong>
@@ -10,14 +11,14 @@ export default function About() {
     title: 'О нас — миссия bebochka',
     description:
       'bebochka: одежда для всей семьи, секонд хенд/сэконд, сток одежда и новая одежда. Миссия — качество, честные фото и доступные цены.',
-    canonical: 'https://bebochka.ru/about',
+    canonical: `${getPublicSiteUrl()}/about`,
     keywords:
       'о нас, миссия, одежда для всей семьи, сток одежда, новая одежда для всей семьи, одежда для детей, покупка одежды',
     jsonLd: {
       '@context': 'https://schema.org',
       '@type': 'Organization',
       name: 'bebochka',
-      url: 'https://bebochka.ru/',
+      url: `${getPublicSiteUrl()}/`,
       description:
         'Одежда для всей семьи: секонд хенд, сэконд, сток одежда и новая одежда по доступным ценам.'
     }

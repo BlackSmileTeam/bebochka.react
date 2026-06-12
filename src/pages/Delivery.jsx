@@ -2,6 +2,7 @@ import PageShell from '../components/PageShell'
 import ContactChannelsLinks from '../components/ContactChannelsLinks'
 import { Link } from 'react-router-dom'
 import { usePageSeo } from '../utils/seo'
+import { getPublicSiteUrl } from '../constants/siteUrl'
 import './InfoPages.css'
 
 export default function Delivery() {
@@ -9,7 +10,7 @@ export default function Delivery() {
     title: 'Доставка одежды | bebochka',
     description:
       'Доставка одежды bebochka: согласование после оплаты, отправка через доступные сервисы и отслеживание заказа.',
-    canonical: 'https://bebochka.ru/delivery',
+    canonical: `${getPublicSiteUrl()}/delivery`,
     keywords:
       'доставка одежды, покупка одежды, одежда для всей семьи, секонд хенд, сэконд, сток одежда'
   })
