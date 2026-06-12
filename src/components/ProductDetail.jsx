@@ -208,6 +208,7 @@ function ProductDetail({
   }
 
   const isScheduled = publishedAt ? publishedAt.getTime() > Date.now() : false
+  const isTestProduct = !!(product.isTestProduct ?? product.IsTestProduct)
 
   let stockClass = 'available'
   let stockLabel = '✓ В наличии'
@@ -349,6 +350,11 @@ function ProductDetail({
                     {isScheduled ? 'Запланировано' : 'Опубликовано'}
                     {publishedAt ? ` · ${formatDateTime(publishedAt)}` : ''}
                   </div>
+                  {isTestProduct && (
+                    <div className="publish-badge publish-badge--test" title="Тестовый товар — виден только администраторам">
+                      тест
+                    </div>
+                  )}
                 </div>
               </>
             )}

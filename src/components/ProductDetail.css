@@ -284,6 +284,12 @@
   border-color: #bee3f8;
 }
 
+.publish-badge--test {
+  background: #fff5f5;
+  color: #9b2c2c;
+  border-color: #feb2b2;
+}
+
 .product-detail-dates {
   display: flex;
   justify-content: space-between;

@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import { TELEGRAM_UI_ENABLED } from '../constants/featureFlags'
 import { isProductPublishedToCatalog } from '../utils/productPublication'
+import { getSessionId } from '../utils/sessionId'
 import Toast from './Toast'
 import './ProductForm.css'
 
@@ -18,6 +19,14 @@ const DEFAULT_PRODUCT_NAME_SUGGESTIONS = [
 const PHOTO_ORDER_HINT = 'Перетаскивайте фото, чтобы изменить порядок. Первое фото будет главным в карточке.'
 const CART_LATER_HINT = 'Карточка может быть уже на сайте (после превью), а кнопка корзины активируется в это время.'
 const KIT_PARTS_HINT = 'Нажмите «+», чтобы добавить вещь комплекта.'
+
+function mapKitPartFromApi(part) {
+  return {
+    id: part.productId ?? part.ProductId ?? part.id ?? part.Id ?? null,
+    name: part.partName ?? part.PartName ?? part.name ?? part.Name ?? '',
+    price: String(part.price ?? part.Price ?? ''),
+  }
+}
 
 function FormFieldHint({ text }) {
   return (
@@ -306,16 +315,12 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       setIsTestProduct(!!(product.isTestProduct ?? product.IsTestProduct))
       setBrandSearch(product.brand || '')
       brandLockedRef.current = !!(product.brand || '').trim()
-      const kit = !!(product.isKit ?? product.IsKit)
+      const kit = !!(product.isKit ?? product.IsKit ?? product.kitId ?? product.KitId)
       setIsKit(kit)
       const parts = product.kitParts ?? product.KitParts
       setKitParts(
-        Array.isArray(parts)
-          ? parts.map((p) => ({
-              id: p.productId ?? p.ProductId ?? p.id ?? p.Id ?? null,
-              name: p.partName ?? p.PartName ?? p.name ?? '',
-              price: String(p.price ?? p.Price ?? ''),
-            }))
+        Array.isArray(parts) && parts.length > 0
+          ? parts.map(mapKitPartFromApi)
           : []
       )
       setNuanceSearch(product.nuance || '')
@@ -349,6 +354,28 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       setExistingImages([])
       setIsKit(false)
       setKitParts([])
+    }
+  }, [product])
+
+  useEffect(() => {
+    if (!product) return undefined
+    const kit = !!(product.isKit ?? product.IsKit ?? product.kitId ?? product.KitId)
+    if (!kit) return undefined
+    const fromProduct = product.kitParts ?? product.KitParts
+    if (Array.isArray(fromProduct) && fromProduct.length > 0) return undefined
+
+    const productId = product.id ?? product.Id
+    if (!productId) return undefined
+
+    let cancelled = false
+    api.getProductKitOptions(productId, getSessionId())
+      .then((data) => {
+        if (cancelled || !Array.isArray(data?.parts) || data.parts.length === 0) return
+        setKitParts(data.parts.map(mapKitPartFromApi))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
     }
   }, [product])
 

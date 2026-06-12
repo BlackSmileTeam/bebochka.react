@@ -559,7 +559,7 @@ function AdminProducts() {
   const handleEdit = (product) => {
     setEditingProduct(product)
     setShowForm(true)
-    setShowDetails(false)
+    setViewingProduct(null)
   }
   
   const handleRowClick = (product, event) => {
