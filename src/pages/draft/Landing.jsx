@@ -14,6 +14,7 @@ import {
   CONTACT_VK_GROUP_URL,
 } from '../../constants/contactLinks'
 import { setPendingCartProduct } from './pendingCartIntent'
+import { isProductVisibleToViewer } from '../../utils/testProductVisibility'
 import './Landing.css'
 
 const LANDING_RETURN = '/welcome'
@@ -60,7 +61,7 @@ export default function Landing() {
         })
         if (cancelled) return
         const items = Array.isArray(data?.items) ? data.items : []
-        const visible = items.filter((p) => (p.quantityInStock ?? p.QuantityInStock ?? 0) > 0)
+        const visible = items.filter((p) => isProductVisibleToViewer(p, { requireStock: true }))
         setProducts(visible.slice(0, LANDING_CATALOG_PAGE_SIZE))
       } catch (e) {
         console.error(e)

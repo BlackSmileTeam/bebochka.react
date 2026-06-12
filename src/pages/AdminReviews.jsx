@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import PageShell from '../components/PageShell'
 import Toast from '../components/Toast'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import ImageLightbox from '../components/ImageLightbox'
 import { getApiPublicOrigin } from '../utils/apiBase'
 import './AdminReviews.css'
 
@@ -77,31 +78,6 @@ function ReviewImageThumb({ src, alt, onOpen }) {
     <button type="button" className="reviews-image-thumb" onClick={() => onOpen(src)} title="Открыть фото">
       <img src={src} alt={alt} loading="lazy" decoding="async" />
     </button>
-  )
-}
-
-function ReviewImageLightbox({ src, onClose }) {
-  if (!src) return null
-  return (
-    <div
-      className="review-image-lightbox"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Просмотр фото"
-      onClick={onClose}
-    >
-      <button
-        type="button"
-        className="review-image-lightbox__close"
-        onClick={onClose}
-        aria-label="Закрыть"
-      >
-        ×
-      </button>
-      <div className="review-image-lightbox__frame" onClick={(e) => e.stopPropagation()}>
-        <img src={src} alt="" className="review-image-lightbox__img" />
-      </div>
-    </div>
   )
 }
 
@@ -549,7 +525,7 @@ function AdminReviews() {
           onClose={() => setToast(null)}
         />
       )}
-      <ReviewImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </PageShell>
   )
 }

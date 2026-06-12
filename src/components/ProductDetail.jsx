@@ -10,6 +10,7 @@ import ProductPriceDisplay from './ProductPriceDisplay'
 import ProductMetaFilter from './ProductMetaFilter'
 import Toast from './Toast'
 import ProductKitCartControl from './ProductKitCartControl'
+import ImageLightbox from './ImageLightbox'
 import { isKitProduct, formatKitPartPrice } from '../utils/productKit'
 import { getSessionId } from '../utils/sessionId'
 import './ProductDetail.css'
@@ -24,6 +25,7 @@ function ProductDetail({
 }) {
   const isPageLayout = variant === 'page'
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [lightboxSrc, setLightboxSrc] = useState(null)
   const [isAdding, setIsAdding] = useState(false)
   const [queueLoading, setQueueLoading] = useState(false)
   const [toast, setToast] = useState(null)
@@ -233,8 +235,7 @@ function ProductDetail({
 
   const openOriginalImage = () => {
     if (!images.length) return
-    const imageUrl = getImageUrl(images[currentImageIndex])
-    window.open(imageUrl, '_blank', 'noopener,noreferrer')
+    setLightboxSrc(getImageUrl(images[currentImageIndex]))
   }
 
   const nextImage = () => {
@@ -284,7 +285,7 @@ function ProductDetail({
                   alt={`${product.name} — фото ${currentImageIndex + 1}`}
                   className="product-detail-image"
                   priority
-                  title="Открыть оригинал"
+                  title="Открыть фото"
                   onClick={openOriginalImage}
                   onError={(e) => {
                     e.target.src = '/logo.jpg'
@@ -516,6 +517,11 @@ function ProductDetail({
           onClose={() => setToast(null)}
         />
       )}
+      <ImageLightbox
+        src={lightboxSrc}
+        alt={`${product.name} — фото ${currentImageIndex + 1}`}
+        onClose={() => setLightboxSrc(null)}
+      />
     </div>
   )
 
