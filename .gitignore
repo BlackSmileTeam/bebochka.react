@@ -10,7 +10,6 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-nginx.edge.conf
 *.local
 
 # Editor directories and files

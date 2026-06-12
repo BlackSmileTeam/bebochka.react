@@ -1,6 +1,6 @@
-# Деплой фронта на FirstVDS (PROD_*) и опционально на edge-VPS (EDGE_*).
-# FirstVDS: /api → host.docker.internal:55501
-# Edge-VPS: /api → FirstVDS :80 (nginx.edge-legacy.conf)
+# Деплой фронта на FirstVDS (PROD_*) и опционально на edge-VPS Selectel (EDGE_*).
+# FirstVDS: /api → host.docker.internal:55501 (локальный API на том же сервере)
+# Edge-VPS: /api → host.docker.internal:55501 (API на Selectel), /uploads → FirstVDS (пока фото там)
 
 name: Deploy frontend to VPS
 
@@ -210,7 +210,7 @@ jobs:
           path: .
 
       - name: Verify archive
-        run: ls -lh ${{ env.IMAGE_NAME }}.tar.gz && test -f nginx.edge-legacy.conf
+        run: ls -lh ${{ env.IMAGE_NAME }}.tar.gz && test -f nginx.edge.conf
 
       - name: Copy image and nginx config to edge VPS
         uses: appleboy/scp-action@v1.0.0
@@ -219,7 +219,7 @@ jobs:
           username: ${{ secrets.EDGE_PROD_USER || 'deploy' }}
           key: ${{ secrets.EDGE_SSH_PRIVATE_KEY }}
           port: ${{ secrets.EDGE_SSH_PORT || 22 }}
-          source: "${{ env.IMAGE_NAME }}.tar.gz,nginx.edge-legacy.conf"
+          source: "${{ env.IMAGE_NAME }}.tar.gz,nginx.edge.conf"
           target: "/tmp"
           overwrite: true
 
@@ -238,16 +238,17 @@ jobs:
             CONTAINER_PORT="${{ env.CONTAINER_PORT }}"
             EDGE_NGINX_DIR="$HOME/bebochka-edge"
             mkdir -p "$EDGE_NGINX_DIR"
-            cp /tmp/nginx.edge-legacy.conf "$EDGE_NGINX_DIR/nginx.conf"
+            cp /tmp/nginx.edge.conf "$EDGE_NGINX_DIR/nginx.conf"
             chmod 644 "$EDGE_NGINX_DIR/nginx.conf"
             echo "=== Load and run edge VPS ==="
             docker load < /tmp/$IMAGE_NAME.tar.gz
-            rm -f /tmp/$IMAGE_NAME.tar.gz /tmp/nginx.edge-legacy.conf
+            rm -f /tmp/$IMAGE_NAME.tar.gz /tmp/nginx.edge.conf
             docker stop $IMAGE_NAME 2>/dev/null || true
             docker rm -f $IMAGE_NAME 2>/dev/null || true
             docker run -d \
               --name $IMAGE_NAME \
               --restart unless-stopped \
+              --add-host=host.docker.internal:host-gateway \
               -v "$EDGE_NGINX_DIR/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
               -p ${HOST_PORT}:${CONTAINER_PORT} \
               $IMAGE_NAME:latest
@@ -257,7 +258,7 @@ jobs:
             echo "GET /welcome HTTP $CODE"
             API_CODE=$(curl -sS -o /tmp/fe_health.json -w "%{http_code}" --max-time 30 "http://127.0.0.1:${HOST_PORT}/api/health" || echo "000")
             echo "GET /api/health HTTP $API_CODE"
-            if [ "$API_CODE" = "200" ]; then head -c 200 /tmp/fe_health.json && echo; else echo "WARN: API via legacy FirstVDS failed"; fi
+            if [ "$API_CODE" = "200" ]; then head -c 200 /tmp/fe_health.json && echo; else echo "WARN: API via local Selectel backend failed — deploy Bebochka.Api edge job first"; fi
             echo "=== Edge VPS deploy done (:${HOST_PORT}) ==="
 
       - name: Summary
@@ -265,4 +266,4 @@ jobs:
           echo "## Edge VPS deploy" >> "$GITHUB_STEP_SUMMARY"
           echo "- Host: \`${{ secrets.EDGE_PROD_HOST }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Port: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- API: FirstVDS :80 (legacy)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API: local :55501 (Selectel), uploads: FirstVDS :55501" >> "$GITHUB_STEP_SUMMARY"
