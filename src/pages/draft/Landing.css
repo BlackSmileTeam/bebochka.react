@@ -157,15 +157,12 @@
   z-index: 2;
 }
 
-.landing-hero {
+.landing-hero--lcp {
   position: relative;
   overflow: hidden;
-  padding: 1.5rem 1.25rem 2.5rem;
-  color: #1f2937;
-  border-bottom: 1px solid #e5e7eb;
 }
 
-.landing-hero::before {
+.landing-hero--lcp::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -174,7 +171,7 @@
   pointer-events: none;
 }
 
-.landing-hero::after {
+.landing-hero--lcp::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -183,9 +180,18 @@
   pointer-events: none;
 }
 
-.landing-hero-content {
+.landing-hero--lcp .landing-hero-content {
   position: relative;
   z-index: 2;
+}
+
+.landing-hero {
+  padding: 1.5rem 1.25rem 2.5rem;
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.landing-hero-content {
   max-width: 1100px;
   margin: 0 auto;
   text-align: center;

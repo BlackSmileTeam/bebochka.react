@@ -1,14 +1,19 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ErrorPageLayout from '../components/ErrorPageLayout'
 import PageShell from '../components/PageShell'
 import ProductDetail from '../components/ProductDetail'
 import RouteFallback from '../components/RouteFallback'
 import { api } from '../services/api'
+import { formatCondition } from '../utils/formatCondition'
+import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import { getSessionId } from '../utils/sessionId'
+import { usePageSeo, getProductStockCount } from '../utils/seo'
 import { buildCatalogFilterSearch } from '../utils/catalogFilters'
 import { DEFAULT_CATALOG_FILTERS } from '../utils/catalogFilterStorage'
 import './ProductPage.css'
+
+const SITE_URL = 'https://bebochka.ru'
 
 function extractProductId(raw) {
   const m = String(raw || '').match(/^(\d+)/)
@@ -62,6 +67,52 @@ export default function ProductPage() {
       active = false
     }
   }, [productId])
+
+  const inStock = product ? getProductStockCount(product) > 0 : false
+  const isIndexable = Boolean(product && inStock && !notFound)
+
+  const canonical = useMemo(
+    () => `${SITE_URL}/product/${productIdSlug || ''}`,
+    [productIdSlug]
+  )
+
+  const seoTitle = product
+    ? `${product.name} — купить одежду для всей семьи | bebochka`
+    : notFound
+      ? 'Товар не найден | bebochka'
+      : 'Карточка товара | bebochka'
+  const seoDescription = product
+    ? `${product.name}. Бренд: ${product.brand || 'без бренда'}, размер: ${product.size || 'не указан'}, состояние: ${formatCondition(product.condition)}. Секонд хенд, сэконд, сток одежда, новая одежда для всей семьи.`
+    : 'Карточка товара bebochka: бренд, размер, состояние, цвет, доставка одежды.'
+
+  usePageSeo({
+    title: seoTitle,
+    description: seoDescription,
+    canonical,
+    robots: isIndexable ? 'index, follow' : 'noindex, nofollow',
+    keywords:
+      'секонд хенд, сэконд, сток одежда, одежда для всей семьи, новая одежда, новая одежда для всей семьи, одежда для детей, для детей секонд, доставка одежды, покупка одежды',
+    jsonLd: product && isIndexable
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.name,
+          image: (product.images || []).map((img) => toAbsoluteMediaUrl(img)).filter(Boolean),
+          description: product.description || `Одежда для всей семьи: ${product.name}`,
+          brand: product.brand || 'bebochka',
+          category: 'Clothing',
+          color: product.color || undefined,
+          size: product.size || undefined,
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'RUB',
+            price: Number(product.price || 0),
+            availability: 'https://schema.org/InStock',
+            url: canonical,
+          },
+        }
+      : null,
+  })
 
   const handleFilterSelect = useCallback(
     (field, value) => {

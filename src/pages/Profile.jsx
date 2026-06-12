@@ -1400,6 +1400,7 @@ function Profile() {
                     showBuyButton={false}
                     available={getAvailableQuantity(p)}
                     inCart={getCartQuantity(p.id)}
+                    imagePriority={index === 0}
                   />
                 ))}
               </div>

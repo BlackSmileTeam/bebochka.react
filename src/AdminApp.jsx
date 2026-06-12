@@ -1,34 +1,42 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
-import Admin from './pages/Admin'
-import AdminProducts from './pages/AdminProducts'
-import AdminUsers from './pages/AdminUsers'
-import AdminAnnouncements from './pages/AdminAnnouncements'
-import AdminOrders from './pages/AdminOrders'
-import AdminUserOrders from './pages/AdminUserOrders'
-import AdminTelegramErrors from './pages/AdminTelegramErrors'
-import AdminReviews from './pages/AdminReviews'
-import AdminIncomingShipments from './pages/AdminIncomingShipments'
-import AdminBackup from './pages/AdminBackup'
-import AdminReferrals from './pages/AdminReferrals'
-import AdminHelpers from './pages/AdminHelpers'
-import AdminBrands from './pages/AdminHelpers'
+import RouteFallback from './components/RouteFallback'
 
+const Admin = lazy(() => import('./pages/Admin'))
+const AdminProducts = lazy(() => import('./pages/AdminProducts'))
+const AdminUsers = lazy(() => import('./pages/AdminUsers'))
+const AdminAnnouncements = lazy(() => import('./pages/AdminAnnouncements'))
+const AdminOrders = lazy(() => import('./pages/AdminOrders'))
+const AdminUserOrders = lazy(() => import('./pages/AdminUserOrders'))
+const AdminTelegramErrors = lazy(() => import('./pages/AdminTelegramErrors'))
+const AdminReviews = lazy(() => import('./pages/AdminReviews'))
+const AdminIncomingShipments = lazy(() => import('./pages/AdminIncomingShipments'))
+const AdminBackup = lazy(() => import('./pages/AdminBackup'))
+const AdminReferrals = lazy(() => import('./pages/AdminReferrals'))
+const AdminHelpers = lazy(() => import('./pages/AdminHelpers'))
+const AdminBrands = lazy(() => import('./pages/AdminHelpers'))
+
+function LazyAdminPage({ children }) {
+  return <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+}
+
+/** Админ-маршруты — отдельный chunk, не грузится на публичных страницах. */
 export default function AdminApp() {
   return (
     <Routes>
-      <Route index element={<Admin />} />
-      <Route path="products" element={<AdminProducts />} />
-      <Route path="users" element={<AdminUsers />} />
-      <Route path="announcements" element={<AdminAnnouncements />} />
-      <Route path="orders" element={<AdminOrders />} />
-      <Route path="users/:userId/orders" element={<AdminUserOrders />} />
-      <Route path="reviews" element={<AdminReviews />} />
-      <Route path="incoming-shipments" element={<AdminIncomingShipments />} />
-      <Route path="backup" element={<AdminBackup />} />
-      <Route path="referrals" element={<AdminReferrals />} />
-      <Route path="helpers" element={<AdminHelpers />} />
-      <Route path="brands" element={<AdminBrands />} />
-      <Route path="telegram-errors" element={<AdminTelegramErrors />} />
+      <Route index element={<LazyAdminPage><Admin /></LazyAdminPage>} />
+      <Route path="products" element={<LazyAdminPage><AdminProducts /></LazyAdminPage>} />
+      <Route path="users" element={<LazyAdminPage><AdminUsers /></LazyAdminPage>} />
+      <Route path="announcements" element={<LazyAdminPage><AdminAnnouncements /></LazyAdminPage>} />
+      <Route path="orders" element={<LazyAdminPage><AdminOrders /></LazyAdminPage>} />
+      <Route path="users/:userId/orders" element={<LazyAdminPage><AdminUserOrders /></LazyAdminPage>} />
+      <Route path="reviews" element={<LazyAdminPage><AdminReviews /></LazyAdminPage>} />
+      <Route path="incoming-shipments" element={<LazyAdminPage><AdminIncomingShipments /></LazyAdminPage>} />
+      <Route path="backup" element={<LazyAdminPage><AdminBackup /></LazyAdminPage>} />
+      <Route path="referrals" element={<LazyAdminPage><AdminReferrals /></LazyAdminPage>} />
+      <Route path="helpers" element={<LazyAdminPage><AdminHelpers /></LazyAdminPage>} />
+      <Route path="brands" element={<LazyAdminPage><AdminBrands /></LazyAdminPage>} />
+      <Route path="telegram-errors" element={<LazyAdminPage><AdminTelegramErrors /></LazyAdminPage>} />
     </Routes>
   )
 }

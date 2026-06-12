@@ -283,6 +283,7 @@ function ProductDetail({
                   src={getImageUrl(images[currentImageIndex])}
                   alt={`${product.name} — фото ${currentImageIndex + 1}`}
                   className="product-detail-image"
+                  priority
                   title="Открыть оригинал"
                   onClick={openOriginalImage}
                   onError={(e) => {

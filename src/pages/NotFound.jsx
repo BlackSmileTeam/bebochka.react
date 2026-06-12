@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import ErrorPageLayout, { getErrorPageCatalogPath } from '../components/ErrorPageLayout'
+import { usePageSeo } from '../utils/seo'
 
 export default function NotFound() {
   const isLoggedIn = (() => {
@@ -11,6 +12,11 @@ export default function NotFound() {
   })()
   const catalogTo = isLoggedIn ? '/' : '/welcome#catalog'
   const catalogLabel = isLoggedIn ? 'В каталог' : 'На главную'
+
+  usePageSeo({
+    title: 'Страница не найдена — bebochka',
+    description: 'Запрошенная страница не существует.',
+  })
 
   return (
     <ErrorPageLayout

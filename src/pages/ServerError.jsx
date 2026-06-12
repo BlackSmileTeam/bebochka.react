@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom'
 import ErrorPageLayout, { getErrorPageCatalogPath } from '../components/ErrorPageLayout'
+import { usePageSeo } from '../utils/seo'
 
 export default function ServerError({ onRetry }) {
+  usePageSeo({
+    title: 'Ошибка сервера — bebochka',
+    description: 'На сервере произошла ошибка.',
+  })
+
   const handleRetry = () => {
     if (typeof onRetry === 'function') {
       onRetry()

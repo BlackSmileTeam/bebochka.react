@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { useCart } from '../contexts/CartContext'
-import ProductDetail from '../components/ProductDetail'
+const ProductDetail = lazy(() => import('../components/ProductDetail'))
 import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
 import FilterIcon from '../components/FilterIcon'
@@ -15,6 +15,7 @@ import ProductImage from '../components/ProductImage'
 import ProductPriceDisplay from '../components/ProductPriceDisplay'
 import ProductMetaFilter from '../components/ProductMetaFilter'
 import SizeMultiSelect, { parseSizeValue } from '../components/SizeMultiSelect'
+import { usePageSeo } from '../utils/seo'
 import { catalogFiltersFromSearchParams, countActiveCatalogFilters, toggleSizeFilter, buildFiltersFromChildren, readAutoFilterEnabled, normalizeGender } from '../utils/catalogFilters'
 import { DEFAULT_CATALOG_FILTERS, readCatalogStateFromSession, saveCatalogStateToSession, hasStoredCatalogFilters } from '../utils/catalogFilterStorage'
 import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
@@ -61,6 +62,15 @@ function Home() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [favoriteProductIds, setFavoriteProductIds] = useState(() => new Set(readFavoriteProductIds()))
   const { addToCart, sessionId, cartItems } = useCart()
+
+  usePageSeo({
+    title: 'Каталог одежды для всей семьи | bebochka',
+    description:
+      'Каталог bebochka: секонд хенд, сэконд, сток одежда и новая одежда для всей семьи и детей. Покупка одежды онлайн, доставка одежды по России.',
+    canonical: 'https://bebochka.ru/',
+    keywords:
+      'одежда для всей семьи, сток одежда, новая одежда, новая одежда для всей семьи, одежда для детей, для детей секонд, секонд хенд, сэконд, доставка одежды, покупка одежды'
+  })
 
   const activeFilterCount = useMemo(
     () => countActiveCatalogFilters(filters),
@@ -537,8 +547,10 @@ function Home() {
                       src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
                       alt={product.name}
                       className="product-image"
+                      priority={index < 4}
                       width={400}
                       height={220}
+                      sizes="(max-width: 480px) 46vw, (max-width: 768px) 31vw, 280px"
                       onError={(e) => {
                         e.target.src = '/logo.jpg'
                       }}
@@ -661,12 +673,14 @@ function Home() {
       )}
       
       {selectedProduct && (
-        <ProductDetail
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          getAvailableQuantity={getAvailableQuantity}
-          onFilterSelect={applyCatalogFilter}
-        />
+        <Suspense fallback={null}>
+          <ProductDetail
+            product={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
+            getAvailableQuantity={getAvailableQuantity}
+            onFilterSelect={applyCatalogFilter}
+          />
+        </Suspense>
       )}
       {toast && (
         <Toast
