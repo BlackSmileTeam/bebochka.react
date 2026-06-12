@@ -3,6 +3,7 @@ import ProductPriceDisplay from './ProductPriceDisplay'
 import ProductMetaFilter from './ProductMetaFilter'
 import CatalogBuyButton from './CatalogBuyButton'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
+import { isTestProduct } from '../utils/testProductVisibility'
 
 function getStockInfo(available, quantityInStock, inCart) {
   const isInMyCart = inCart > 0
@@ -36,6 +37,7 @@ export default function CatalogProductCard({
 }) {
   const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
   const { stockClass, stockLabel } = getStockInfo(available, quantityInStock, inCart)
+  const showTestBadge = isTestProduct(product)
 
   const handleFavoriteClick = (event) => {
     event.stopPropagation()
@@ -91,9 +93,16 @@ export default function CatalogProductCard({
           >
             {product.name}
           </h3>
-          <span className={`product-meta-item product-meta-stock product-meta-stock--${stockClass}`}>
-            {stockLabel}
-          </span>
+          <div className="product-title-row__statuses">
+            {showTestBadge && (
+              <span className="product-test-badge" title="Тестовый товар — виден только администраторам">
+                тест
+              </span>
+            )}
+            <span className={`product-meta-item product-meta-stock product-meta-stock--${stockClass}`}>
+              {stockLabel}
+            </span>
+          </div>
         </div>
         <p className={`product-description${product.description ? '' : ' product-description--empty'}`}>
           {product.description || '\u00a0'}

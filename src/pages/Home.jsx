@@ -19,6 +19,7 @@ import { usePageSeo } from '../utils/seo'
 import { catalogFiltersFromSearchParams, countActiveCatalogFilters, toggleSizeFilter, buildFiltersFromChildren, readAutoFilterEnabled, normalizeGender } from '../utils/catalogFilters'
 import { DEFAULT_CATALOG_FILTERS, readCatalogStateFromSession, saveCatalogStateToSession, hasStoredCatalogFilters } from '../utils/catalogFilterStorage'
 import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
+import { isTestProduct } from '../utils/testProductVisibility'
 import './Home.css'
 
 const ITEMS_PER_PAGE = 24
@@ -581,9 +582,16 @@ function Home() {
                       Комплект
                     </span>
                   )}
-                  <span className={`product-meta-item product-meta-stock product-meta-stock--${stockClass}`}>
-                    {stockLabel}
-                  </span>
+                  <div className="product-title-row__statuses">
+                    {isTestProduct(product) && (
+                      <span className="product-test-badge" title="Тестовый товар — виден только администраторам">
+                        тест
+                      </span>
+                    )}
+                    <span className={`product-meta-item product-meta-stock product-meta-stock--${stockClass}`}>
+                      {stockLabel}
+                    </span>
+                  </div>
                 </div>
                 <p
                   className={`product-description${product.description ? '' : ' product-description--empty'}`}
