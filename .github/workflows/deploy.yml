@@ -268,4 +268,4 @@ jobs:
           echo "## Edge VPS deploy" >> "$GITHUB_STEP_SUMMARY"
           echo "- Host: \`${{ secrets.EDGE_PROD_HOST }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Port: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- API: bebochka-backend:44315 (Docker network bebochka-edge), uploads: FirstVDS :55501" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API: bebochka-backend:44315 (Docker network bebochka-edge), uploads: local API" >> "$GITHUB_STEP_SUMMARY"
