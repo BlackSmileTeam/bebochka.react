@@ -1275,7 +1275,7 @@ function AdminOrders() {
                                     {orderRowMenuOpen === orderId && (
                                       <>
                                         <div className="order-row-dropdown-backdrop" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null) }} />
-                                        <div className="order-row-dropdown-menu order-row-dropdown-menu--centered">
+                                        <div className="order-row-dropdown-menu">
                                           <button type="button" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null); setOrderDetailsOrderId(orderId) }}>
                                             Подробнее
                                           </button>
@@ -1519,7 +1519,7 @@ function AdminOrders() {
                     {orderDetailsMenuOpen && (
                       <>
                         <div className="order-row-dropdown-backdrop" onClick={(e) => { e.stopPropagation(); setOrderDetailsMenuOpen(false) }} />
-                        <div className="order-row-dropdown-menu order-row-dropdown-menu--centered">
+                        <div className="order-row-dropdown-menu">
                           <button
                             type="button"
                             onClick={(e) => {
