@@ -31,7 +31,6 @@ export default function CatalogProductCard({
   showBuyButton = false,
   available,
   inCart = 0,
-  imagePriority = false,
   buyButtonProps = {},
 }) {
   const quantityInStock = product.quantityInStock ?? product.QuantityInStock ?? 0
@@ -62,10 +61,8 @@ export default function CatalogProductCard({
               src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
               alt={product.name}
               className="product-image"
-              priority={imagePriority}
               width={400}
               height={220}
-              sizes="(max-width: 480px) 46vw, (max-width: 768px) 31vw, 280px"
               onError={(e) => {
                 e.target.src = '/logo.jpg'
               }}

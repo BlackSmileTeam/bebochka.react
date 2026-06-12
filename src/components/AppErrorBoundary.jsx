@@ -1,7 +1,5 @@
-import { Component, lazy, Suspense } from 'react'
-import RouteFallback from './RouteFallback'
-
-const ServerError = lazy(() => import('../pages/ServerError'))
+import { Component } from 'react'
+import ServerError from '../pages/ServerError'
 
 export default class AppErrorBoundary extends Component {
   constructor(props) {
@@ -23,11 +21,7 @@ export default class AppErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <Suspense fallback={<RouteFallback />}>
-          <ServerError onRetry={this.handleRetry} />
-        </Suspense>
-      )
+      return <ServerError onRetry={this.handleRetry} />
     }
     return this.props.children
   }

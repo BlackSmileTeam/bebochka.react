@@ -6,7 +6,6 @@ import { getSessionId } from '../../utils/sessionId'
 import { toAbsoluteMediaUrl } from '../../utils/mediaUrl'
 import { formatCondition } from '../../utils/formatCondition'
 import ProductImage from '../../components/ProductImage'
-import { usePageSeo } from '../../utils/seo'
 import { showToast } from '../../utils/showToast'
 import {
   CONTACT_TELEGRAM_CHANNEL_URL,
@@ -18,7 +17,6 @@ import './Landing.css'
 
 const LANDING_RETURN = '/welcome'
 const LANDING_CATALOG_PAGE_SIZE = 12
-const LANDING_PRODUCT_IMAGE_SIZES = '(max-width: 480px) 50vw, (max-width: 900px) 33vw, 320px'
 
 function formatGender(gender) {
   if (!gender) return ''
@@ -33,22 +31,8 @@ export default function Landing() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
 
-  usePageSeo({
-    title: 'bebochka — качественная одежда для всей семьи с доставкой по России',
-    description:
-      'Секонд и сток европейских брендов для всей семьи. Честные фото, размеры в карточке, доставка по России через Авито и Ozon.',
-    canonical: 'https://bebochka.ru/welcome',
-    keywords:
-      'одежда для всей семьи, секонд хенд, сток одежда, доставка по России, bebochka, одежда б/у',
-  })
-
   useEffect(() => {
     let cancelled = false
-    const catalogEl = document.getElementById('catalog')
-    if (!catalogEl) {
-      setLoading(false)
-      return undefined
-    }
 
     const loadCatalog = async () => {
       try {
@@ -69,18 +53,9 @@ export default function Landing() {
       }
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return
-        observer.disconnect()
-        loadCatalog()
-      },
-      { root: null, rootMargin: '200px 0px', threshold: 0 }
-    )
-    observer.observe(catalogEl)
+    loadCatalog()
     return () => {
       cancelled = true
-      observer.disconnect()
     }
   }, [sessionId])
 
@@ -112,7 +87,7 @@ export default function Landing() {
 
   return (
     <div className="landing">
-      <section className="landing-hero landing-hero--lcp">
+      <section className="landing-hero">
         <div className="landing-hero-content">
           <h1>
             <span className="landing-hero-title-line">Качественная одежда для всей семьи</span>
@@ -202,7 +177,7 @@ export default function Landing() {
           <p className="landing-muted">Скоро появятся новые вещи — следите в канале.</p>
         ) : (
           <div className="landing-products">
-            {products.map((product, index) => {
+            {products.map((product) => {
               const id = product.id ?? product.Id
               const inCart = getInCart(id)
               const img = product.images?.[0]
@@ -220,8 +195,6 @@ export default function Landing() {
                         className="landing-product-image"
                         width={320}
                         height={320}
-                        sizes={LANDING_PRODUCT_IMAGE_SIZES}
-                        priority={index === 0}
                       />
                     ) : (
                       <div className="landing-product-placeholder">Нет фото</div>

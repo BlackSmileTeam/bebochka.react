@@ -1,11 +1,10 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { CONTACT_TELEGRAM_URL } from '../constants/contactLinks'
 import Toast from './Toast'
+import CookieNotice from './CookieNotice'
 import './Layout.css'
-
-const CookieNotice = lazy(() => import('./CookieNotice'))
 
 function readUser() {
   try {
@@ -135,8 +134,6 @@ function Layout() {
                   className="logo-img"
                   width={50}
                   height={50}
-                  decoding="async"
-                  fetchpriority="low"
                 />
               </picture>
               <span className="logo-text">bebochka</span>
@@ -429,9 +426,7 @@ function Layout() {
       <main className={`main${isWelcomePage ? ' main--welcome' : ''}`}>
         <Outlet />
       </main>
-      <Suspense fallback={null}>
-        <CookieNotice />
-      </Suspense>
+      <CookieNotice />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
