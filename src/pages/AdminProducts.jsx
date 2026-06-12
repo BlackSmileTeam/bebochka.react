@@ -1402,9 +1402,11 @@ function AdminProducts() {
                         </div>
                       )}
                       <div className="product-name-below">
-                        {product.name}
+                        <span className="product-name-below__title">{product.name}</span>
                         {(product.isTestProduct ?? product.IsTestProduct) && (
-                          <span className="product-test-badge" title="Виден только администраторам в каталоге">тест</span>
+                          <span className="product-test-badge product-test-badge--below-name" title="Виден только администраторам в каталоге">
+                            тест
+                          </span>
                         )}
                       </div>
                     </div>

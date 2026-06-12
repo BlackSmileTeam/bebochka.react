@@ -85,6 +85,17 @@
   }
 }
 
+@media (min-width: 769px) {
+  .product-detail-modal:not(.product-detail-modal--page) .product-detail-main-image {
+    height: min(36vh, 280px);
+  }
+
+  .product-detail-modal:not(.product-detail-modal--page) .product-detail-content {
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+  }
+}
+
 .product-detail-gallery {
   display: flex;
   flex-direction: column;
