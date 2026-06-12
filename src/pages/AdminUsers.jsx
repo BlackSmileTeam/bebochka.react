@@ -523,7 +523,7 @@ function AdminUsers() {
   }
 
   const renderChildrenCount = (user, count) => {
-    if (count <= 0) return '—'
+    if (count <= 0) return null
     return (
       <button
         type="button"
@@ -533,6 +533,74 @@ function AdminUsers() {
       >
         {count}
       </button>
+    )
+  }
+
+  const userActionsId = (user) => user.id || user.Id
+
+  const renderUserActionsMenu = (user, vkProfileUrl, { includeOrders = true, className = '', dropdownClassName = '' } = {}) => {
+    const uid = userActionsId(user)
+    const currentUserId = parseInt(localStorage.getItem('userId') || '0', 10)
+    const canDelete = uid !== currentUserId
+
+    return (
+      <div className={`actions-menu-wrap${className ? ` ${className}` : ''}`}>
+        <button
+          type="button"
+          className="btn btn-icon-dots"
+          aria-label="Действия с пользователем"
+          aria-expanded={openActionsFor === uid}
+          onClick={() => setOpenActionsFor(openActionsFor === uid ? null : uid)}
+        >
+          ⋯
+        </button>
+        {openActionsFor === uid && (
+          <div className={`actions-dropdown${dropdownClassName ? ` ${dropdownClassName}` : ''}`}>
+            {includeOrders && (
+              <button
+                type="button"
+                className="actions-dropdown-item"
+                onClick={() => {
+                  handleGoToOrders(user)
+                  setOpenActionsFor(null)
+                }}
+              >
+                К заказам
+              </button>
+            )}
+            <button
+              type="button"
+              className="actions-dropdown-item"
+              onClick={() => {
+                setShowPasswordForm(uid)
+                setOpenActionsFor(null)
+              }}
+            >
+              Изменить пароль
+            </button>
+            {vkProfileUrl && (
+              <a
+                className="actions-dropdown-item actions-dropdown-link"
+                href={vkProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpenActionsFor(null)}
+              >
+                Открыть профиль в ВК
+              </a>
+            )}
+            {canDelete && (
+              <button
+                type="button"
+                className="actions-dropdown-item actions-dropdown-item--danger"
+                onClick={() => requestDeleteUser(uid)}
+              >
+                Удалить
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -763,6 +831,9 @@ function AdminUsers() {
                 const isAdmin = !!(user.isAdmin ?? user.IsAdmin)
                 const childrenCount = Number(user.childrenCount ?? user.ChildrenCount ?? 0)
                 const showVkBadge = isVkUser(user) && vkProfileUrl
+                const userEmail = String(user.email || user.Email || '').trim()
+                const hasEmail = Boolean(userEmail)
+                const lastLoginRaw = user.lastLoginAt || user.LastLoginAt
                 return (
                     <tr
                       key={user.id || user.Id}
@@ -794,114 +865,54 @@ function AdminUsers() {
                             </span>
                           </div>
                           <div className="user-mobile-head__right">
+                            {renderUserActionsMenu(user, vkProfileUrl, {
+                              includeOrders: false,
+                              className: 'actions-menu-mobile-head',
+                              dropdownClassName: 'actions-dropdown--mobile-head',
+                            })}
+                            {childrenCount > 0 && (
+                              <span className="user-mobile-meta">
+                                Дети: {renderChildrenCount(user, childrenCount)}
+                              </span>
+                            )}
                             <span className="user-mobile-meta">
-                              Дети: {renderChildrenCount(user, childrenCount)}
+                              Создан: {formatDate(user.createdAt || user.CreatedAt)}
                             </span>
-                            <span className="user-mobile-meta">Создан: {formatDate(user.createdAt || user.CreatedAt)}</span>
-                            <span className="user-mobile-meta">Вход: {formatDateTime(user.lastLoginAt || user.LastLoginAt)}</span>
+                            {lastLoginRaw && (
+                              <span className="user-mobile-meta">
+                                Вход: {formatDateTime(lastLoginRaw)}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td data-label="Email" className="email-cell">
-                        <AdminUserEmailLink email={user.email || user.Email} className="admin-user-contact-link" />
-                      </td>
+                      {hasEmail ? (
+                        <td data-label="Email" className="email-cell">
+                          <AdminUserEmailLink email={userEmail} className="admin-user-contact-link" />
+                        </td>
+                      ) : (
+                        <td data-label="Email" className="email-cell email-cell--empty" aria-hidden="true" />
+                      )}
                       <td data-label="Телефон" className="phone-cell">
                         <AdminUserPhoneLink user={user} className="admin-user-contact-link" />
                       </td>
-                      <td data-label="Дети" className="children-count-cell">
+                      <td
+                        data-label="Дети"
+                        className={`children-count-cell${childrenCount > 0 ? '' : ' children-count-cell--empty'}`}
+                      >
                         {renderChildrenCount(user, childrenCount)}
                       </td>
                       <td data-label="Создан" className="created-cell">{formatDate(user.createdAt || user.CreatedAt)}</td>
                       <td data-label="Последний вход" className="last-login-cell">{formatDateTime(user.lastLoginAt || user.LastLoginAt)}</td>
                       <td data-label="Действия" className="actions-cell">
-                        <div className="actions-menu-desktop">
-                          <button
-                            type="button"
-                            className="btn btn-icon-dots"
-                            aria-label="Действия"
-                            onClick={() => setOpenActionsFor(openActionsFor === (user.id || user.Id) ? null : (user.id || user.Id))}
-                          >
-                            ⋯
-                          </button>
-                          {openActionsFor === (user.id || user.Id) && (
-                            <div className="actions-dropdown">
-                              <button
-                                type="button"
-                                className="actions-dropdown-item"
-                                onClick={() => {
-                                  handleGoToOrders(user)
-                                  setOpenActionsFor(null)
-                                }}
-                              >
-                                К заказам
-                              </button>
-                              <button
-                                type="button"
-                                className="actions-dropdown-item"
-                                onClick={() => {
-                                  setShowPasswordForm(user.id || user.Id)
-                                  setOpenActionsFor(null)
-                                }}
-                              >
-                                Изменить пароль
-                              </button>
-                              {vkProfileUrl && (
-                                <a
-                                  className="actions-dropdown-item actions-dropdown-link"
-                                  href={vkProfileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={() => setOpenActionsFor(null)}
-                                >
-                                  Открыть профиль в ВК
-                                </a>
-                              )}
-                              {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
-                                <button
-                                  type="button"
-                                  className="actions-dropdown-item actions-dropdown-item--danger"
-                                  onClick={() => {
-                                    requestDeleteUser(user.id || user.Id)
-                                  }}
-                                >
-                                  Удалить
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <div className="actions-mobile-inline">
-                          <button
-                            className="btn btn-small btn-secondary"
-                            onClick={() => handleGoToOrders(user)}
-                          >
-                            К заказам
-                          </button>
-                          <button
-                            className="btn btn-small btn-edit"
-                            onClick={() => setShowPasswordForm(user.id || user.Id)}
-                          >
-                            Изменить пароль
-                          </button>
-                          {vkProfileUrl && (
-                            <a
-                              className="btn btn-small btn-secondary actions-mobile-vk"
-                              href={vkProfileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              ВК
-                            </a>
-                          )}
-                          {(user.id || user.Id) !== parseInt(localStorage.getItem('userId') || '0') && (
-                            <button
-                              className="btn btn-small btn-delete"
-                              onClick={() => requestDeleteUser(user.id || user.Id)}
-                            >
-                              Удалить
-                            </button>
-                          )}
-                        </div>
+                        {renderUserActionsMenu(user, vkProfileUrl, { className: 'actions-menu-desktop' })}
+                        <button
+                          type="button"
+                          className="btn btn-small btn-secondary btn-orders-mobile"
+                          onClick={() => handleGoToOrders(user)}
+                        >
+                          К заказам
+                        </button>
                       </td>
                     </tr>
                 )

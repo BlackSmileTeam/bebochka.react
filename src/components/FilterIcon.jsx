@@ -11,7 +11,7 @@ export default function FilterIcon({ className = '', width = 18, height = 18 }) 
     >
       <path
         fill="currentColor"
-        d="M4 5h16l-6 7v7l-4-2v-5L4 5z"
+        d="M4 6h16l-6.2 7.4V19l-3.8-1.9v-5.7L4 6z"
       />
     </svg>
   )

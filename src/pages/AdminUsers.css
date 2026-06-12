@@ -453,9 +453,24 @@
   margin-right: 0.5rem;
 }
 
+.actions-menu-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .actions-menu-desktop {
   position: relative;
   display: inline-flex;
+}
+
+.actions-menu-mobile-head {
+  display: none;
+}
+
+.btn-orders-mobile {
+  display: none;
 }
 
 .btn-icon-dots {
@@ -519,8 +534,9 @@
   color: #c53030;
 }
 
-.actions-mobile-inline {
-  display: none;
+.actions-dropdown--mobile-head {
+  right: 0;
+  left: auto;
 }
 
 .user-mobile-head__right,
@@ -714,6 +730,20 @@
     text-align: right;
   }
 
+  .actions-menu-mobile-head {
+    display: inline-flex;
+    margin-bottom: 0.15rem;
+  }
+
+  .users-table .email-cell--empty,
+  .users-table .children-count-cell {
+    display: none;
+  }
+
+  .users-table .children-count-cell--empty {
+    display: none;
+  }
+
   .user-mobile-meta {
     display: inline;
     font-size: 0.68rem;
@@ -748,36 +778,29 @@
 
   /* Действия */
   .users-table .actions-cell {
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: stretch;
     padding-top: 0.75rem;
     gap: 0.5rem;
-    flex-wrap: wrap;
   }
 
   .actions-menu-desktop {
     display: none;
   }
 
-  .actions-mobile-inline {
-    display: inline-flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+  .btn-orders-mobile {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
   }
 
   .users-table .actions-cell:before {
     display: none;
-  }
-
-  .users-table .actions-cell .btn,
-  .users-table .actions-cell .actions-mobile-vk {
-    width: auto;
-    min-width: auto;
-    padding: 0.5rem 1rem;
-    margin-right: 0;
-    font-size: 0.85rem;
-    font-weight: 600;
-    line-height: 1.25;
-    text-decoration: none;
   }
 
   .btn-small {

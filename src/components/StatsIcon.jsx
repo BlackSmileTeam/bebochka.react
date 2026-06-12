@@ -9,7 +9,10 @@ export default function StatsIcon({ className = '', width = 18, height = 18 }) {
       aria-hidden="true"
       focusable="false"
     >
-      <path fill="currentColor" d="M5 9h2v10H5V9zm4-4h2v14H9V5zm4 6h2v8h-2v-8zm4-3h2v11h-2V8z" />
+      <path
+        fill="currentColor"
+        d="M6 20V10h3v10H6zm5-8V20h3V12h-3zm5 4v4h3v-4h-3z"
+      />
     </svg>
   )
 }

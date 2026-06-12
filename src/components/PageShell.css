@@ -167,6 +167,18 @@
   height: 42px;
   min-height: 42px;
   padding: 0;
+  line-height: 0;
+  -webkit-box-align: center;
+  -webkit-box-pack: center;
+}
+
+.page-shell--admin-toolbar .btn-toolbar-icon__icon {
+  display: block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  pointer-events: none;
 }
 
 .page-shell--admin-toolbar .btn-toolbar-icon__label {
