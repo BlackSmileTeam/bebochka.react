@@ -235,6 +235,11 @@ function getOrderItems(o) {
   return o.orderItems || o.OrderItems || []
 }
 
+function getChildOrders(o) {
+  const c = o.childOrders || o.ChildOrders
+  return Array.isArray(c) ? c : []
+}
+
 function getStatusHistory(o) {
   const h = o.statusHistory || o.StatusHistory
   return Array.isArray(h) ? h : []
@@ -561,6 +566,20 @@ function Profile() {
           const id = row.id ?? row.Id
           const newId = updated?.id ?? updated?.Id
           if (id === orderId && newId != null) return { ...row, ...updated }
+          const children = getChildOrders(row)
+          if (children.some((c) => (c.id ?? c.Id) === orderId)) {
+            return {
+              ...row,
+              childOrders: children.map((c) => {
+                const cid = c.id ?? c.Id
+                return cid === orderId && newId != null ? { ...c, ...updated } : c
+              }),
+              ChildOrders: children.map((c) => {
+                const cid = c.id ?? c.Id
+                return cid === orderId && newId != null ? { ...c, ...updated } : c
+              })
+            }
+          }
           return row
         })
       )
@@ -1197,18 +1216,78 @@ function Profile() {
             {orders.map((o) => {
               const oid = o.id ?? o.Id
               const statusText = (o.status || o.Status || '').trim() || '—'
+              const childOrders = getChildOrders(o)
               const items = getOrderItems(o)
+              const displayItems = items.length > 0
+                ? items
+                : childOrders.flatMap((c) => getOrderItems(c))
               const history = getStatusHistory(o)
               const totalAmount = Number(o.totalAmount ?? o.TotalAmount ?? 0)
               const finalAmount = Number(o.finalAmount ?? o.FinalAmount ?? totalAmount)
               const hasDiscount = finalAmount < totalAmount
               const thank = thankYouByOrderId[oid]
               const hasReviewFlag = !!(o.hasCustomerReview ?? o.HasCustomerReview)
-              const showReceiveBtn = statusText === 'Отправлен' && receiveFormOrderId !== oid
-              const isItemsExpanded = expandedItemsOrderIds.has(oid)
+              const showReceiveBtn = statusText === 'Отправлен' && receiveFormOrderId !== oid && childOrders.length === 0
               const isHistoryExpanded = expandedHistoryOrderIds.has(oid)
               const statusColor = getOrderStatusColor(statusText)
               const showPaymentHintBtn = statusText === 'Ожидает оплату'
+              const renderItemsBlock = (orderItems, expandKey, labelPrefix = 'Состав заказа') => {
+                if (!orderItems.length) return null
+                const expanded = expandedItemsOrderIds.has(expandKey)
+                return (
+                  <div className="profile-order-items">
+                    <button
+                      type="button"
+                      className="profile-order-items-toggle"
+                      onClick={() => toggleOrderItems(expandKey)}
+                      aria-expanded={expanded}
+                    >
+                      {expanded ? '▼ Скрыть состав' : `▶ ${labelPrefix} (${orderItems.length})`}
+                    </button>
+                    {expanded && (
+                      <ul className="profile-order-items-list">
+                        {orderItems.map((it) => {
+                          const pid = it.productId ?? it.ProductId
+                          const name = it.productName ?? it.ProductName ?? 'Товар'
+                          const imgRaw = it.imageUrl ?? it.ImageUrl
+                          const quantity = Number(it.quantity ?? it.Quantity ?? 1) || 1
+                          const unitPrice = Number(it.productPrice ?? it.ProductPrice ?? 0) || 0
+                          const lineTotal = unitPrice * quantity
+                          return (
+                            <li key={it.id ?? it.Id} className="profile-order-item-row">
+                              <button
+                                type="button"
+                                className="profile-order-item-thumb"
+                                onClick={() => openProductDetail(pid)}
+                                disabled={detailLoadingId === pid}
+                                title="Открыть карточку товара"
+                              >
+                                <img src={getImageUrl(imgRaw)} alt={name} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/logo.jpg' }} />
+                              </button>
+                              <div className="profile-order-item-text">
+                                <span className="profile-order-item-name">{name}</span>
+                                <span className="profile-order-item-qty">
+                                  {quantity > 1
+                                    ? `${unitPrice.toLocaleString('ru-RU')} ₽ × ${quantity} = ${lineTotal.toLocaleString('ru-RU')} ₽`
+                                    : `${lineTotal.toLocaleString('ru-RU')} ₽`}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                className="profile-order-item-open"
+                                onClick={() => openProductDetail(pid)}
+                                disabled={detailLoadingId === pid}
+                              >
+                                {detailLoadingId === pid ? '…' : 'Смотреть'}
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )
+              }
               return (
                 <li key={oid} className="profile-order-card">
                   <div className="profile-order-head">
@@ -1257,6 +1336,12 @@ function Profile() {
                     <p className="profile-review-note">Спасибо за ваш отзыв по этому заказу.</p>
                   )}
 
+                  {statusText === 'Отправлено частично' && childOrders.length > 0 && (
+                    <p className="profile-order-partial-hint">
+                      Часть уже в пути, остальное собираем. «Получен» отмечайте у каждой отправки ниже.
+                    </p>
+                  )}
+
                   {history.length > 0 && (
                     <div className="profile-status-history">
                       <button
@@ -1287,58 +1372,55 @@ function Profile() {
                     </div>
                   )}
 
-                  {items.length > 0 && (
-                    <div className="profile-order-items">
-                      <button
-                        type="button"
-                        className="profile-order-items-toggle"
-                        onClick={() => toggleOrderItems(oid)}
-                        aria-expanded={isItemsExpanded}
-                      >
-                        {isItemsExpanded ? '▼ Скрыть состав заказа' : `▶ Состав заказа (${items.length})`}
-                      </button>
-                      {isItemsExpanded && (
-                        <ul className="profile-order-items-list">
-                          {items.map((it) => {
-                            const pid = it.productId ?? it.ProductId
-                            const name = it.productName ?? it.ProductName ?? 'Товар'
-                            const imgRaw = it.imageUrl ?? it.ImageUrl
-                            const quantity = Number(it.quantity ?? it.Quantity ?? 1) || 1
-                            const unitPrice = Number(it.productPrice ?? it.ProductPrice ?? 0) || 0
-                            const lineTotal = unitPrice * quantity
-                            return (
-                              <li key={it.id ?? it.Id} className="profile-order-item-row">
+                  {renderItemsBlock(displayItems, oid, items.length > 0 ? 'Состав заказа' : 'Все позиции')}
+
+                  {childOrders.length > 0 && (
+                    <ul className="profile-order-suborders">
+                      {childOrders.map((child) => {
+                        const cid = child.id ?? child.Id
+                        const cStatus = (child.status || child.Status || '').trim() || '—'
+                        const cItems = getOrderItems(child)
+                        const cFinal = Number(child.finalAmount ?? child.FinalAmount ?? child.totalAmount ?? child.TotalAmount ?? 0)
+                        const cThank = thankYouByOrderId[cid]
+                        const cColor = getOrderStatusColor(cStatus)
+                        const cShowReceive = cStatus === 'Отправлен' && receiveFormOrderId !== cid
+                        return (
+                          <li key={cid} className="profile-order-suborder">
+                            <div className="profile-order-suborder-head">
+                              <strong>{child.orderNumber || child.OrderNumber}</strong>
+                              <span className="profile-order-suborder-amount">
+                                {cFinal.toLocaleString('ru-RU')}{'\u00a0'}{'\u20bd'}
+                              </span>
+                            </div>
+                            <div className="profile-order-meta">
+                              <span
+                                className="profile-order-status-badge"
+                                style={{ borderColor: cColor, color: cColor }}
+                              >
+                                {cStatus}
+                              </span>
+                            </div>
+                            {cThank && (
+                              <div className="profile-thank-you" role="status">
+                                <p>Эта часть отмечена как полученная. Спасибо!</p>
+                              </div>
+                            )}
+                            {renderItemsBlock(cItems, cid, 'Состав отправки')}
+                            {cShowReceive && (
+                              <div className="profile-receive-actions">
                                 <button
                                   type="button"
-                                  className="profile-order-item-thumb"
-                                  onClick={() => openProductDetail(pid)}
-                                  disabled={detailLoadingId === pid}
-                                  title="Открыть карточку товара"
+                                  className="profile-btn-received"
+                                  onClick={() => startReceiveFlow(cid)}
                                 >
-                                  <img src={getImageUrl(imgRaw)} alt={name} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/logo.jpg' }} />
+                                  Получен
                                 </button>
-                                <div className="profile-order-item-text">
-                                  <span className="profile-order-item-name">{name}</span>
-                                  <span className="profile-order-item-qty">
-                                    {quantity > 1
-                                      ? `${unitPrice.toLocaleString('ru-RU')} ₽ × ${quantity} = ${lineTotal.toLocaleString('ru-RU')} ₽`
-                                      : `${lineTotal.toLocaleString('ru-RU')} ₽`}
-                                  </span>
-                                </div>
-                                <button
-                                  type="button"
-                                  className="profile-order-item-open"
-                                  onClick={() => openProductDetail(pid)}
-                                  disabled={detailLoadingId === pid}
-                                >
-                                  {detailLoadingId === pid ? '…' : 'Смотреть'}
-                                </button>
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      )}
-                    </div>
+                              </div>
+                            )}
+                          </li>
+                        )
+                      })}
+                    </ul>
                   )}
 
                   {showPaymentHintBtn && (

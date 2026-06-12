@@ -2157,9 +2157,9 @@ export const api = {
    * @param {string} status - New status
    * @returns {Promise<Object>} Response
    */
-  async updateOrderStatus(id, status) {
+  async updateOrderStatus(id, status, confirmSplit = false) {
     try {
-      const response = await apiClient.put(`/orders/${id}/status`, { status })
+      const response = await apiClient.put(`/orders/${id}/status`, { status, confirmSplit })
       return response.data
     } catch (error) {
       console.error('[API] Error updating order status:', error)
