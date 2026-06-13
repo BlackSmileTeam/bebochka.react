@@ -528,6 +528,10 @@ function AdminOrders() {
     return parentId == null || parentId === ''
   }
   const isItemAddedToParcel = (item) => !!(item.addedToParcel ?? item.AddedToParcel)
+  const isItemShownInParcel = (order, item) => {
+    if (getOrderStatus(order) === 'Отправлен') return true
+    return isItemAddedToParcel(item)
+  }
   const hasUnmarkedParcelItems = (order) => getOrderItems(order).some(item => !isItemAddedToParcel(item))
   const hasMarkedParcelItems = (order) => getOrderItems(order).some(item => isItemAddedToParcel(item))
   const shouldOfferSplitOrder = (order, oldStatus, nextStatus) => (
@@ -1352,7 +1356,7 @@ function AdminOrders() {
                                                 const itemId = item.id ?? item.Id
                                                 const imgUrl = getItemImageUrl(item)
                                                 const name = item.productName ?? item.ProductName ?? '—'
-                                                const addedToParcel = isItemAddedToParcel(item)
+                                                const addedToParcel = isItemShownInParcel(child, item)
                                                 return (
                                                   <div
                                                     key={itemId}
@@ -1401,7 +1405,7 @@ function AdminOrders() {
                                       const size = item.size ?? item.Size ?? ''
                                       const brand = item.brand ?? item.Brand ?? ''
                                       const color = item.color ?? item.Color ?? ''
-                                      const addedToParcel = isItemAddedToParcel(item)
+                                      const addedToParcel = isItemShownInParcel(order, item)
                                       const key = `${orderId}-${itemId}`
                                       const isDeleting = deletingItemKey === key
                                       const isTogglingInParcel = inParcelTogglingKey === key
@@ -1716,7 +1720,7 @@ function AdminOrders() {
                     const size = item.size ?? item.Size ?? ''
                     const brand = item.brand ?? item.Brand ?? ''
                     const color = item.color ?? item.Color ?? ''
-                    const addedToParcel = isItemAddedToParcel(item)
+                    const addedToParcel = isItemShownInParcel(orderDetailsOrder, item)
                     const key = `${orderDetailsOrderId}-${itemId}`
                     const isDeleting = deletingItemKey === key
                     const isTogglingInParcel = inParcelTogglingKey === key
