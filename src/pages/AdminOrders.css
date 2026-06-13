@@ -999,6 +999,10 @@
   padding: 1rem;
 }
 
+.modal-overlay--status-split {
+  z-index: 10150;
+}
+
 .modal-content {
   background: white;
   border-radius: 12px;

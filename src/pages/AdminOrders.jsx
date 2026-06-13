@@ -57,7 +57,7 @@ const ORDER_STATUSES_ALL = [
 ]
 
 /** Статусы, доступные администратору в выпадающих списках и массовых действиях. */
-const ORDER_STATUSES_ADMIN = ORDER_STATUSES_ALL.filter(s => s !== 'Получен')
+const ORDER_STATUSES_ADMIN = ORDER_STATUSES_ALL.filter(s => s !== 'Получен' && s !== 'Отправлено частично')
 
 function getAdminStatusSelectOptions(currentStatus) {
   if (currentStatus === 'Получен') return ['Получен']
@@ -522,7 +522,7 @@ function AdminOrders() {
   const hasMarkedParcelItems = (order) => getOrderItems(order).some(item => isItemAddedToParcel(item))
   const shouldOfferSplitOrder = (order, oldStatus, nextStatus) => (
     !getParentOrderId(order) &&
-    oldStatus === 'В сборке' &&
+    (oldStatus === 'В сборке' || oldStatus === 'На доставку') &&
     nextStatus === 'Отправлен' &&
     hasMarkedParcelItems(order) &&
     hasUnmarkedParcelItems(order)
@@ -545,8 +545,8 @@ function AdminOrders() {
   }
   const shouldWarnAboutUnmarkedParcelItems = (order, oldStatus, nextStatus) => (
     !shouldOfferSplitOrder(order, oldStatus, nextStatus) &&
-    oldStatus === 'В сборке' &&
-    nextStatus !== 'В сборке' &&
+    (oldStatus === 'В сборке' || oldStatus === 'На доставку') &&
+    nextStatus === 'Отправлен' &&
     !isMoveToPastStatus(oldStatus, nextStatus) &&
     hasUnmarkedParcelItems(order)
   )
@@ -1399,22 +1399,6 @@ function AdminOrders() {
         </div>
       )}
 
-      {statusChangeWarning && (
-        <div className="modal-overlay" onClick={() => setStatusChangeWarning(null)}>
-          <div className="modal-content status-warning-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{statusChangeWarning.type === 'split' ? 'Частичная отправка' : 'Проверка перед сменой статуса'}</h3>
-            <p>{statusChangeWarning.text}</p>
-            <div className="modal-actions status-warning-modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setStatusChangeWarning(null)}>
-                Отмена
-              </button>
-              <button type="button" className="btn btn-primary" onClick={handleConfirmStatusWarning}>
-                {statusChangeWarning.type === 'split' ? 'Да, разбить' : 'Перевести'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Модальное окно распродажи */}
       {saleModalOpen && (
@@ -1736,6 +1720,22 @@ function AdminOrders() {
         onCancel={() => setConfirmDialog(null)}
         onConfirm={handleConfirmDialog}
       />
+      {statusChangeWarning && (
+        <div className="modal-overlay modal-overlay--status-split" onClick={() => setStatusChangeWarning(null)}>
+          <div className="modal-content status-warning-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{statusChangeWarning.type === 'split' ? 'Частичная отправка' : 'Проверка перед сменой статуса'}</h3>
+            <p>{statusChangeWarning.text}</p>
+            <div className="modal-actions status-warning-modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setStatusChangeWarning(null)}>
+                Отмена
+              </button>
+              <button type="button" className="btn btn-primary" onClick={handleConfirmStatusWarning}>
+                {statusChangeWarning.type === 'split' ? 'Да, разбить' : 'Перевести'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </PageShell>
   )
