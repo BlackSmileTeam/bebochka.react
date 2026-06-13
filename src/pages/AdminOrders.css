@@ -586,6 +586,56 @@
   background: #f7fafc !important;
 }
 
+.order-children-td {
+  padding: 0.75rem 1rem 0.75rem 3rem !important;
+  background: #fafbfd;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.order-child-orders-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.order-child-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.order-child-order-block {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.6rem 0.75rem;
+}
+
+.order-child-order-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.order-child-order-sum {
+  margin-left: auto;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.order-child-order-items {
+  margin-top: 0.6rem;
+}
+
+.order-child-item-parcel-mark {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #38a169;
+  white-space: nowrap;
+}
+
 .order-items-td {
   padding: 0.75rem 1rem 0.75rem 3rem !important;
   border-bottom: 1px solid #e2e8f0;

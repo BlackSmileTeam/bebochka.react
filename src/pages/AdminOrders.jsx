@@ -197,6 +197,7 @@ function AdminOrders() {
     })
     const statusMap = { 'В пути': 'На доставку', 'Доставлен': 'Отправлен' }
     ordersForGrouping.forEach(order => {
+      if (order.parentOrderId ?? order.ParentOrderId) return
       let status = order.status || order.Status || ORDER_STATUSES_ALL[0]
       status = statusMap[status] || status
       if (grouped[status]) {
@@ -219,6 +220,7 @@ function AdminOrders() {
   const groupedByClient = useMemo(() => {
     const map = {}
     ordersForGrouping.forEach(order => {
+      if (order.parentOrderId ?? order.ParentOrderId) return
       const key = getCustomerKey(order)
       if (!map[key]) map[key] = []
       map[key].push(order)
@@ -517,6 +519,14 @@ function AdminOrders() {
     return s === 'Получен' || s === 'Отменен' || s === 'Отправлено частично'
   }
   const getParentOrderId = (order) => order.parentOrderId ?? order.ParentOrderId ?? null
+  const getChildOrders = (order) => {
+    const list = order?.childOrders ?? order?.ChildOrders
+    return Array.isArray(list) ? list : []
+  }
+  const isRootOrder = (order) => {
+    const parentId = getParentOrderId(order)
+    return parentId == null || parentId === ''
+  }
   const isItemAddedToParcel = (item) => !!(item.addedToParcel ?? item.AddedToParcel)
   const hasUnmarkedParcelItems = (order) => getOrderItems(order).some(item => !isItemAddedToParcel(item))
   const hasMarkedParcelItems = (order) => getOrderItems(order).some(item => isItemAddedToParcel(item))
@@ -537,6 +547,7 @@ function AdminOrders() {
   const shouldHighlightMissingParcel = (order) => {
     const status = getOrderStatus(order)
     if (status === 'Отменен') return false
+    if (['Отправлен', 'Получен', 'На доставку', 'Отправлено частично'].includes(status)) return false
     const assemblyIdx = ORDER_STATUS_INDEX['В сборке']
     const curIdx = ORDER_STATUS_INDEX[status]
     if (assemblyIdx == null || curIdx == null) return false
@@ -1075,15 +1086,6 @@ function AdminOrders() {
                 style={{ borderLeftColor: groupColor }}
               >
                 <div className="group-header-left">
-                  <input
-                    type="checkbox"
-                    checked={allGroupSelected}
-                    ref={input => {
-                      if (input) input.indeterminate = someGroupSelected && !allGroupSelected
-                    }}
-                    onChange={() => toggleGroupSelection(groupKey)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
                   <h2
                     onClick={() => toggleGroupExpansion(groupKey)}
                     style={{ cursor: 'pointer', color: groupColor }}
@@ -1134,13 +1136,14 @@ function AdminOrders() {
                       </tr>
                     </thead>
                     <tbody>
-                      {sortOrdersInGroup(statusOrders).map(order => {
+                      {sortOrdersInGroup(statusOrders.filter(isRootOrder)).map(order => {
                         const orderId = getOrderId(order)
                         const isSelected = selectedOrders.has(orderId)
                         const isUpdating = updatingStatuses.has(orderId)
                         const currentStatus = getOrderStatus(order)
                         const statusLocked = isOrderStatusLocked(order)
                         const items = getOrderItems(order)
+                        const childOrders = getChildOrders(order)
                         const isOrderExpanded = expandedOrderIds.has(orderId)
                         const parcelActionsAllowed = currentStatus === 'В сборке'
                         const highlightMissingParcel = shouldHighlightMissingParcel(order)
@@ -1155,12 +1158,12 @@ function AdminOrders() {
                               onClick={(e) => handleOrderRowClick(e, orderId)}
                             >
                               <td className="expand-column">
-                                {items.length > 0 && (
+                                {(items.length > 0 || childOrders.length > 0) && (
                                   <button
                                     type="button"
                                     className="btn-expand-items"
                                     onClick={(e) => { e.stopPropagation(); toggleOrderExpanded(orderId) }}
-                                    title={isOrderExpanded ? 'Свернуть товары' : 'Развернуть товары'}
+                                    title={isOrderExpanded ? 'Свернуть' : 'Развернуть состав и части заказа'}
                                   >
                                     {isOrderExpanded ? '▼' : '▶'}
                                   </button>
@@ -1306,6 +1309,87 @@ function AdminOrders() {
                                 </div>
                               </td>
                             </tr>
+                            {isOrderExpanded && childOrders.length > 0 && (
+                              <tr key={`${orderId}-children`} className="order-children-tr">
+                                <td colSpan={8} className="order-children-td">
+                                  <div className="order-child-orders-list">
+                                    <p className="order-child-orders-title">Части заказа</p>
+                                    {childOrders.map((child) => {
+                                      const childId = getOrderId(child)
+                                      const childStatus = getOrderStatus(child)
+                                      const childItems = getOrderItems(child)
+                                      const childExpanded = expandedOrderIds.has(childId)
+                                      return (
+                                        <div key={childId} className="order-child-order-block">
+                                          <div className="order-child-order-head">
+                                            <button
+                                              type="button"
+                                              className="btn-expand-items"
+                                              onClick={(e) => { e.stopPropagation(); toggleOrderExpanded(childId) }}
+                                              title={childExpanded ? 'Свернуть состав' : 'Развернуть состав'}
+                                            >
+                                              {childExpanded ? '▼' : '▶'}
+                                            </button>
+                                            <strong>{getOrderNumber(child)}</strong>
+                                            <span
+                                              className="status-badge"
+                                              style={{ backgroundColor: ORDER_STATUS_COLORS[childStatus] || '#718096' }}
+                                            >
+                                              {childStatus}
+                                            </span>
+                                            <span className="order-child-order-sum">{formatPrice(getFinalAmount(child))}</span>
+                                            <button
+                                              type="button"
+                                              className="btn btn-secondary btn-sm"
+                                              onClick={(e) => { e.stopPropagation(); setOrderDetailsOrderId(childId) }}
+                                            >
+                                              Подробнее
+                                            </button>
+                                          </div>
+                                          {childExpanded && childItems.length > 0 && (
+                                            <div className="order-items-list order-child-order-items">
+                                              {childItems.map((item) => {
+                                                const itemId = item.id ?? item.Id
+                                                const imgUrl = getItemImageUrl(item)
+                                                const name = item.productName ?? item.ProductName ?? '—'
+                                                const addedToParcel = isItemAddedToParcel(item)
+                                                return (
+                                                  <div
+                                                    key={itemId}
+                                                    className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}`}
+                                                  >
+                                                    {imgUrl ? (
+                                                      <div
+                                                        className="order-item-photo"
+                                                        onClick={() => openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)}
+                                                        title="Открыть фото"
+                                                      >
+                                                        <img src={imgUrl} alt={name} loading="lazy" decoding="async" />
+                                                      </div>
+                                                    ) : (
+                                                      <div className="order-item-photo order-item-photo-placeholder">фото</div>
+                                                    )}
+                                                    <div className="order-item-info">
+                                                      <strong>{name}</strong>
+                                                    </div>
+                                                    {addedToParcel && (
+                                                      <span className="order-child-item-parcel-mark">✓ В посылке</span>
+                                                    )}
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
                             {isOrderExpanded && items.length > 0 && (
                               <tr key={`${orderId}-items`} className="order-items-tr">
                                 <td colSpan={8} className="order-items-td">
