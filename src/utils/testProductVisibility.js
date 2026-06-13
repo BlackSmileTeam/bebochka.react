@@ -12,7 +12,7 @@ export function isAdminViewer() {
   }
 }
 
-/** Тестовые товары — только для админов (каталог, welcome, карточка). */
+/** Тестовые товары — только для админов (каталог, карточка). Welcome — всегда без тестовых. */
 export function isProductVisibleToViewer(product, { requireStock = false } = {}) {
   if (!isAdminViewer() && isTestProduct(product)) return false
   if (requireStock && (product.quantityInStock ?? product.QuantityInStock ?? 0) <= 0) {

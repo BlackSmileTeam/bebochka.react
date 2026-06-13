@@ -1800,7 +1800,7 @@
   flex-wrap: wrap;
 }
 
-.client-link-telegram--icon {
+.client-link-external--icon {
   font-size: 0.85rem;
   line-height: 1;
   text-decoration: none;
@@ -1809,7 +1809,7 @@
   border-radius: 4px;
 }
 
-.client-link-telegram--icon:hover {
+.client-link-external--icon:hover {
   background: #ebf8ff;
   color: #2c5282;
 }

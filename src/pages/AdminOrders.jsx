@@ -558,10 +558,7 @@ function AdminOrders() {
     if (!Number.isFinite(n) || n <= 0) return null
     return n
   }
-  const getTelegramUserId = (order) => order.telegramUserId ?? order.TelegramUserId
-  const getTelegramUsername = (order) => order.telegramUsername || order.TelegramUsername || order.customerName || order.CustomerName
-  // Ссылка на профиль/чат: из API (CustomerProfileLink) или собираем из telegramUserId
-  const getCustomerProfileLink = (order) => order.customerProfileLink || order.CustomerProfileLink || (getTelegramUserId(order) != null && Number(getTelegramUserId(order)) > 0 ? `tg://openmessage?user_id=${getTelegramUserId(order)}` : null)
+  const getCustomerProfileLink = (order) => order.customerProfileLink || order.CustomerProfileLink || null
   const hasClientLink = (order) => !!getCustomerProfileLink(order)
   const getCustomerName = (order) => order.customerName || order.CustomerName || '-'
   const getCustomerPhone = (order) => order.customerPhone || order.CustomerPhone || '-'
@@ -712,7 +709,7 @@ function AdminOrders() {
   const handleDeleteOrderItem = async (orderId, itemId) => {
     setConfirmDialog({
       title: 'Подтвердите действие',
-      message: 'Удалить товар из заказа? Комментарий пользователя в Telegram будет удалён, товар перейдёт следующему в очереди.',
+      message: 'Удалить товар из заказа? Остаток восстановится, товар может перейти следующему в очереди на сайте.',
       confirmLabel: 'Удалить',
       variant: 'danger',
       action: 'deleteOrderItem',
@@ -1196,10 +1193,10 @@ function AdminOrders() {
                                             href={getCustomerProfileLink(order)}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="client-link-telegram client-link-telegram--icon"
+                                            className="client-link-external client-link-external--icon"
                                             onClick={(e) => e.stopPropagation()}
-                                            title="Открыть профиль/чат в Telegram"
-                                            aria-label="Telegram"
+                                            title="Открыть профиль клиента"
+                                            aria-label="Профиль клиента"
                                           >
                                             ↗
                                           </a>
@@ -1210,9 +1207,9 @@ function AdminOrders() {
                                         href={getCustomerProfileLink(order)}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="client-link-telegram"
+                                        className="client-link-external"
                                         onClick={(e) => e.stopPropagation()}
-                                        title="Открыть профиль/чат в Telegram"
+                                        title="Открыть профиль клиента"
                                       >
                                         {getCustomerName(order)}
                                       </a>
@@ -1564,16 +1561,16 @@ function AdminOrders() {
                           href={getCustomerProfileLink(order)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="client-link-telegram client-link-telegram--icon"
-                          title="Открыть профиль/чат в Telegram"
-                          aria-label="Telegram"
+                          className="client-link-external client-link-external--icon"
+                          title="Открыть профиль клиента"
+                          aria-label="Профиль клиента"
                         >
                           ↗
                         </a>
                       )}
                     </span>
                   ) : hasClientLink(order) ? (
-                    <a href={getCustomerProfileLink(order)} target="_blank" rel="noopener noreferrer" className="client-link-telegram">{getCustomerName(order)}</a>
+                    <a href={getCustomerProfileLink(order)} target="_blank" rel="noopener noreferrer" className="client-link-external">{getCustomerName(order)}</a>
                   ) : (
                     getCustomerName(order)
                   )}

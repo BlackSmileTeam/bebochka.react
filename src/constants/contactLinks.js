@@ -1,5 +1,7 @@
 /** Глобальные ссылки на каналы связи (сайт, оплата, футер). */
 export const CONTACT_TELEGRAM_URL = 'https://t.me/mamka_vseya_russi'
+export const CONTACT_TELEGRAM_CHANNEL_URL =
+  import.meta.env.VITE_TELEGRAM_CHANNEL_URL || 'https://t.me/bebochkasekond'
 /** Сообщество / связь ВКонтакте — менять только здесь (или VITE_VK_URL в .env). */
 export const CONTACT_VK_URL = (
   import.meta.env.VITE_VK_URL || 'https://vk.com/bebochkaclub'
@@ -8,8 +10,6 @@ export const CONTACT_VK_URL = (
 export const CONTACT_VK_PERSONAL_URL = (
   import.meta.env.VITE_VK_PERSONAL_URL || 'https://vk.com/i7911729911'
 ).trim()
-export const CONTACT_TELEGRAM_CHANNEL_URL =
-  import.meta.env.VITE_TELEGRAM_CHANNEL_URL || 'https://t.me/bebochkasekond'
 export const CONTACT_VK_GROUP_URL = (
   import.meta.env.VITE_VK_GROUP_URL || CONTACT_VK_URL
 ).trim()
@@ -30,5 +30,5 @@ export const CONTACT_AVITO_LABEL = 'Avito'
 export const CONTACT_CHANNELS = [
   { url: CONTACT_TELEGRAM_URL, label: CONTACT_TELEGRAM_LABEL },
   { url: CONTACT_VK_PERSONAL_URL, label: CONTACT_VK_LABEL },
-  { url: CONTACT_AVITO_URL, label: CONTACT_AVITO_LABEL }
+  { url: CONTACT_AVITO_URL, label: CONTACT_AVITO_LABEL },
 ]

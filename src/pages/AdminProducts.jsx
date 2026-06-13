@@ -12,7 +12,6 @@ import ProductPriceDisplay from '../components/ProductPriceDisplay.jsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.jsx'
 import { formatCondition } from '../utils/formatCondition.js'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl.js'
-import { TELEGRAM_UI_ENABLED } from '../constants/featureFlags.js'
 import {
   readAdminProductsFilters,
   saveAdminProductsFilters,
@@ -60,30 +59,15 @@ function AdminProducts() {
   const [colors, setColors] = useState([])
   const [showFiltersPopup, setShowFiltersPopup] = useState(false) // Popup с фильтрами
   const [selectedProductIds, setSelectedProductIds] = useState(new Set())
-  const [sendingToChannel, setSendingToChannel] = useState(false)
-  const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 })
-  const [showEmojiSettings, setShowEmojiSettings] = useState(false)
-  const [channelEmojiId, setChannelEmojiId] = useState(null)
   const [toast, setToast] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [showDiscountForm, setShowDiscountForm] = useState(false)
   const [discountPercentInput, setDiscountPercentInput] = useState('')
   const [discountBusy, setDiscountBusy] = useState(false)
-  const hasCheckedOngoingOperation = useRef(false)
   
   // Фильтры (сохраняются в localStorage)
   const [filters, setFilters] = useState(() => readAdminProductsFilters())
-
-  const CHANNEL_EMOJIS = useMemo(() => [
-    { id: '5411324292317085002', label: 'Коричневая звёздочка', image: '/channel-emoji-1.svg' },
-    { id: '5408952177584534542', label: 'Белая звёздочка', image: '/channel-emoji-2.svg' },
-    { id: '5411236430171107971', label: 'Коричневое сердечко', image: '/channel-emoji-3.svg' },
-    { id: '5411234342817002517', label: 'Бежевое сердечко', image: '/channel-emoji-4.svg' },
-    { id: '5408859831492704655', label: 'Розовый бантик', image: '/channel-emoji-5.svg' },
-    { id: '5411111760155408332', label: 'Голубой бантик', image: '/channel-emoji-6.svg' },
-    { id: '5375191050283414804', label: 'Жемчужинка', image: '/channel-emoji-7.svg' }
-  ], [])
 
   useEffect(() => {
     if (selectedProductIds.size === 0) {
@@ -99,160 +83,8 @@ function AdminProducts() {
   useEffect(() => {
     loadProducts()
     loadColors()
-    // Load preferred channel emoji for current admin
-    ;(async () => {
-      try {
-        const emojiId = await api.getMyChannelEmoji()
-        if (emojiId) setChannelEmojiId(emojiId)
-      } catch (e) {
-        console.error('Failed to load channel emoji preference', e)
-      }
-    })()
   }, [])
 
-  // Check for ongoing send operation after products are loaded
-  useEffect(() => {
-    if (products.length > 0 && !hasCheckedOngoingOperation.current) {
-      hasCheckedOngoingOperation.current = true
-      checkOngoingSendOperation()
-    }
-  }, [products.length])
-
-  // Check for ongoing send operation stored in localStorage
-  const checkOngoingSendOperation = async () => {
-    try {
-      const savedOperation = localStorage.getItem('sendingToChannel')
-      if (savedOperation) {
-        const operation = JSON.parse(savedOperation)
-        const { productIds, startTime, total, current = 0 } = operation
-        
-        // Check if operation is recent (within last 30 minutes)
-        const operationTime = new Date(startTime)
-        const now = new Date()
-        const minutesSinceStart = (now - operationTime) / (1000 * 60)
-        
-        if (minutesSinceStart < 30) {
-          // Use already loaded products
-          const data = products
-          
-          // Use saved current progress, not count of published products
-          // because products might have been published earlier
-          const savedCurrent = current || 0
-          
-          // If not all products are sent, restore sending state
-          if (savedCurrent < total) {
-            setSendingToChannel(true)
-            setSendProgress({ current: savedCurrent, total })
-            setSelectedProductIds(new Set(productIds))
-            
-            // Continue sending remaining products from saved progress
-            continueSendingProducts(productIds, savedCurrent, total, data)
-          } else {
-            // All products are sent, clear saved operation
-            localStorage.removeItem('sendingToChannel')
-            setToast({ 
-              message: `Все товары успешно отправлены в канал! (${total} товар(ов))`, 
-              type: 'success' 
-            })
-          }
-        } else {
-          // Operation is too old, clear it
-          localStorage.removeItem('sendingToChannel')
-        }
-      }
-    } catch (err) {
-      console.error('Error checking ongoing send operation:', err)
-      localStorage.removeItem('sendingToChannel')
-    }
-  }
-
-  const handleSelectChannelEmoji = async (emojiId) => {
-    try {
-      const savedId = await api.setMyChannelEmoji(emojiId)
-      setChannelEmojiId(savedId)
-      setShowEmojiSettings(false)
-      setToast({
-        message: 'Эмоджи для канала сохранён',
-        type: 'success'
-      })
-    } catch (e) {
-      console.error('Failed to save channel emoji', e)
-      setToast({
-        message: 'Не удалось сохранить эмоджи для канала',
-        type: 'error'
-      })
-    }
-  }
-
-  // Continue sending products that weren't sent yet
-  const continueSendingProducts = async (productIds, startIndex, total, allProducts) => {
-    // Find remaining products that haven't been published yet
-    const remainingProductIds = allProducts
-      .filter(p => productIds.includes(p.id) && !p.publishedAt)
-      .map(p => p.id)
-    
-    if (remainingProductIds.length === 0) {
-      setSendingToChannel(false)
-      setSendProgress({ current: 0, total: 0 })
-      localStorage.removeItem('sendingToChannel')
-      setSelectedProductIds(new Set())
-      return
-    }
-    
-    // Send remaining products using new endpoint - backend handles everything
-    try {
-      const result = await api.sendProductsToChannel(remainingProductIds, channelEmojiId || undefined)
-      console.log('[ContinueSendToChannel] API response:', result)
-      
-      // Update progress
-      const newSuccessCount = startIndex + result.successCount
-      setSendProgress({ current: newSuccessCount, total })
-      
-      // Update localStorage
-      const savedOperation = localStorage.getItem('sendingToChannel')
-      if (savedOperation) {
-        const operationInfo = JSON.parse(savedOperation)
-        operationInfo.current = newSuccessCount
-        localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
-      }
-      
-      // Reload products to update status (PublishedAt is updated on backend)
-      await loadProducts()
-      
-      // Clear saved operation
-      localStorage.removeItem('sendingToChannel')
-      setSendingToChannel(false)
-      setSendProgress({ current: 0, total: 0 })
-      setSelectedProductIds(new Set())
-      
-      if (result.successCount > 0 && result.failCount === 0) {
-        setToast({ 
-          message: `Доставлено в канал: ${newSuccessCount} товар(ов)`, 
-          type: 'success' 
-        })
-      } else if (result.successCount > 0 && result.failCount > 0) {
-        setToast({ 
-          message: `Доставлено в канал: ${newSuccessCount}, Ошибок: ${result.failCount}`, 
-          type: 'warning' 
-        })
-      } else {
-        setToast({ 
-          message: 'Не удалось отправить сообщения в канал', 
-          type: 'error' 
-        })
-      }
-    } catch (err) {
-      console.error('Error continuing send to channel:', err)
-      setSendingToChannel(false)
-      setSendProgress({ current: 0, total: 0 })
-      localStorage.removeItem('sendingToChannel')
-      setToast({ 
-        message: 'Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'), 
-        type: 'error' 
-      })
-    }
-  }
-  
   useEffect(() => {
     // Применяем фильтры при изменении товаров или фильтров
     applyFilters()
@@ -763,126 +595,6 @@ function AdminProducts() {
     }
   }
 
-  const handleSendToChannel = async () => {
-    if (selectedProductIds.size === 0) {
-      setToast({ message: 'Выберите хотя бы один товар для отправки в канал', type: 'warning' })
-      return
-    }
-
-    // Get product IDs to send
-    const productIds = Array.from(selectedProductIds)
-    const total = productIds.length
-
-    // Save operation info to localStorage for recovery after page reload
-    const operationInfo = {
-      productIds,
-      startTime: new Date().toISOString(),
-      total,
-      current: 0 // Track actual number of successfully sent products
-    }
-    localStorage.setItem('sendingToChannel', JSON.stringify(operationInfo))
-
-    // Send products to channel - backend handles everything in parallel
-    // We'll poll for status updates to show real-time progress
-    let pollInterval = null
-    try {
-      setSendingToChannel(true)
-      setSendProgress({ current: 0, total })
-      
-      // Start sending products in parallel (non-blocking)
-      const sendPromise = api.sendProductsToChannel(productIds, channelEmojiId || undefined)
-      
-      // Poll for status updates while sending
-      pollInterval = setInterval(async () => {
-        try {
-          const status = await api.getSendStatus(productIds)
-          setSendProgress({ current: status.publishedCount, total: status.totalCount })
-          
-          // Update localStorage with current progress
-          const updatedOperation = {
-            ...operationInfo,
-            current: status.publishedCount
-          }
-          localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
-          
-          // If all products are published, stop polling
-          if (status.publishedCount >= status.totalCount) {
-            if (pollInterval) {
-              clearInterval(pollInterval)
-              pollInterval = null
-            }
-          }
-        } catch (err) {
-          console.error('[SendToChannel] Error polling status:', err)
-        }
-      }, 500) // Poll every 500ms for real-time updates
-      
-      // Wait for all products to be sent
-      const result = await sendPromise
-      console.log('[SendToChannel] API response:', result)
-      
-      // Clear polling interval
-      if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-      }
-      
-      // Get final status
-      const finalStatus = await api.getSendStatus(productIds)
-      setSendProgress({ current: finalStatus.publishedCount, total: finalStatus.totalCount })
-      
-      // Update localStorage with final status
-      const updatedOperation = {
-        ...operationInfo,
-        current: finalStatus.publishedCount
-      }
-      localStorage.setItem('sendingToChannel', JSON.stringify(updatedOperation))
-
-      // Reload products to update status (PublishedAt is updated on backend)
-      await loadProducts()
-
-      // Clear saved operation
-      localStorage.removeItem('sendingToChannel')
-
-      if (result.successCount > 0 && result.failCount === 0) {
-        setToast({ 
-          message: `Доставлено в канал: ${result.successCount} товар(ов)`, 
-          type: 'success' 
-        })
-        setSelectedProductIds(new Set())
-      } else if (result.successCount > 0 && result.failCount > 0) {
-        setToast({ 
-          message: `Доставлено в канал: ${result.successCount}, Ошибок: ${result.failCount}`, 
-          type: 'warning' 
-        })
-      } else {
-        setToast({ 
-          message: 'Не удалось отправить сообщения в канал', 
-          type: 'error' 
-        })
-      }
-    } catch (err) {
-      console.error('Error sending products to channel:', err)
-      // Clear polling interval on error
-      if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-      }
-      // Don't clear localStorage on error - allow recovery
-      setToast({ 
-        message: 'Ошибка при отправке в канал: ' + (err.message || 'Неизвестная ошибка'), 
-        type: 'error' 
-      })
-    } finally {
-      // Ensure interval is cleared
-      if (pollInterval) {
-        clearInterval(pollInterval)
-      }
-      setSendingToChannel(false)
-      setSendProgress({ current: 0, total: 0 })
-    }
-  }
-
   if (loading) {
     return (
       <PageShell className="page-shell--no-x-pad page-shell--admin-toolbar page-shell--admin-products" title="Управление товарами">
@@ -898,7 +610,7 @@ function AdminProducts() {
       className="page-shell--no-x-pad page-shell--admin-toolbar page-shell--admin-products"
       title="Управление товарами"
       actions={(
-        <div className={`admin-page-header-actions${selectedProductIds.size > 0 ? ' admin-page-header-actions--with-send' : ''}`}>
+        <div className="admin-page-header-actions">
           <div className="admin-page-toolbar">
             {selectedProductIds.size > 0 && (
               <div className="admin-discount-toolbar">
@@ -990,64 +702,6 @@ function AdminProducts() {
               <span className="btn-toolbar-icon__label">Добавить</span>
             </button>
           </div>
-          {TELEGRAM_UI_ENABLED && selectedProductIds.size > 0 && (
-            <div className="send-channel-wrapper">
-              <div className="send-channel-group">
-                <button 
-                  className="btn btn-secondary btn-send-channel" 
-                  onClick={handleSendToChannel}
-                  disabled={sendingToChannel}
-                  title={`Отправить ${selectedProductIds.size} товар(ов) в канал`}
-                >
-                  {sendingToChannel 
-                    ? `📢 ${sendProgress.current}/${sendProgress.total}` 
-                    : `📢 Отправить в канал (${selectedProductIds.size})`}
-                </button>
-                <div className="emoji-settings-anchor">
-                  <button
-                    type="button"
-                    className={`btn btn-icon btn-emoji-settings ${showEmojiSettings ? 'active' : ''}`}
-                    onClick={() => setShowEmojiSettings(!showEmojiSettings)}
-                    title="Выбрать эмоджи для канала"
-                  >
-                    ⚙️
-                  </button>
-                  {showEmojiSettings && (
-                    <div className="emoji-settings-popup">
-                      <div className="emoji-settings-title">Эмоджи для постов в канале</div>
-                      <div className="emoji-settings-list">
-                        {CHANNEL_EMOJIS.map(e => (
-                          <button
-                            key={e.id}
-                            type="button"
-                            className={`emoji-option ${channelEmojiId === e.id ? 'selected' : ''}`}
-                            onClick={() => handleSelectChannelEmoji(e.id)}
-                          >
-                            {e.image && (
-                              <img
-                                src={e.image}
-                                alt={e.label}
-                                className="emoji-option-image"
-                              />
-                            )}
-                            <span className="emoji-option-label">{e.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {sendingToChannel && sendProgress.total > 0 && (
-                <div className="send-progress-bar">
-                  <div 
-                    className="send-progress-fill" 
-                    style={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
     >
@@ -1354,9 +1008,6 @@ function AdminProducts() {
                 <th>Состояние</th>
                 <th>Цена</th>
                 <th>Номер коробки</th>
-                {TELEGRAM_UI_ENABLED && (
-                  <th title="Статус публикации в ТГ"><span style={{cursor: 'help'}}>📢</span></th>
-                )}
                 <th>Действия</th>
               </tr>
             </thead>
@@ -1443,36 +1094,6 @@ function AdminProducts() {
                     <ProductPriceDisplay product={product} />
                   </td>
                   <td data-label="Коробка" className="desktop-only">{product.boxNumber || '-'}</td>
-                  {TELEGRAM_UI_ENABLED && (
-                    <td data-label="Статус" className="publication-cell">
-                      <div className="publication-icon-wrapper">
-                        {product.publishedAt ? (
-                          published ? (
-                            <span
-                              className="publication-icon published"
-                              title="Опубликован"
-                            >
-                              ✓
-                            </span>
-                          ) : (
-                            <span
-                              className="publication-icon scheduled"
-                              title={`Запланировано на ${formatMoscowTime(product.publishedAt)}`}
-                            >
-                              ⏰
-                            </span>
-                          )
-                        ) : (
-                          <span
-                            className="publication-icon published"
-                            title="Опубликован"
-                          >
-                            ✓
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  )}
                   <td data-label="Действия" className="actions-cell">
                     <div className="action-menu-wrapper">
                       <button

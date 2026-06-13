@@ -4,7 +4,7 @@ import ContactChannelsLinks from '../components/ContactChannelsLinks'
 import {
   CONTACT_TELEGRAM_CHANNEL_URL,
   CONTACT_VK_GROUP_URL,
-  CONTACT_VK_URL
+  CONTACT_VK_URL,
 } from '../constants/contactLinks'
 import { usePageSeo } from '../utils/seo'
 import { getPublicSiteUrl } from '../constants/siteUrl'
@@ -89,12 +89,12 @@ export default function Faq() {
         <p>
           Если кнопка «В корзину» ещё неактивна — на карточке идёт обратный отсчёт до открытия продажи.
           Следите за анонсами в{' '}
-          <a href={CONTACT_VK_GROUP_URL} target="_blank" rel="noopener noreferrer">
-            сообществе VK
-          </a>{' '}
-          и{' '}
           <a href={CONTACT_TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer">
             Telegram-канале
+          </a>{' '}
+          и{' '}
+          <a href={CONTACT_VK_GROUP_URL} target="_blank" rel="noopener noreferrer">
+            сообществе VK
           </a>
           .
         </p>
@@ -171,12 +171,12 @@ export default function Faq() {
       <FaqSection title="Где смотреть анонсы новинок?">
         <p>
           Важные объявления публикуем в{' '}
-          <a href={CONTACT_VK_GROUP_URL} target="_blank" rel="noopener noreferrer">
-            сообществе ВКонтакте
-          </a>{' '}
-          и{' '}
           <a href={CONTACT_TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer">
             Telegram-канале
+          </a>{' '}
+          и{' '}
+          <a href={CONTACT_VK_GROUP_URL} target="_blank" rel="noopener noreferrer">
+            сообществе ВКонтакте
           </a>
           . Накануне выкладки делаем анонсы в этих каналах, затем на сайте появляются карточки товаров с
           таймером: кнопка «В корзину» откроется в указанное время.

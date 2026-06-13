@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
-import { TELEGRAM_UI_ENABLED } from '../constants/featureFlags'
 import { isProductPublishedToCatalog } from '../utils/productPublication'
 import { getSessionId } from '../utils/sessionId'
 import Toast from './Toast'
@@ -61,7 +60,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     owner: 'Даша',
     incomingShipmentId: ''
   })
-  const [scheduleSend, setScheduleSend] = useState(false)
   const [scheduleCartUnlock, setScheduleCartUnlock] = useState(false)
   const [isTestProduct, setIsTestProduct] = useState(false)
   const [previewLoading, setPreviewLoading] = useState(false)
@@ -310,7 +308,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         owner: product.owner || 'Даша',
         incomingShipmentId: product.incomingShipmentId ?? ''
       })
-      setScheduleSend(TELEGRAM_UI_ENABLED && !!(product.publishedAt || product.PublishedAt))
       setScheduleCartUnlock(!!(product.cartAvailableAt || product.CartAvailableAt))
       setIsTestProduct(!!(product.isTestProduct ?? product.IsTestProduct))
       setBrandSearch(product.brand || '')
@@ -327,7 +324,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
       nuanceLockedRef.current = !!(product.nuance || '').trim()
       setExistingImages(product.images || [])
     } else {
-      setScheduleSend(false)
       setScheduleCartUnlock(false)
       setIsTestProduct(false)
       setFormData({
@@ -451,18 +447,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
         )
       }
       
-      // Add PublishedAt if "отправить ко времени" is checked
-      // datetime-local gives "YYYY-MM-DDTHH:mm" (interpreted as Moscow time)
-      if (TELEGRAM_UI_ENABLED && scheduleSend && formData.publishedAt) {
-        const [datePart, timePart] = formData.publishedAt.split('T')
-        const [year, month, day] = datePart.split('-').map(Number)
-        const [hours, minutes] = timePart.split(':').map(Number)
-        
-        // Create Date object as UTC with the components (representing Moscow time)
-        const publishedAtDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
-        formDataToSend.append('publishedAt', publishedAtDate.toISOString())
-      }
-
       if (scheduleCartUnlock && formData.cartAvailableAt) {
         const [datePart, timePart] = formData.cartAvailableAt.split('T')
         const [year, month, day] = datePart.split('-').map(Number)
@@ -1092,34 +1076,6 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
               placeholder="Краткое описание товара"
             />
           </div>
-
-          {TELEGRAM_UI_ENABLED && (
-            <div className="form-group">
-              <label className="form-checkbox-inline">
-                <input
-                  type="checkbox"
-                  checked={scheduleSend}
-                  onChange={(e) => setScheduleSend(e.target.checked)}
-                />
-                Отправить ко времени
-              </label>
-              {scheduleSend && (
-                <>
-                  <input
-                    type="datetime-local"
-                    id="publishedAt"
-                    name="publishedAt"
-                    value={formData.publishedAt}
-                    onChange={handleChange}
-                    style={{ marginTop: '8px' }}
-                  />
-                  <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-                    Укажите дату и время публикации (МСК).
-                  </small>
-                </>
-              )}
-            </div>
-          )}
 
           <div className="form-group">
             <div className="form-label-row form-label-row--checkbox">

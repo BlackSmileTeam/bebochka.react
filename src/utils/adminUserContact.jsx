@@ -3,23 +3,6 @@ export function buildMailtoHref(email) {
   return trimmed ? `mailto:${trimmed}` : null
 }
 
-export function buildTelegramContactHref(user) {
-  const tgId = user?.telegramUserId ?? user?.TelegramUserId
-  if (tgId) return `tg://openmessage?user_id=${tgId}`
-
-  const phone = user?.phone ?? user?.Phone
-  if (!phone) return null
-
-  const digits = String(phone).replace(/\D/g, '')
-  if (!digits) return null
-
-  let normalized = digits
-  if (digits.length === 11 && digits.startsWith('8')) normalized = `7${digits.slice(1)}`
-  else if (digits.length === 10) normalized = `7${digits}`
-
-  return `https://t.me/+${normalized}`
-}
-
 export function AdminUserEmailLink({ email, className = '' }) {
   const value = String(email || '').trim()
   if (!value || value === '-') return value || '-'
@@ -27,13 +10,10 @@ export function AdminUserEmailLink({ email, className = '' }) {
   return href ? <a href={href} className={className}>{value}</a> : value
 }
 
-export function AdminUserPhoneLink({ user, phone, className = '' }) {
-  const value = String(phone ?? user?.phone ?? user?.Phone ?? '').trim()
+export function AdminUserPhoneLink({ phone, className = '' }) {
+  const value = String(phone ?? '').trim()
   if (!value || value === '-') return value || '-'
-  const href = buildTelegramContactHref(user ?? { phone: value })
-  return href ? (
-    <a href={href} className={className} target="_blank" rel="noopener noreferrer">
-      {value}
-    </a>
-  ) : value
+  const digits = value.replace(/\D/g, '')
+  const href = digits ? `tel:+${digits.startsWith('7') ? digits : `7${digits}`}` : null
+  return href ? <a href={href} className={className}>{value}</a> : value
 }

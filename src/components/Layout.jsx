@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { useCart } from '../contexts/CartContext'
-import { CONTACT_TELEGRAM_URL } from '../constants/contactLinks'
+import { CONTACT_TELEGRAM_URL, CONTACT_VK_PERSONAL_URL } from '../constants/contactLinks'
 import Toast from './Toast'
 import './Layout.css'
 
@@ -441,7 +441,11 @@ function Layout() {
             По всем вопросам
             <br />
             <a href={CONTACT_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
-              bebochka
+              Telegram
+            </a>
+            ,{' '}
+            <a href={CONTACT_VK_PERSONAL_URL} target="_blank" rel="noopener noreferrer">
+              VK
             </a>
           </p>
         </div>

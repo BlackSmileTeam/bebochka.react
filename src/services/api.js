@@ -223,6 +223,7 @@ export const api = {
       kitId: product.kitId ?? product.KitId ?? null,
       kitPrice: product.kitPrice ?? product.KitPrice ?? null,
       kitParts: product.kitParts ?? product.KitParts ?? null,
+      isTestProduct: !!(product.isTestProduct ?? product.IsTestProduct),
     }
   },
 
@@ -317,8 +318,10 @@ export const api = {
     filters = {},
     priceSort = '',
     includeFacets = false,
+    publicOnly = false,
   } = {}) {
     const params = { page, pageSize, includeFacets }
+    if (publicOnly) params.publicOnly = true
     if (sessionId) params.sessionId = sessionId
     if (filters.brand) params.brand = filters.brand
     if (filters.color) params.color = filters.color
@@ -1342,7 +1345,6 @@ export const api = {
             fullName: user.fullName || user.FullName || null,
             vkUserId: user.vkUserId ?? user.VkUserId ?? user.vkId ?? user.VkId ?? null,
             vkProfileUrl: user.vkProfileUrl ?? user.VkProfileUrl ?? null,
-            telegramUserId: user.telegramUserId ?? user.TelegramUserId ?? null,
             createdAt: user.createdAt || user.CreatedAt || null,
             lastLoginAt: user.lastLoginAt || user.LastLoginAt || null,
             isAdmin: !!(user.isAdmin ?? user.IsAdmin),
@@ -1392,7 +1394,6 @@ export const api = {
       lastLoginAt: u.lastLoginAt ?? u.LastLoginAt ?? null,
       autoFilterByChildren: u.autoFilterByChildren ?? u.AutoFilterByChildren,
       dateOfBirth: u.dateOfBirth ?? u.DateOfBirth ?? null,
-      telegramUserId: u.telegramUserId ?? u.TelegramUserId ?? null,
       childrenCount: u.childrenCount ?? u.ChildrenCount ?? children.length,
       children,
     }
@@ -1687,63 +1688,6 @@ export const api = {
   },
 
   /**
-   * Gets all announcements
-   * @returns {Promise<Array>} List of announcements
-   */
-  async getAnnouncements() {
-    try {
-      const response = await apiClient.get('/announcements')
-      return response.data || []
-    } catch (error) {
-      console.error('[API] Error fetching announcements:', error)
-      throw error
-    }
-  },
-
-  /**
-   * Gets unpublished products for announcement selection
-   * @returns {Promise<Array>} List of unpublished products
-   */
-  async getUnpublishedProducts() {
-    try {
-      const response = await apiClient.get('/announcements/unpublished-products')
-      return response.data || []
-    } catch (error) {
-      console.error('[API] Error fetching unpublished products:', error)
-      throw error
-    }
-  },
-
-  /**
-   * Creates a new announcement
-   * @param {Object} announcement - Announcement data
-   * @returns {Promise<Object>} Created announcement
-   */
-  async createAnnouncement(announcement) {
-    try {
-      const response = await apiClient.post('/announcements', announcement)
-      return response.data
-    } catch (error) {
-      console.error('[API] Error creating announcement:', error)
-      throw error
-    }
-  },
-
-  /**
-   * Deletes an announcement
-   * @param {number} id - Announcement ID
-   * @returns {Promise<void>}
-   */
-  async deleteAnnouncement(id) {
-    try {
-      await apiClient.delete(`/announcements/${id}`)
-    } catch (error) {
-      console.error('[API] Error deleting announcement:', error)
-      throw error
-    }
-  },
-
-  /**
    * Gets all brands with optional search
    * @param {string} search - Search term
    * @returns {Promise<Array>} List of brands
@@ -1876,167 +1820,6 @@ export const api = {
       discountPercent: discountPercent ?? null,
     })
     return response.data
-  },
-
-  /**
-   * Sends a message to Telegram channel
-   * @param {string} message - Message text to send
-   * @param {Array<string>} imageUrls - Optional list of image URLs to send with the message
-   * @returns {Promise<Object>} Response with success status
-   */
-  async sendMessageToChannel(message, imageUrls = null) {
-    try {
-      const payload = { message }
-      if (imageUrls && imageUrls.length > 0) {
-        payload.imageUrls = imageUrls
-      }
-      // Increase timeout for Telegram channel sending (can take up to 500 seconds on backend)
-      const response = await apiClient.post('/telegram/channel/send', payload, {
-        timeout: 600000 // 10 minutes timeout for sending large images to Telegram
-      })
-      const data = response.data
-      const isObject = data && typeof data === 'object'
-      const success = isObject ? (data.success ?? data.Success ?? false) : false
-      const normalizedMessage = isObject ? (data.message ?? data.Message ?? '') : ''
-      return isObject ? { ...data, success, message: normalizedMessage } : { success, message: normalizedMessage, raw: data }
-    } catch (error) {
-      console.error('[API] Error sending message to channel:', error)
-      const apiMessage = error.response?.data?.message || error.response?.data?.Message
-      if (apiMessage) {
-        throw new Error(apiMessage)
-      }
-      throw error
-    }
-  },
-
-  /**
-   * Sends products to Telegram channel by product IDs
-   * All message formatting and image loading happens on the backend
-   * @param {Array<number>} productIds - Array of product IDs to send
-   * @param {string|null} preferredEmojiId - Optional. Telegram custom_emoji_id for this send (overrides saved preference)
-   * @returns {Promise<Object>} Response with success status and details
-   */
-  async sendProductsToChannel(productIds, preferredEmojiId = null) {
-    try {
-      const payload = { productIds }
-      if (preferredEmojiId) payload.preferredEmojiId = preferredEmojiId
-      // Increase timeout for Telegram channel sending (can take up to 500 seconds per product on backend)
-      const response = await apiClient.post('/telegram/channel/send-products', payload, {
-        timeout: 600000 // 10 minutes timeout for sending large images to Telegram
-      })
-      const data = response.data
-      return {
-        success: data.success ?? data.Success ?? false,
-        successCount: data.successCount ?? data.SuccessCount ?? 0,
-        failCount: data.failCount ?? data.FailCount ?? 0,
-        totalCount: data.totalCount ?? data.TotalCount ?? 0,
-        results: data.results ?? data.Results ?? [],
-        message: data.message ?? data.Message ?? ''
-      }
-    } catch (error) {
-      console.error('[API] Error sending products to channel:', error)
-      const apiMessage = error.response?.data?.message || error.response?.data?.Message
-      if (apiMessage) {
-        throw new Error(apiMessage)
-      }
-      throw error
-    }
-  },
-
-  /**
-   * Gets current admin user's preferred channel emoji (Telegram custom_emoji_id)
-   * @returns {Promise<string|null>}
-   */
-  async getMyChannelEmoji() {
-    try {
-      const response = await apiClient.get('/users/me/channel-emoji')
-      return response.data?.emojiId ?? null
-    } catch (error) {
-      console.error('[API] Error getting channel emoji preference:', error)
-      return null
-    }
-  },
-
-  /**
-   * Updates current admin user's preferred channel emoji (Telegram custom_emoji_id)
-   * @param {string|null} emojiId
-   * @returns {Promise<string|null>}
-   */
-  async setMyChannelEmoji(emojiId) {
-    try {
-      const payload = { emojiId }
-      const response = await apiClient.post('/users/me/channel-emoji', payload)
-      return response.data?.emojiId ?? null
-    } catch (error) {
-      console.error('[API] Error setting channel emoji preference:', error)
-      throw error
-    }
-  },
-
-  /**
-   * Gets the sending status for products by their IDs
-   * Returns how many products have been published (sent to channel)
-   * @param {Array<number>} productIds - Array of product IDs to check
-   * @returns {Promise<Object>} Status with count of published products
-   */
-  async getSendStatus(productIds) {
-    try {
-      const response = await apiClient.post('/telegram/channel/send-status', productIds)
-      const data = response.data
-      return {
-        totalCount: data.totalCount ?? data.TotalCount ?? 0,
-        publishedCount: data.publishedCount ?? data.PublishedCount ?? 0,
-        remainingCount: data.remainingCount ?? data.RemainingCount ?? 0
-      }
-    } catch (error) {
-      console.error('[API] Error getting send status:', error)
-      const apiMessage = error.response?.data?.message || error.response?.data?.Message
-      if (apiMessage) {
-        throw new Error(apiMessage)
-      }
-      throw error
-    }
-  },
-
-  /**
-   * Gets all Telegram errors grouped by date
-   * @returns {Promise<Object>} Errors grouped by date
-   */
-  async getTelegramErrors() {
-    try {
-      const response = await apiClient.get('/TelegramErrors')
-      return response.data
-    } catch (error) {
-      console.error('[API] Error fetching Telegram errors:', error)
-      throw error
-    }
-  },
-
-  /**
-   * Deletes a Telegram error by ID
-   * @param {number} id - Error ID
-   * @returns {Promise<void>}
-   */
-  async deleteTelegramError(id) {
-    try {
-      await apiClient.delete(`/TelegramErrors/${id}`)
-    } catch (error) {
-      console.error('[API] Error deleting Telegram error:', error)
-      throw error
-    }
-  },
-
-  /**
-   * Deletes all Telegram errors
-   * @returns {Promise<void>}
-   */
-  async deleteAllTelegramErrors() {
-    try {
-      await apiClient.delete('/TelegramErrors/all')
-    } catch (error) {
-      console.error('[API] Error deleting all Telegram errors:', error)
-      throw error
-    }
   },
 
   /**
@@ -2206,7 +1989,7 @@ export const api = {
   },
 
   /**
-   * Removes an item from an order (admin only). Deletes user's Telegram comment, restores stock, may assign product to next in queue.
+   * Removes an item from an order (admin only). Restores stock, may assign product to next in web queue.
    * @param {number} orderId - Order ID
    * @param {number} itemId - Order item ID
    * @returns {Promise<void>}

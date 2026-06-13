@@ -10,11 +10,11 @@ import PageShell from '../components/PageShell'
 import SizeMultiSelect, { parseSizeValue, joinSizeValue } from '../components/SizeMultiSelect'
 import { buildCatalogFilterSearch, readAutoFilterEnabled } from '../utils/catalogFilters'
 import { showToast } from '../utils/showToast'
-import { buildTelegramPaymentHref, buildVkPaymentHref } from '../utils/paymentMessengerLinks'
+import { buildVkPaymentHref } from '../utils/paymentMessengerLinks'
 import {
   PAYMENT_AVITO_URL,
   PAYMENT_TELEGRAM_URL,
-  PAYMENT_VK_URL
+  PAYMENT_VK_URL,
 } from '../constants/paymentContacts'
 import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
 import { readProfileTab, saveProfileTab } from '../utils/profileTabStorage'
@@ -22,6 +22,7 @@ import './Profile.css'
 import './Home.css'
 
 const payAvitoHref = PAYMENT_AVITO_URL
+const payTelegramHref = PAYMENT_TELEGRAM_URL
 
 function CopyIcon() {
   return (
@@ -326,7 +327,7 @@ function ReferralRulesContent() {
         </li>
         <li>
           Условие: приглашённым может быть только новый пользователь, у которого нет ранее совершённых
-          заказов и который не был нашим покупателем в Telegram-канале
+          заказов на сайте
         </li>
       </ul>
     </div>
@@ -873,10 +874,6 @@ function Profile() {
   const paymentContactOrderLabel =
     String(paymentHintOrderNumber || '').trim() ||
     (paymentHintOrderId != null ? String(paymentHintOrderId) : '')
-  const paymentTelegramHrefWithDraft =
-    paymentHintOrderId != null
-      ? buildTelegramPaymentHref(PAYMENT_TELEGRAM_URL, paymentContactOrderLabel)
-      : PAYMENT_TELEGRAM_URL
   const paymentVkHrefWithDraft =
     paymentHintOrderId != null
       ? buildVkPaymentHref(PAYMENT_VK_URL, paymentContactOrderLabel)
@@ -1532,7 +1529,7 @@ function Profile() {
                 <li>
                   <a
                     className="profile-pay-contact-row"
-                    href={paymentTelegramHrefWithDraft}
+                    href={payTelegramHref}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

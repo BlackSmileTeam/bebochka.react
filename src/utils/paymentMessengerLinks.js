@@ -1,33 +1,3 @@
-/**
- * Сообщения «прошу счёт по заказу» — случайный вариант из серии.
- * @param {string} orderLabel — номер заказа как показываем пользователю
- */
-export function pickInvoiceRequestMessage(orderLabel) {
-  const n = String(orderLabel || '').trim() || '—'
-  const templates = [
-    () => `Прошу выставить счёт по заказу ${n}.`,
-    () => `Добрый день! Прошу выставить счёт по заказу ${n}.`,
-    () => `Здравствуйте. Прошу выставить счёт по заказу ${n}.`,
-    () => `Прошу выслать счёт на оплату по заказу ${n}.`,
-    () => `Добрый день, прошу выставить счёт по заказу № ${n}.`,
-    () => `Добрый день. Необходим счёт по заказу ${n}, спасибо.`,
-  ]
-  const i = Math.floor(Math.random() * templates.length)
-  return templates[i]()
-}
-
-/**
- * https://t.me/username?text=… — открывает чат с черновиком сообщения (клиент / веб).
- */
-export function buildTelegramPaymentHref(telegramBaseUrl, orderLabel) {
-  const base = String(telegramBaseUrl || '').trim()
-  if (!base) return base
-  const text = pickInvoiceRequestMessage(orderLabel)
-  const basePath = base.split('?')[0].replace(/\/$/, '')
-  // encodeURIComponent → пробелы как %20; searchParams даёт «+», Telegram показывает их в тексте
-  return `${basePath}?text=${encodeURIComponent(text)}`
-}
-
 /** id7911729911 в ссылке часто опечатка вместо короткого имени i7911729911 */
 function normalizeVkPaymentScreen(screen) {
   const s = String(screen || '').trim()

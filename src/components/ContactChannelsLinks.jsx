@@ -5,9 +5,7 @@ const linkProps = {
   rel: 'noopener noreferrer'
 }
 
-/**
- * Ссылки на Telegram, VK и Avito через запятую и «или» перед последним.
- */
+/** Ссылки на VK и Avito через запятую и «или» перед последним. */
 export default function ContactChannelsLinks({ className = '' }) {
   return (
     <span className={className}>
