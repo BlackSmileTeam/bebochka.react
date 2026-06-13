@@ -1176,14 +1176,35 @@
 }
 
 .checkbox-column {
-  width: 40px;
+  width: 32px;
+  padding: 0.5rem 0.25rem !important;
   text-align: center;
 }
 
 .checkbox-column input[type="checkbox"] {
   cursor: pointer;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+}
+
+.th-phone,
+.td-phone {
+  white-space: nowrap;
+}
+
+.th-date,
+.td-date {
+  white-space: nowrap;
+}
+
+.th-amount,
+.td-amount {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.td-amount .order-row-sum {
+  font-size: 0.9rem;
 }
 
 .status-badge {

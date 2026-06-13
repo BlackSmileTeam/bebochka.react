@@ -1104,12 +1104,12 @@ function AdminOrders() {
                   <table className="orders-table">
                     <colgroup>
                       <col className="col-expand" style={{ width: '36px' }} />
-                      <col className="col-checkbox" style={{ width: '40px' }} />
-                      <col className="col-number" style={{ width: '12%' }} />
-                      <col className="col-client" style={{ width: '18%' }} />
-                      <col className="col-phone" style={{ width: '13%' }} />
-                      <col className="col-date" style={{ width: '14%' }} />
-                      <col className="col-amount" style={{ width: '13%' }} />
+                      <col className="col-checkbox" style={{ width: '32px' }} />
+                      <col className="col-number" style={{ width: '11%' }} />
+                      <col className="col-client" style={{ width: '16%' }} />
+                      <col className="col-phone" style={{ width: '18%' }} />
+                      <col className="col-date" style={{ width: '17%' }} />
+                      <col className="col-amount" style={{ width: '9%' }} />
                       <col className="col-actions" style={{ width: '20%' }} />
                     </colgroup>
                     <thead>
