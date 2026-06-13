@@ -53,12 +53,18 @@
 
 .status-filters-toggle-btn--header {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 0;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
   color: #4a5568;
   cursor: pointer;
+}
+
+.status-filters-toggle-btn--header.btn-toolbar-icon--square .btn-toolbar-icon__icon {
+  margin: 0 auto;
 }
 
 .status-filters-toggle-btn--header.active {
@@ -326,6 +332,12 @@
   border-radius: 6px;
   flex-shrink: 0;
   background: #edf2f7;
+  cursor: pointer;
+}
+
+.admin-cart-item-image:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
 }
 
 .admin-cart-item-image--empty {

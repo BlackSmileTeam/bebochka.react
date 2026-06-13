@@ -3,6 +3,7 @@ import { api } from '../services/api'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import { isProductPublishedToCatalog } from '../utils/productPublication'
 import { getSessionId } from '../utils/sessionId'
+import { rotateImageSource } from '../utils/rotateImage'
 import Toast from './Toast'
 import './ProductForm.css'
 
@@ -89,6 +90,7 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
   const [toast, setToast] = useState(null)
   const [isKit, setIsKit] = useState(false)
   const [kitParts, setKitParts] = useState([])
+  const [rotatingImageKey, setRotatingImageKey] = useState(null)
 
   const moveImage = (kind, fromIndex, toIndex) => {
     if (fromIndex === toIndex || fromIndex == null || toIndex == null) return
@@ -396,6 +398,34 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
     setExistingImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleRotateNewImage = async (index) => {
+    const key = `new-${index}`
+    setRotatingImageKey(key)
+    try {
+      const rotated = await rotateImageSource(images[index], 90)
+      setImages((prev) => prev.map((file, i) => (i === index ? rotated : file)))
+    } catch (err) {
+      setToast({ type: 'error', message: err?.message || 'Не удалось повернуть фото' })
+    } finally {
+      setRotatingImageKey(null)
+    }
+  }
+
+  const handleRotateExistingImage = async (index) => {
+    const key = `existing-${index}`
+    setRotatingImageKey(key)
+    try {
+      const src = existingImages[index]
+      const rotated = await rotateImageSource(toAbsoluteMediaUrl(src) || src, 90)
+      setImages((prev) => [...prev, rotated])
+      setExistingImages((prev) => prev.filter((_, i) => i !== index))
+    } catch (err) {
+      setToast({ type: 'error', message: err?.message || 'Не удалось повернуть фото' })
+    } finally {
+      setRotatingImageKey(null)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -597,6 +627,16 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                     <span className="preview-order-badge">{index + 1}</span>
                     <button
                       type="button"
+                      className="rotate-image"
+                      onClick={() => handleRotateNewImage(index)}
+                      title="Повернуть на 90°"
+                      disabled={loading || rotatingImageKey === `new-${index}`}
+                      aria-label="Повернуть фото на 90 градусов"
+                    >
+                      ↻
+                    </button>
+                    <button
+                      type="button"
                       className="remove-image"
                       onClick={() => handleRemoveNewImage(index)}
                       title="Удалить фото"
@@ -634,6 +674,16 @@ function ProductForm({ product, colors = [], onClose, onSuccess }) {
                         }
                       />
                       <span className="preview-order-badge">{index + 1}</span>
+                      <button
+                        type="button"
+                        className="rotate-image"
+                        onClick={() => handleRotateExistingImage(index)}
+                        title="Повернуть на 90°"
+                        disabled={loading || rotatingImageKey === `existing-${index}`}
+                        aria-label="Повернуть фото на 90 градусов"
+                      >
+                        ↻
+                      </button>
                       <button
                         type="button"
                         className="remove-image"

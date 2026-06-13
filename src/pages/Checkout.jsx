@@ -7,6 +7,7 @@ import CartReservationTimer from '../components/CartReservationTimer'
 import CartReferralDiscountPanel, { ReferralDiscountTotals } from '../components/CartReferralDiscount'
 import { getReferralDiscountSelection, clearReferralDiscountSelection } from '../utils/referralDiscountStorage'
 import { mergeCartReferralOptions, resolveReferralSelection } from '../utils/referralCartDiscount'
+import { formatUserFacingError } from '../utils/userFacingError'
 import './Checkout.css'
 import '../components/CartReferralDiscount.css'
 
@@ -196,22 +197,7 @@ function Checkout() {
         }
       }
 
-      const headers = { 'Content-Type': 'application/json' }
-      const token = localStorage.getItem('authToken')
-      if (token) headers.Authorization = `Bearer ${token}`
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(orderData)
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Ошибка при оформлении заказа' }))
-        throw new Error(errorData.message || errorData.Message || 'Ошибка при оформлении заказа')
-      }
-
-      const order = await response.json()
+      const order = await api.createOrder(orderData)
       const orderNumber = order.orderNumber ?? order.OrderNumber ?? null
 
       clearCart()
@@ -223,7 +209,7 @@ function Checkout() {
       })
     } catch (err) {
       console.error('Order error:', err)
-      setError(err?.message || 'Ошибка при оформлении заказа. Попробуйте еще раз.')
+      setError(formatUserFacingError(err, 'Не удалось оформить заказ. Попробуйте ещё раз.'))
     } finally {
       setLoading(false)
     }

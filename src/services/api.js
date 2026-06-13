@@ -1252,6 +1252,20 @@ export const api = {
     }
   },
 
+  /**
+   * Оформление заказа из корзины
+   * @param {object} orderData
+   * @returns {Promise<object>}
+   */
+  async createOrder(orderData) {
+    try {
+      const response = await apiClient.post('/orders', orderData)
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+
   async getMyOrders() {
     try {
       const response = await apiClient.get('/orders/mine')
@@ -1666,6 +1680,7 @@ export const api = {
     return rows.map((item) => ({
       ...item,
       id: item.id ?? item.Id,
+      productId: item.productId ?? item.ProductId,
       userId: item.userId ?? item.UserId,
       sessionId: item.sessionId ?? item.SessionId,
       productName: item.productName ?? item.ProductName,

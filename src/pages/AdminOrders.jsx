@@ -987,6 +987,7 @@ function AdminOrders() {
                 ) : (
                   adminCartItems.map((item) => {
                     const id = item.id ?? item.Id
+                    const productId = item.productId ?? item.ProductId
                     const userId = getCartItemUserId(item)
                     const sessionId = item.sessionId ?? item.SessionId
                     const customerName = getCartCustomerName(item)
@@ -997,7 +998,23 @@ function AdminOrders() {
                     return (
                       <div key={id} className="admin-cart-item-card">
                         {imageUrl ? (
-                          <img className="admin-cart-item-image" src={imageUrl} alt={productName} loading="lazy" decoding="async" />
+                          <img
+                            className="admin-cart-item-image"
+                            src={imageUrl}
+                            alt={productName}
+                            loading="lazy"
+                            decoding="async"
+                            role="button"
+                            tabIndex={0}
+                            title="Открыть фото"
+                            onClick={() => openPhotoCarousel(productId, imageUrl)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                openPhotoCarousel(productId, imageUrl)
+                              }
+                            }}
+                          />
                         ) : (
                           <div className="admin-cart-item-image admin-cart-item-image--empty">фото</div>
                         )}
