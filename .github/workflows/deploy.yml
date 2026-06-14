@@ -88,8 +88,8 @@ jobs:
             echo "=== OK ==="
 
   build:
-    needs: [detect-target, preflight-prod, preflight-edge]
-    if: always() && !cancelled() && needs.detect-target.result == 'success' && (needs.preflight-prod.result == 'success' || needs.preflight-prod.result == 'skipped') && (needs.preflight-edge.result == 'success' || needs.preflight-edge.result == 'skipped')
+    needs: [detect-target]
+    if: needs.detect-target.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -141,8 +141,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy-prod:
-    needs: [build, detect-target]
-    if: needs.detect-target.outputs.edge != 'true'
+    needs: [build, detect-target, preflight-prod]
+    if: ${{ needs.build.result == 'success' && needs.detect-target.outputs.edge != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Download image
@@ -205,8 +205,8 @@ jobs:
           echo "- Port: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-edge:
-    needs: [build, detect-target]
-    if: needs.detect-target.outputs.edge == 'true'
+    needs: [build, detect-target, preflight-edge]
+    if: ${{ needs.build.result == 'success' && needs.detect-target.outputs.edge == 'true' && needs.preflight-edge.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
