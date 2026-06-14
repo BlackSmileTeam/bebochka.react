@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
-import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
+import { ORDER_STATUS_COLORS, ORDER_STATUS_ICONS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
 import PageShell from '../components/PageShell'
 import FilterIcon from '../components/FilterIcon'
 import Toast from '../components/Toast'
@@ -352,6 +352,12 @@ function AdminOrders() {
     setSelectedOrders(allSelected ? new Set() : new Set(allOrderIds))
   }
 
+  const getStatusGroupLabel = (status, count) => {
+    const icon = ORDER_STATUS_ICONS[status]
+    const suffix = count != null ? ` (${count})` : ''
+    return icon ? `${icon} ${status}${suffix}` : `${status}${suffix}`
+  }
+
   const toggleGroupExpansion = (groupKey) => {
     setExpandedGroups(prev => {
       const next = new Set(prev)
@@ -550,6 +556,20 @@ function AdminOrders() {
     if (parentId == null || parentId === '') return null
     return allOrdersFlat.find(o => getOrderId(o) === parentId) ?? null
   }
+  const resolveChildOrdersForAdmin = (order) => {
+    const nested = getChildOrders(order)
+    if (nested.length > 0) {
+      return nested.map((c) => {
+        if (getOrderItems(c).length > 0) return c
+        const cid = getOrderId(c)
+        const richer = allOrdersFlat.find((o) => getOrderId(o) === cid)
+        return richer && getOrderItems(richer).length > 0 ? richer : c
+      })
+    }
+    const orderId = getOrderId(order)
+    return allOrdersFlat.filter((o) => getParentOrderId(o) === orderId)
+  }
+
   const findOrderById = (orderId) => allOrdersFlat.find(o => getOrderId(o) === orderId) ?? null
   const isItemAddedToParcel = (item) => !!(item.addedToParcel ?? item.AddedToParcel)
   const isItemShownInParcel = (order, item) => {
@@ -954,7 +974,7 @@ function AdminOrders() {
               onClick={() => setSelectedStatusFilter(status)}
               style={{ '--status-color': ORDER_STATUS_COLORS[status] }}
             >
-              {status} ({count})
+              {getStatusGroupLabel(status, count)}
             </button>
           )
         })}
@@ -1119,21 +1139,25 @@ function AdminOrders() {
               <div
                 className="order-group-header"
                 style={{ borderLeftColor: groupColor }}
+                onClick={() => toggleGroupExpansion(groupKey)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    toggleGroupExpansion(groupKey)
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
               >
                 <div className="group-header-left">
-                  <h2
-                    onClick={() => toggleGroupExpansion(groupKey)}
-                    style={{ cursor: 'pointer', color: groupColor }}
-                  >
-                    {groupTitle} ({statusOrders.length})
+                  <h2 style={{ color: groupColor }}>
+                    {groupBy === 'status' ? getStatusGroupLabel(groupTitle, statusOrders.length) : `${groupTitle} (${statusOrders.length})`}
                   </h2>
                 </div>
-                <button
-                  className="expand-btn"
-                  onClick={() => toggleGroupExpansion(groupKey)}
-                >
+                <span className="expand-btn" aria-hidden="true">
                   {isExpanded ? '▼' : '▶'}
-                </button>
+                </span>
               </div>
 
               {isExpanded && (
@@ -1178,7 +1202,7 @@ function AdminOrders() {
                         const currentStatus = getOrderStatus(order)
                         const statusLocked = isOrderStatusLocked(order)
                         const items = getOrderItems(order)
-                        const childOrders = getChildOrders(order)
+                        const childOrders = resolveChildOrdersForAdmin(order)
                         const isOrderExpanded = expandedOrderIds.has(orderId)
                         const parcelActionsAllowed = currentStatus === 'В сборке'
                         const highlightMissingParcel = shouldHighlightMissingParcel(order)
@@ -1611,7 +1635,7 @@ function AdminOrders() {
         const order = findOrderById(orderDetailsOrderId)
         if (!order) return null
         const items = getOrderItems(order)
-        const childOrders = getChildOrders(order)
+        const childOrders = resolveChildOrdersForAdmin(order)
         const currentStatus = getOrderStatus(order)
         const statusLocked = isOrderStatusLocked(order)
         const parcelActionsAllowed = currentStatus === 'В сборке'
@@ -1622,21 +1646,8 @@ function AdminOrders() {
           <div className="modal-overlay order-details-overlay" onClick={() => setOrderDetailsOrderId(null)}>
             <div className="modal-content order-details-modal" onClick={e => e.stopPropagation()}>
               <div className="order-details-header">
-                <h3>Заказ {getOrderNumber(order)}</h3>
-                <div className="order-details-header-right">
-                  <select
-                    value={currentStatus}
-                    onChange={(e) => handleStatusChange(orderDetailsOrderId, e.target.value)}
-                    disabled={isUpdating || statusLocked}
-                    className="status-select status-select--colored status-select--details-header"
-                    style={getOrderStatusSelectSurfaceStyle(currentStatus)}
-                    title={STATUS_TOOLTIPS[currentStatus]}
-                    aria-label="Статус заказа"
-                  >
-                    {getAdminStatusSelectOptions(currentStatus).map(s => (
-                      <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
-                    ))}
-                  </select>
+                <h3 className="order-details-header-title">Заказ {getOrderNumber(order)}</h3>
+                <div className="order-details-header-top-actions">
                   <div className={`order-row-dropdown order-details-header-dropdown${orderDetailsMenuOpen ? ' order-details-header-dropdown--open' : ''}`}>
                     <button
                       type="button"
@@ -1679,6 +1690,19 @@ function AdminOrders() {
                   </div>
                   <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
                 </div>
+                <select
+                  value={currentStatus}
+                  onChange={(e) => handleStatusChange(orderDetailsOrderId, e.target.value)}
+                  disabled={isUpdating || statusLocked}
+                  className="status-select status-select--colored status-select--details-header order-details-header-status"
+                  style={getOrderStatusSelectSurfaceStyle(currentStatus)}
+                  title={STATUS_TOOLTIPS[currentStatus]}
+                  aria-label="Статус заказа"
+                >
+                  {getAdminStatusSelectOptions(currentStatus).map(s => (
+                    <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
+                  ))}
+                </select>
               </div>
               <div className="order-details-body">
                 <p><strong>Телефон:</strong> {getCustomerPhone(order)}</p>

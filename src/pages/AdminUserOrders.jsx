@@ -69,6 +69,29 @@ function formatBool(value) {
   return '—'
 }
 
+function enrichOrderFromRoots(order, rootOrders) {
+  if (!order || getItems(order).length > 0) return order
+  const id = getOrderId(order)
+  for (const root of rootOrders) {
+    for (const c of getChildOrders(root)) {
+      if (getOrderId(c) === id && getItems(c).length > 0) return c
+    }
+  }
+  return order
+}
+
+function resolveChildOrders(order, ordersById, rootOrders) {
+  const nested = getChildOrders(order)
+  if (nested.length > 0) {
+    return nested.map((c) => enrichOrderFromRoots(c, rootOrders))
+  }
+  const oid = getOrderId(order)
+  if (!oid) return []
+  return Array.from(ordersById.values())
+    .filter((o) => getParentOrderId(o) === oid)
+    .map((c) => enrichOrderFromRoots(c, rootOrders))
+}
+
 function AdminUserInfo({ user, userId, children, childrenLoading, childrenError }) {
   if (!user) {
     return (
@@ -109,23 +132,31 @@ function AdminUserInfo({ user, userId, children, childrenLoading, childrenError 
 
   return (
     <div className="admin-user-orders-user-info">
-      <h2 className="admin-user-orders-user-info-title">Пользователь</h2>
-      <dl className="admin-user-orders-user-info-grid">
-        {rows.map(({ label, value }) => (
-          <div key={label} className="admin-user-orders-user-info-row">
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-      <div className="admin-user-orders-user-info-links">
+      <div className="admin-user-orders-user-info-links admin-user-orders-user-info-links--vk">
         <VkProfileLink user={user} />
       </div>
-      <AdminUserChildrenPanel
-        loading={childrenLoading}
-        error={childrenError}
-        children={children}
-      />
+      <details className="admin-user-orders-collapsible">
+        <summary className="admin-user-orders-collapsible-summary">Пользователь</summary>
+        <dl className="admin-user-orders-user-info-grid">
+          {rows.map(({ label, value }) => (
+            <div key={label} className="admin-user-orders-user-info-row">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
+      <details className="admin-user-orders-collapsible">
+        <summary className="admin-user-orders-collapsible-summary">
+          Дети{children.length > 0 ? ` (${children.length})` : ''}
+        </summary>
+        <AdminUserChildrenPanel
+          loading={childrenLoading}
+          error={childrenError}
+          children={children}
+          title=""
+        />
+      </details>
     </div>
   )
 }
@@ -219,6 +250,8 @@ function OrderItemsGrid({
 
 function OrderCard({
   order,
+  rootOrders,
+  ordersById,
   defaultOpen,
   parcelAllowed,
   togglingKey,
@@ -226,14 +259,16 @@ function OrderCard({
   onOpenProduct,
   detailLoadingId
 }) {
-  const oid = getOrderId(order)
-  const status = getOrderStatus(order)
-  const num = order.orderNumber || order.OrderNumber || `#${oid}`
-  const sum = order.finalAmount ?? order.FinalAmount ?? order.totalAmount ?? order.TotalAmount ?? 0
+  const displayOrder = enrichOrderFromRoots(order, rootOrders)
+  const oid = getOrderId(displayOrder)
+  const status = getOrderStatus(displayOrder)
+  const num = displayOrder.orderNumber || displayOrder.OrderNumber || `#${oid}`
+  const sum = displayOrder.finalAmount ?? displayOrder.FinalAmount ?? displayOrder.totalAmount ?? displayOrder.TotalAmount ?? 0
   const color = getOrderStatusColor(status)
-  const childOrders = getChildOrders(order)
-  const parentId = getParentOrderId(order)
+  const childOrders = resolveChildOrders(displayOrder, ordersById, rootOrders)
+  const parentId = getParentOrderId(displayOrder)
   const parentHint = parentId ? ` · часть #${parentId}` : ''
+  const parcelForOrder = status === 'В сборке'
   return (
     <details className="admin-user-orders-order" open={defaultOpen}>
       <summary className="admin-user-orders-order-summary">
@@ -241,7 +276,7 @@ function OrderCard({
         <span className="admin-user-orders-order-num">{num}{parentHint}</span>
         <span className="admin-user-orders-order-sum">{formatMoney(sum)}</span>
         <span className="admin-user-orders-order-status" style={{ backgroundColor: color }}>{status}</span>
-        <span className="admin-user-orders-order-date">{formatWhen(order.createdAt || order.CreatedAt)}</span>
+        <span className="admin-user-orders-order-date">{formatWhen(displayOrder.createdAt || displayOrder.CreatedAt)}</span>
       </summary>
       <div className="admin-user-orders-order-body">
         {childOrders.length > 0 ? (
@@ -276,9 +311,9 @@ function OrderCard({
           </div>
         ) : (
           <OrderItemsGrid
-            order={order}
+            order={displayOrder}
             orderId={oid}
-            parcelAllowed={parcelAllowed}
+            parcelAllowed={parcelForOrder || parcelAllowed}
             togglingKey={togglingKey}
             onToggleInParcel={onToggleInParcel}
             onOpenProduct={onOpenProduct}
@@ -339,10 +374,20 @@ export default function AdminUserOrders() {
   }, [orders])
 
   const primaryOrder = useMemo(() => {
+    let found = null
     if (highlightOrderId != null && !Number.isNaN(highlightOrderId) && ordersById.has(highlightOrderId)) {
-      return ordersById.get(highlightOrderId)
+      found = ordersById.get(highlightOrderId)
+    } else {
+      found = sortedRootOrders[0] ?? null
     }
-    return sortedRootOrders[0] ?? null
+    if (!found) return null
+    const parentId = getParentOrderId(found)
+    if (parentId) {
+      return enrichOrderFromRoots(found, sortedRootOrders)
+    }
+    const rootId = getOrderId(found)
+    const fromRoot = sortedRootOrders.find((o) => getOrderId(o) === rootId)
+    return fromRoot ?? enrichOrderFromRoots(found, sortedRootOrders)
   }, [sortedRootOrders, highlightOrderId, ordersById])
 
   const primaryRootId = useMemo(() => {
@@ -433,22 +478,20 @@ export default function AdminUserOrders() {
   const userLabel = user
     ? (user.fullName || user.FullName || user.username || user.Username || user.email || user.Email || `id ${userId}`)
     : `id ${userId}`
-  const renderOrderCard = (o, defaultOpen) => {
-    const st = getOrderStatus(o)
-    const parcelAllowed = st === 'В сборке'
-    return (
-      <OrderCard
-        key={getOrderId(o)}
-        order={o}
-        defaultOpen={defaultOpen}
-        parcelAllowed={parcelAllowed}
-        togglingKey={inParcelTogglingKey}
-        onToggleInParcel={handleToggleInParcel}
-        onOpenProduct={openProductDetail}
-        detailLoadingId={detailLoadingId}
-      />
-    )
-  }
+  const renderOrderCard = (o, defaultOpen) => (
+    <OrderCard
+      key={getOrderId(o)}
+      order={o}
+      rootOrders={sortedRootOrders}
+      ordersById={ordersById}
+      defaultOpen={defaultOpen}
+      parcelAllowed={getOrderStatus(o) === 'В сборке'}
+      togglingKey={inParcelTogglingKey}
+      onToggleInParcel={handleToggleInParcel}
+      onOpenProduct={openProductDetail}
+      detailLoadingId={detailLoadingId}
+    />
+  )
 
   return (
     <PageShell

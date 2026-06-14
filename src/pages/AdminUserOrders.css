@@ -33,6 +33,56 @@
   color: #2d3748;
 }
 
+.admin-user-orders-user-info-links--vk {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-top: none;
+}
+
+.admin-user-orders-collapsible {
+  margin-top: 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.admin-user-orders-collapsible-summary {
+  padding: 0.55rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2d3748;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.admin-user-orders-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-user-orders-collapsible-summary::before {
+  content: '▶ ';
+  font-size: 0.7rem;
+  color: #718096;
+}
+
+.admin-user-orders-collapsible[open] > .admin-user-orders-collapsible-summary::before {
+  content: '▼ ';
+}
+
+.admin-user-orders-collapsible .admin-user-orders-user-info-grid {
+  padding: 0 0.75rem 0.75rem;
+}
+
+.admin-user-orders-collapsible .admin-user-children-panel {
+  margin: 0;
+  padding: 0 0.75rem 0.75rem;
+  border-top: none;
+}
+
 .admin-user-orders-user-info-title {
   margin: 0 0 0.75rem;
   font-size: 1rem;
