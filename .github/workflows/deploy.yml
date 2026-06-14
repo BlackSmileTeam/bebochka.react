@@ -1,6 +1,6 @@
-# Деплой фронта на FirstVDS (PROD_*) и опционально на edge-VPS Selectel (EDGE_*).
-# FirstVDS: /api → host.docker.internal:55501 (локальный API на том же сервере)
-# Edge-VPS: /api → bebochka-backend:44315 (Docker-сеть bebochka-edge), /uploads → FirstVDS
+# Деплой фронта на Selectel (EDGE_* secrets).
+# DNS: bebochka.ru / bebochka.online → 139.100.225.234
+# /api → bebochka-backend:44315 (Docker-сеть bebochka-edge), uploads — локально на Selectel
 
 name: Deploy frontend to VPS
 
@@ -24,6 +24,7 @@ env:
 
 jobs:
   preflight-prod:
+    if: ${{ secrets.EDGE_PROD_HOST == '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Validate PROD secrets
@@ -46,7 +47,7 @@ jobs:
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           command_timeout: 2m
           script: |
-            echo "=== SSH preflight FirstVDS ==="
+            echo "=== SSH preflight (legacy host) ==="
             echo "Docker: $(docker --version 2>/dev/null || echo not installed)"
             docker ps -a --format 'table {{.Names}}\t{{.Status}}' | head -15
             echo "=== OK ==="
@@ -76,13 +77,14 @@ jobs:
           key: ${{ secrets.EDGE_SSH_PRIVATE_KEY }}
           command_timeout: 2m
           script: |
-            echo "=== SSH preflight edge VPS ==="
+            echo "=== SSH preflight Selectel ==="
             echo "Docker: $(docker --version 2>/dev/null || echo not installed)"
             docker ps -a --format 'table {{.Names}}\t{{.Status}}' | head -15
             echo "=== OK ==="
 
   build:
-    needs: [preflight-prod]
+    needs: [preflight-prod, preflight-edge]
+    if: always() && !cancelled() && (needs.preflight-prod.result == 'success' || needs.preflight-prod.result == 'skipped') && needs.preflight-edge.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -135,6 +137,7 @@ jobs:
 
   deploy-prod:
     needs: [build]
+    if: ${{ secrets.EDGE_PROD_HOST == '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Download image
@@ -170,7 +173,7 @@ jobs:
             IMAGE_NAME="${{ env.IMAGE_NAME }}"
             HOST_PORT="${{ env.HOST_PORT }}"
             CONTAINER_PORT="${{ env.CONTAINER_PORT }}"
-            echo "=== Load and run FirstVDS ==="
+            echo "=== Load and run (legacy host) ==="
             docker load < /tmp/$IMAGE_NAME.tar.gz
             rm -f /tmp/$IMAGE_NAME.tar.gz
             docker stop $IMAGE_NAME 2>/dev/null || true
@@ -188,11 +191,11 @@ jobs:
             API_CODE=$(curl -sS -o /tmp/fe_health.json -w "%{http_code}" --max-time 20 "http://127.0.0.1:${HOST_PORT}/api/health" || echo "000")
             echo "GET /api/health HTTP $API_CODE"
             if [ "$API_CODE" = "200" ]; then head -c 200 /tmp/fe_health.json && echo; else echo "WARN: API via frontend proxy failed"; fi
-            echo "=== FirstVDS deploy done (:${HOST_PORT}) ==="
+            echo "=== Legacy host deploy done (:${HOST_PORT}) ==="
 
       - name: Summary
         run: |
-          echo "## FirstVDS deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Legacy host deploy" >> "$GITHUB_STEP_SUMMARY"
           echo "- Host: \`${{ secrets.PROD_HOST }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Port: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
 
@@ -242,7 +245,7 @@ jobs:
             cp /tmp/nginx.edge.conf "$EDGE_NGINX_DIR/nginx.conf"
             chmod 644 "$EDGE_NGINX_DIR/nginx.conf"
             docker network create "$EDGE_NETWORK" 2>/dev/null || true
-            echo "=== Load and run edge VPS ==="
+            echo "=== Load and run Selectel ==="
             docker load < /tmp/$IMAGE_NAME.tar.gz
             rm -f /tmp/$IMAGE_NAME.tar.gz /tmp/nginx.edge.conf
             docker stop $IMAGE_NAME 2>/dev/null || true
@@ -261,11 +264,11 @@ jobs:
             API_CODE=$(curl -sS -o /tmp/fe_health.json -w "%{http_code}" --max-time 30 "http://127.0.0.1:${HOST_PORT}/api/health" || echo "000")
             echo "GET /api/health HTTP $API_CODE"
             if [ "$API_CODE" = "200" ]; then head -c 200 /tmp/fe_health.json && echo; else echo "WARN: API via local Selectel backend failed — deploy Bebochka.Api edge job first"; fi
-            echo "=== Edge VPS deploy done (:${HOST_PORT}) ==="
+            echo "=== Selectel deploy done (:${HOST_PORT}) ==="
 
       - name: Summary
         run: |
-          echo "## Edge VPS deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Selectel deploy" >> "$GITHUB_STEP_SUMMARY"
           echo "- Host: \`${{ secrets.EDGE_PROD_HOST }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Port: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
           echo "- API: bebochka-backend:44315 (Docker network bebochka-edge), uploads: local API" >> "$GITHUB_STEP_SUMMARY"
