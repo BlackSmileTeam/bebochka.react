@@ -15,6 +15,5 @@ jobs:
     steps:
       - name: Edge deploy moved
         run: |
-          echo "Edge-VPS деплоится вместе с FirstVDS: workflow Deploy frontend to VPS (deploy.yml)."
-          echo "Добавьте секреты EDGE_PROD_HOST и EDGE_SSH_PRIVATE_KEY в GitHub Actions."
-          echo "См. deploy/DEPLOY_EDGE_VPS.md"
+          echo "Production на Selectel: workflow Deploy frontend to VPS (deploy.yml), job deploy-edge."
+          echo "См. deploy/DEPLOY_SELECTEL.md"
