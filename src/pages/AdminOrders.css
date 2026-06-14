@@ -1192,6 +1192,20 @@
   align-items: center;
 }
 
+.status-warning-modal-actions .status-warning-modal-confirm {
+  min-width: 9.5rem;
+  white-space: nowrap;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.order-child-parent-hint {
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #718096;
+}
+
 .modal-discount-sums {
   display: flex;
   gap: 1.5rem;

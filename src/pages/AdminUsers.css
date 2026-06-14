@@ -157,6 +157,22 @@
   background: #f8fafc;
 }
 
+.stats-card--clickable {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.stats-card--clickable:hover,
+.stats-card--clickable:focus-visible {
+  border-color: #cbd5e0;
+  background: #edf2f7;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  outline: none;
+}
+
 .stats-card__label {
   color: #4a5568;
   font-size: 0.9rem;

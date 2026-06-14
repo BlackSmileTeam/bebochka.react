@@ -292,6 +292,22 @@ function AdminUsers() {
     setStatsUsersModal({ title, users: list })
   }
 
+  const renderStatsCard = (label, count, title, list) => {
+    const clickable = count > 0
+    const CardTag = clickable ? 'button' : 'div'
+    return (
+      <CardTag
+        type={clickable ? 'button' : undefined}
+        className={`stats-card${clickable ? ' stats-card--clickable' : ''}`}
+        onClick={clickable ? () => openStatsUsersList(title, list) : undefined}
+        title={clickable ? 'Показать список пользователей' : undefined}
+      >
+        <div className="stats-card__label">{label}</div>
+        <div className="stats-card__value">{count}</div>
+      </CardTag>
+    )
+  }
+
   const renderStatsCountButton = (count, title, list) => {
     if (count <= 0) {
       return <div className="stats-card__value">{count}</div>
@@ -976,38 +992,10 @@ function AdminUsers() {
             </div>
             <div className="stats-body">
               <div className="stats-cards">
-                <div className="stats-card">
-                  <div className="stats-card__label">Всего пользователей</div>
-                  {renderStatsCountButton(
-                    stats.totalCount,
-                    'Все пользователи',
-                    statsUserLists.all()
-                  )}
-                </div>
-                <div className="stats-card">
-                  <div className="stats-card__label">Новых за неделю</div>
-                  {renderStatsCountButton(
-                    stats.weekCount,
-                    'Новые за неделю',
-                    statsUserLists.week()
-                  )}
-                </div>
-                <div className="stats-card">
-                  <div className="stats-card__label">Новых за сегодня</div>
-                  {renderStatsCountButton(
-                    stats.todayCount,
-                    'Новые за сегодня',
-                    statsUserLists.today()
-                  )}
-                </div>
-                <div className="stats-card">
-                  <div className="stats-card__label">Новых за текущий месяц</div>
-                  {renderStatsCountButton(
-                    stats.currentMonthCount,
-                    'Новые за текущий месяц',
-                    statsUserLists.month()
-                  )}
-                </div>
+                {renderStatsCard('Всего пользователей', stats.totalCount, 'Все пользователи', statsUserLists.all())}
+                {renderStatsCard('Новых за неделю', stats.weekCount, 'Новые за неделю', statsUserLists.week())}
+                {renderStatsCard('Новых за сегодня', stats.todayCount, 'Новые за сегодня', statsUserLists.today())}
+                {renderStatsCard('Новых за текущий месяц', stats.currentMonthCount, 'Новые за текущий месяц', statsUserLists.month())}
               </div>
 
               <section className="stats-section">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { ORDER_STATUS_COLORS, getOrderStatusSelectSurfaceStyle, getOrderStatusOptionStyle } from '../constants/orderStatusColors'
@@ -197,7 +197,6 @@ function AdminOrders() {
     })
     const statusMap = { 'В пути': 'На доставку', 'Доставлен': 'Отправлен' }
     ordersForGrouping.forEach(order => {
-      if (order.parentOrderId ?? order.ParentOrderId) return
       let status = order.status || order.Status || ORDER_STATUSES_ALL[0]
       status = statusMap[status] || status
       if (grouped[status]) {
@@ -220,7 +219,6 @@ function AdminOrders() {
   const groupedByClient = useMemo(() => {
     const map = {}
     ordersForGrouping.forEach(order => {
-      if (order.parentOrderId ?? order.ParentOrderId) return
       const key = getCustomerKey(order)
       if (!map[key]) map[key] = []
       map[key].push(order)
@@ -347,7 +345,10 @@ function AdminOrders() {
     })
   }
 
+  const prevGroupByRef = useRef(groupBy)
   useEffect(() => {
+    if (prevGroupByRef.current === groupBy) return
+    prevGroupByRef.current = groupBy
     if (groupBy === 'client') {
       setExpandedGroups(new Set(Object.keys(groupedByClient)))
     } else {
@@ -520,12 +521,15 @@ function AdminOrders() {
   }
   const getParentOrderId = (order) => order.parentOrderId ?? order.ParentOrderId ?? null
   const getChildOrders = (order) => {
-    const list = order?.childOrders ?? order?.ChildOrders
-    return Array.isArray(list) ? list : []
+    const nested = order?.childOrders ?? order?.ChildOrders
+    if (Array.isArray(nested) && nested.length > 0) return nested
+    const orderId = getOrderId(order)
+    return orders.filter(o => getParentOrderId(o) === orderId)
   }
-  const isRootOrder = (order) => {
+  const getParentOrder = (order) => {
     const parentId = getParentOrderId(order)
-    return parentId == null || parentId === ''
+    if (parentId == null || parentId === '') return null
+    return orders.find(o => getOrderId(o) === parentId) ?? null
   }
   const isItemAddedToParcel = (item) => !!(item.addedToParcel ?? item.AddedToParcel)
   const isItemShownInParcel = (order, item) => {
@@ -783,6 +787,7 @@ function AdminOrders() {
         })
         return { ...o, orderItems: items, OrderItems: items }
       }))
+      setExpandedOrderIds(prev => new Set(prev).add(orderId))
     } catch (err) {
       console.error('Ошибка отметки «в посылку»:', err)
       showToast('Ошибка: ' + (err.message || 'Неизвестная ошибка'))
@@ -1140,7 +1145,7 @@ function AdminOrders() {
                       </tr>
                     </thead>
                     <tbody>
-                      {sortOrdersInGroup(statusOrders.filter(isRootOrder)).map(order => {
+                      {sortOrdersInGroup(statusOrders).map(order => {
                         const orderId = getOrderId(order)
                         const isSelected = selectedOrders.has(orderId)
                         const isUpdating = updatingStatuses.has(orderId)
@@ -1197,6 +1202,11 @@ function AdminOrders() {
                                 )}
                                 {hasOrderDiscount(order) && (
                                   <span className="order-discount-icon" title="У заказа есть скидка">🏷️</span>
+                                )}
+                                {isChildOrder && getParentOrder(order) && (
+                                  <div className="order-child-parent-hint">
+                                    часть {getOrderNumber(getParentOrder(order))}
+                                  </div>
                                 )}
                               </td>
                               <td className="td-client client-cell">
@@ -1342,13 +1352,6 @@ function AdminOrders() {
                                               {childStatus}
                                             </span>
                                             <span className="order-child-order-sum">{formatPrice(getFinalAmount(child))}</span>
-                                            <button
-                                              type="button"
-                                              className="btn btn-secondary btn-sm"
-                                              onClick={(e) => { e.stopPropagation(); setOrderDetailsOrderId(childId) }}
-                                            >
-                                              Подробнее
-                                            </button>
                                           </div>
                                           {childExpanded && childItems.length > 0 && (
                                             <div className="order-items-list order-child-order-items">
@@ -1356,6 +1359,9 @@ function AdminOrders() {
                                                 const itemId = item.id ?? item.Id
                                                 const imgUrl = getItemImageUrl(item)
                                                 const name = item.productName ?? item.ProductName ?? '—'
+                                                const size = item.size ?? item.Size ?? ''
+                                                const brand = item.brand ?? item.Brand ?? ''
+                                                const color = item.color ?? item.Color ?? ''
                                                 const addedToParcel = isItemShownInParcel(child, item)
                                                 return (
                                                   <div
@@ -1378,6 +1384,9 @@ function AdminOrders() {
                                                     )}
                                                     <div className="order-item-info">
                                                       <strong>{name}</strong>
+                                                      {size && <span className="order-item-meta">Размер: {size}</span>}
+                                                      {brand && <span className="order-item-meta">Бренд: {brand}</span>}
+                                                      {color && <span className="order-item-meta">Цвет: {color}</span>}
                                                     </div>
                                                     {addedToParcel && (
                                                       <span className="order-child-item-parcel-mark">✓ В посылке</span>
@@ -1817,7 +1826,7 @@ function AdminOrders() {
               <button type="button" className="btn btn-secondary" onClick={() => setStatusChangeWarning(null)}>
                 Отмена
               </button>
-              <button type="button" className="btn btn-primary" onClick={handleConfirmStatusWarning}>
+              <button type="button" className="btn btn-primary status-warning-modal-confirm" onClick={handleConfirmStatusWarning}>
                 {statusChangeWarning.type === 'split' ? 'Да, разбить' : 'Перевести'}
               </button>
             </div>
