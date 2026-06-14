@@ -2,9 +2,7 @@ const METRIKA_ID = 109494790
 
 let initialized = false
 
-/**
- * Loads Yandex.Metrika after cookie notice acceptance (or if already accepted).
- */
+/** Яндекс.Метрика — только после принятия cookie (см. CookieNotice). */
 export function initYandexMetrika() {
   if (typeof window === 'undefined' || initialized) return
   initialized = true
