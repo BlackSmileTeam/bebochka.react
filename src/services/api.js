@@ -1685,6 +1685,8 @@ export const api = {
       sessionId: item.sessionId ?? item.SessionId,
       productName: item.productName ?? item.ProductName,
       productBrand: item.productBrand ?? item.ProductBrand,
+      productPrice: item.productPrice ?? item.ProductPrice,
+      productSize: item.productSize ?? item.ProductSize,
       productImages: item.productImages ?? item.ProductImages ?? [],
       updatedAt: item.updatedAt ?? item.UpdatedAt,
       customerName: item.customerName ?? item.CustomerName ?? null,

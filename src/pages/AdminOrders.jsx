@@ -1034,6 +1034,8 @@ function AdminOrders() {
                     const imageUrl = getCartImageUrl(item)
                     const productName = item.productName ?? item.ProductName ?? '—'
                     const productBrand = item.productBrand ?? item.ProductBrand
+                    const productPrice = item.productPrice ?? item.ProductPrice
+                    const productSize = item.productSize ?? item.ProductSize
                     const updatedAt = item.updatedAt ?? item.UpdatedAt
                     return (
                       <div key={id} className="admin-cart-item-card">
@@ -1061,6 +1063,10 @@ function AdminOrders() {
                         <div className="admin-cart-item-info">
                           <strong>{productName}</strong>
                           {productBrand && <span>Бренд: {productBrand}</span>}
+                          {(productPrice != null && productPrice !== '') && (
+                            <span>Цена: {formatPrice(Number(productPrice))}</span>
+                          )}
+                          {productSize && <span>Размер: {productSize}</span>}
                           <span className="admin-cart-owner">
                             Владелец:{' '}
                             {userId != null ? (
@@ -1328,7 +1334,7 @@ function AdminOrders() {
                                         <div className="order-row-dropdown-backdrop" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null) }} />
                                         <div className="order-row-dropdown-menu">
                                           <button type="button" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null); setOrderDetailsOrderId(orderId) }}>
-                                            Подробнее
+                                            📋 Подробнее
                                           </button>
                                           <button type="button" onClick={(e) => { e.stopPropagation(); setOrderRowMenuOpen(null); setOrderDiscountModal(orderId) }}>
                                             🏷️ Скидка

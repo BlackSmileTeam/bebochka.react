@@ -15,6 +15,16 @@ function getOrderId(o) {
   return o.id ?? o.Id
 }
 
+function getChildOrders(o) {
+  const nested = o?.childOrders ?? o?.ChildOrders
+  return Array.isArray(nested) ? nested : []
+}
+
+function getParentOrderId(o) {
+  const pid = o?.parentOrderId ?? o?.ParentOrderId
+  return pid != null && pid !== '' ? pid : null
+}
+
 function getItems(o) {
   return o.orderItems || o.OrderItems || []
 }
@@ -221,25 +231,60 @@ function OrderCard({
   const num = order.orderNumber || order.OrderNumber || `#${oid}`
   const sum = order.finalAmount ?? order.FinalAmount ?? order.totalAmount ?? order.TotalAmount ?? 0
   const color = getOrderStatusColor(status)
+  const childOrders = getChildOrders(order)
+  const parentId = getParentOrderId(order)
+  const parentHint = parentId ? ` · часть #${parentId}` : ''
   return (
     <details className="admin-user-orders-order" open={defaultOpen}>
       <summary className="admin-user-orders-order-summary">
         <span className="admin-user-orders-order-chevron" aria-hidden>▶</span>
-        <span className="admin-user-orders-order-num">{num}</span>
+        <span className="admin-user-orders-order-num">{num}{parentHint}</span>
         <span className="admin-user-orders-order-sum">{formatMoney(sum)}</span>
         <span className="admin-user-orders-order-status" style={{ backgroundColor: color }}>{status}</span>
         <span className="admin-user-orders-order-date">{formatWhen(order.createdAt || order.CreatedAt)}</span>
       </summary>
       <div className="admin-user-orders-order-body">
-        <OrderItemsGrid
-          order={order}
-          orderId={oid}
-          parcelAllowed={parcelAllowed}
-          togglingKey={togglingKey}
-          onToggleInParcel={onToggleInParcel}
-          onOpenProduct={onOpenProduct}
-          detailLoadingId={detailLoadingId}
-        />
+        {childOrders.length > 0 ? (
+          <div className="admin-user-orders-child-parts">
+            {childOrders.map((child) => {
+              const childId = getOrderId(child)
+              const childStatus = getOrderStatus(child)
+              const childParcelAllowed = childStatus === 'В сборке'
+              return (
+                <div key={childId} className="admin-user-orders-child-part">
+                  <div className="admin-user-orders-child-part-head">
+                    <strong>{child.orderNumber || child.OrderNumber || `#${childId}`}</strong>
+                    <span
+                      className="admin-user-orders-order-status admin-user-orders-order-status--inline"
+                      style={{ backgroundColor: getOrderStatusColor(childStatus) }}
+                    >
+                      {childStatus}
+                    </span>
+                  </div>
+                  <OrderItemsGrid
+                    order={child}
+                    orderId={childId}
+                    parcelAllowed={childParcelAllowed}
+                    togglingKey={togglingKey}
+                    onToggleInParcel={onToggleInParcel}
+                    onOpenProduct={onOpenProduct}
+                    detailLoadingId={detailLoadingId}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <OrderItemsGrid
+            order={order}
+            orderId={oid}
+            parcelAllowed={parcelAllowed}
+            togglingKey={togglingKey}
+            onToggleInParcel={onToggleInParcel}
+            onOpenProduct={onOpenProduct}
+            detailLoadingId={detailLoadingId}
+          />
+        )}
       </div>
     </details>
   )
@@ -270,7 +315,20 @@ export default function AdminUserOrders() {
     setOrders(Array.isArray(list) ? list : [])
   }, [userId])
 
-  const sortedOrders = useMemo(() => {
+  const ordersById = useMemo(() => {
+    const byId = new Map()
+    for (const o of orders) {
+      const id = getOrderId(o)
+      if (id != null) byId.set(id, o)
+      for (const c of getChildOrders(o)) {
+        const cid = getOrderId(c)
+        if (cid != null) byId.set(cid, c)
+      }
+    }
+    return byId
+  }, [orders])
+
+  const sortedRootOrders = useMemo(() => {
     const list = Array.isArray(orders) ? [...orders] : []
     list.sort((a, b) => {
       const da = new Date(a.createdAt || a.CreatedAt || 0).getTime()
@@ -280,13 +338,18 @@ export default function AdminUserOrders() {
     return list
   }, [orders])
 
-  const primaryOrderId = useMemo(() => {
-    if (highlightOrderId != null && !Number.isNaN(highlightOrderId) && sortedOrders.some((o) => getOrderId(o) === highlightOrderId)) {
-      return highlightOrderId
+  const primaryOrder = useMemo(() => {
+    if (highlightOrderId != null && !Number.isNaN(highlightOrderId) && ordersById.has(highlightOrderId)) {
+      return ordersById.get(highlightOrderId)
     }
-    const first = sortedOrders[0]
-    return first ? getOrderId(first) : null
-  }, [sortedOrders, highlightOrderId])
+    return sortedRootOrders[0] ?? null
+  }, [sortedRootOrders, highlightOrderId, ordersById])
+
+  const primaryRootId = useMemo(() => {
+    if (!primaryOrder) return null
+    const parentId = getParentOrderId(primaryOrder)
+    return parentId ?? getOrderId(primaryOrder)
+  }, [primaryOrder])
 
   useEffect(() => {
     let cancelled = false
@@ -411,24 +474,22 @@ export default function AdminUserOrders() {
         )}
         {loading && <p className="admin-user-orders-muted">Загрузка…</p>}
         {!loading && error && <p className="admin-user-orders-error">{error}</p>}
-        {!loading && !error && sortedOrders.length === 0 && (
+        {!loading && !error && sortedRootOrders.length === 0 && (
           <p className="admin-user-orders-muted">У этого пользователя пока нет заказов.</p>
         )}
-        {!loading && !error && sortedOrders.length > 0 && (
+        {!loading && !error && primaryOrder && (
           <>
             <section className="admin-user-orders-section">
               <h2 className="admin-user-orders-section-title">
                 {highlightOrderId != null && !Number.isNaN(highlightOrderId) ? 'Выбранный заказ' : 'Последний заказ'}
               </h2>
-              {sortedOrders
-                .filter((o) => getOrderId(o) === primaryOrderId)
-                .map((o) => renderOrderCard(o, true))}
+              {renderOrderCard(primaryOrder, true)}
             </section>
-            {sortedOrders.filter((o) => getOrderId(o) !== primaryOrderId).length > 0 && (
+            {sortedRootOrders.filter((o) => getOrderId(o) !== primaryRootId).length > 0 && (
               <section className="admin-user-orders-section">
                 <h2 className="admin-user-orders-section-title">Прошлые заказы</h2>
-                {sortedOrders
-                  .filter((o) => getOrderId(o) !== primaryOrderId)
+                {sortedRootOrders
+                  .filter((o) => getOrderId(o) !== primaryRootId)
                   .map((o) => renderOrderCard(o, false))}
               </section>
             )}
