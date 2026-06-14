@@ -175,11 +175,30 @@ function AdminOrders() {
     return t && t !== 'None'
   }
 
+  const getOrderIdEarly = (order) => order?.id ?? order?.Id
+
+  /** Плоский список: корневые + вложенные childOrders (если API отдал только внутри родителя). */
+  const allOrdersFlat = useMemo(() => {
+    const byId = new Map()
+    for (const o of orders) {
+      const id = getOrderIdEarly(o)
+      if (id != null) byId.set(id, o)
+      const nested = o?.childOrders ?? o?.ChildOrders
+      if (Array.isArray(nested)) {
+        for (const c of nested) {
+          const cid = getOrderIdEarly(c)
+          if (cid != null) byId.set(cid, c)
+        }
+      }
+    }
+    return Array.from(byId.values())
+  }, [orders])
+
   // Фильтр по скидке: все заказы или только со скидкой
   const ordersForGrouping = useMemo(() => {
-    if (discountFilter !== 'withDiscount') return orders
-    return orders.filter(hasOrderDiscount)
-  }, [orders, discountFilter])
+    if (discountFilter !== 'withDiscount') return allOrdersFlat
+    return allOrdersFlat.filter(hasOrderDiscount)
+  }, [allOrdersFlat, discountFilter])
 
   const getCustomerKey = (order) => {
     const name = order.customerName || order.CustomerName || '-'
@@ -524,13 +543,14 @@ function AdminOrders() {
     const nested = order?.childOrders ?? order?.ChildOrders
     if (Array.isArray(nested) && nested.length > 0) return nested
     const orderId = getOrderId(order)
-    return orders.filter(o => getParentOrderId(o) === orderId)
+    return allOrdersFlat.filter(o => getParentOrderId(o) === orderId)
   }
   const getParentOrder = (order) => {
     const parentId = getParentOrderId(order)
     if (parentId == null || parentId === '') return null
-    return orders.find(o => getOrderId(o) === parentId) ?? null
+    return allOrdersFlat.find(o => getOrderId(o) === parentId) ?? null
   }
+  const findOrderById = (orderId) => allOrdersFlat.find(o => getOrderId(o) === orderId) ?? null
   const isItemAddedToParcel = (item) => !!(item.addedToParcel ?? item.AddedToParcel)
   const isItemShownInParcel = (order, item) => {
     if (getOrderStatus(order) === 'Отправлен') return true
@@ -848,7 +868,7 @@ function AdminOrders() {
     )
   }
 
-  const totalOrders = orders.length
+  const totalOrders = allOrdersFlat.length
   const selectedCount = selectedOrders.size
 
   return (
@@ -1567,13 +1587,13 @@ function AdminOrders() {
       {orderDiscountModal != null && (
         <OrderDiscountSingleModal
           orderId={orderDiscountModal}
-          order={orders.find(o => getOrderId(o) === orderDiscountModal)}
+          order={findOrderById(orderDiscountModal)}
           getOrderNumber={getOrderNumber}
           getCustomerName={getCustomerName}
           getTotalAmount={getTotalAmount}
           getFinalAmount={getFinalAmount}
           formatPrice={formatPrice}
-          hasDiscount={(() => { const o = orders.find(ord => getOrderId(ord) === orderDiscountModal); return o && hasOrderDiscount(o) })()}
+          hasDiscount={(() => { const o = findOrderById(orderDiscountModal); return o && hasOrderDiscount(o) })()}
           onClose={() => setOrderDiscountModal(null)}
           onApply={(percent) => handleSetOrderDiscountPercent(orderDiscountModal, percent)}
           onRemove={() => { handleRemoveOrderDiscount(orderDiscountModal); setOrderDiscountModal(null) }}
@@ -1582,9 +1602,10 @@ function AdminOrders() {
 
       {/* Детали заказа (модалка) */}
       {orderDetailsOrderId != null && (() => {
-        const order = orders.find(o => getOrderId(o) === orderDetailsOrderId)
+        const order = findOrderById(orderDetailsOrderId)
         if (!order) return null
         const items = getOrderItems(order)
+        const childOrders = getChildOrders(order)
         const currentStatus = getOrderStatus(order)
         const statusLocked = isOrderStatusLocked(order)
         const parcelActionsAllowed = currentStatus === 'В сборке'
@@ -1596,12 +1617,21 @@ function AdminOrders() {
             <div className="modal-content order-details-modal" onClick={e => e.stopPropagation()}>
               <div className="order-details-header">
                 <h3>Заказ {getOrderNumber(order)}</h3>
-                <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
-              </div>
-              <div className="order-details-body">
-                <div className="order-details-number-row">
-                  <p className="order-details-number-line"><strong>Номер:</strong> {getOrderNumber(order)}</p>
-                  <div className={`order-row-dropdown order-details-number-dropdown${orderDetailsMenuOpen ? ' order-details-number-dropdown--open' : ''}`}>
+                <div className="order-details-header-right">
+                  <select
+                    value={currentStatus}
+                    onChange={(e) => handleStatusChange(orderDetailsOrderId, e.target.value)}
+                    disabled={isUpdating || statusLocked}
+                    className="status-select status-select--colored status-select--details-header"
+                    style={getOrderStatusSelectSurfaceStyle(currentStatus)}
+                    title={STATUS_TOOLTIPS[currentStatus]}
+                    aria-label="Статус заказа"
+                  >
+                    {getAdminStatusSelectOptions(currentStatus).map(s => (
+                      <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
+                    ))}
+                  </select>
+                  <div className={`order-row-dropdown order-details-header-dropdown${orderDetailsMenuOpen ? ' order-details-header-dropdown--open' : ''}`}>
                     <button
                       type="button"
                       className="btn-order-menu-trigger"
@@ -1641,7 +1671,10 @@ function AdminOrders() {
                       </>
                     )}
                   </div>
+                  <button type="button" className="btn-close-modal" onClick={() => setOrderDetailsOrderId(null)} aria-label="Закрыть">×</button>
                 </div>
+              </div>
+              <div className="order-details-body">
                 <p><strong>Телефон:</strong> {getCustomerPhone(order)}</p>
                 <p><strong>Клиент:</strong>{' '}
                   {getPositiveWebUserId(order) != null ? (
@@ -1675,21 +1708,6 @@ function AdminOrders() {
                 </p>
                 <p><strong>Дата:</strong> {formatDate(order.createdAt || order.CreatedAt)}</p>
                 <p><strong>Сумма:</strong> {formatPrice(getFinalAmount(order))}{hasOrderDiscount(order) && getFinalAmount(order) !== getTotalAmount(order) && ` (${formatPrice(getTotalAmount(order))})`}</p>
-                <div className="order-details-actions">
-                  <label className="order-details-status-label" htmlFor={`order-details-status-${orderDetailsOrderId}`}>Статус</label>
-                  <select
-                    id={`order-details-status-${orderDetailsOrderId}`}
-                    value={currentStatus}
-                    onChange={(e) => handleStatusChange(orderDetailsOrderId, e.target.value)}
-                    disabled={isUpdating || statusLocked}
-                    className="status-select status-select--colored status-select--details-full"
-                    style={getOrderStatusSelectSurfaceStyle(currentStatus)}
-                  >
-                    {getAdminStatusSelectOptions(currentStatus).map(s => (
-                      <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
-                    ))}
-                  </select>
-                </div>
                 {Array.isArray(statusHistory) && statusHistory.length > 0 && (
                   <div className={`order-details-status-history${orderDetailsHistoryOpen ? ' order-details-status-history--open' : ''}`}>
                     <button
@@ -1720,6 +1738,97 @@ function AdminOrders() {
                     </ul>
                   </div>
                 )}
+                {childOrders.length > 0 && (
+                  <>
+                    <h4>Части заказа</h4>
+                    <div className="order-details-child-orders">
+                      {childOrders.map((child) => {
+                        const childId = getOrderId(child)
+                        const childStatus = getOrderStatus(child)
+                        const childItems = getOrderItems(child)
+                        const childLocked = isOrderStatusLocked(child)
+                        const childUpdating = updatingStatuses.has(childId)
+                        const childParcelAllowed = childStatus === 'В сборке'
+                        const childHighlightMissing = shouldHighlightMissingParcel(child)
+                        return (
+                          <div key={childId} className="order-details-child-block">
+                            <div className="order-details-child-head">
+                              <strong>{getOrderNumber(child)}</strong>
+                              <select
+                                value={childStatus}
+                                onChange={(e) => handleStatusChange(childId, e.target.value)}
+                                disabled={childUpdating || childLocked}
+                                className="status-select status-select--colored status-select--details-header"
+                                style={getOrderStatusSelectSurfaceStyle(childStatus)}
+                                title={STATUS_TOOLTIPS[childStatus]}
+                                aria-label={`Статус ${getOrderNumber(child)}`}
+                              >
+                                {getAdminStatusSelectOptions(childStatus).map(s => (
+                                  <option key={s} value={s} style={getOrderStatusOptionStyle(s)}>{s}</option>
+                                ))}
+                              </select>
+                              <span className="order-child-order-sum">{formatPrice(getFinalAmount(child))}</span>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-small"
+                                onClick={() => setOrderDetailsOrderId(childId)}
+                              >
+                                Открыть
+                              </button>
+                            </div>
+                            {childItems.length > 0 ? (
+                              <div className="order-items-list order-details-items">
+                                {childItems.map(item => {
+                                  const itemId = item.id ?? item.Id
+                                  const imgUrl = getItemImageUrl(item)
+                                  const name = item.productName ?? item.ProductName ?? '—'
+                                  const size = item.size ?? item.Size ?? ''
+                                  const brand = item.brand ?? item.Brand ?? ''
+                                  const color = item.color ?? item.Color ?? ''
+                                  const addedToParcel = isItemShownInParcel(child, item)
+                                  const key = `${childId}-${itemId}`
+                                  const isDeleting = deletingItemKey === key
+                                  const isTogglingInParcel = inParcelTogglingKey === key
+                                  return (
+                                    <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}${childHighlightMissing && !addedToParcel ? ' order-item-card--missing-parcel' : ''}`}>
+                                      {imgUrl ? (
+                                        <div className="order-item-photo" onClick={() => openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} title="Открыть фото">
+                                          <img src={imgUrl} alt={name} loading="lazy" decoding="async" />
+                                        </div>
+                                      ) : (
+                                        <div className="order-item-photo order-item-photo-placeholder">фото</div>
+                                      )}
+                                      <div className="order-item-info">
+                                        <strong>{name}</strong>
+                                        {size && <span className="order-item-meta">Размер: {size}</span>}
+                                        {brand && <span className="order-item-meta">Бренд: {brand}</span>}
+                                        {color && <span className="order-item-meta">Цвет: {color}</span>}
+                                      </div>
+                                      <div className="order-item-actions">
+                                        {childParcelAllowed && (
+                                          <>
+                                            <button type="button" className="btn-in-parcel" onClick={() => handleToggleInParcel(childId, itemId, addedToParcel)} disabled={isTogglingInParcel}>
+                                              {isTogglingInParcel ? '…' : (addedToParcel ? '✓ В посылке' : 'В посылку')}
+                                            </button>
+                                            <button type="button" className="btn-delete-item" onClick={() => handleDeleteOrderItem(childId, itemId)} disabled={isDeleting}>{isDeleting ? '…' : 'Удалить'}</button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ) : (
+                              <p className="order-details-child-empty">Нет товаров в этой части</p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+                {items.length > 0 && (
+                  <>
                 <h4>Товары</h4>
                 <div className="order-items-list order-details-items">
                   {items.map(item => {
@@ -1729,7 +1838,7 @@ function AdminOrders() {
                     const size = item.size ?? item.Size ?? ''
                     const brand = item.brand ?? item.Brand ?? ''
                     const color = item.color ?? item.Color ?? ''
-                    const addedToParcel = isItemShownInParcel(orderDetailsOrder, item)
+                    const addedToParcel = isItemShownInParcel(order, item)
                     const key = `${orderDetailsOrderId}-${itemId}`
                     const isDeleting = deletingItemKey === key
                     const isTogglingInParcel = inParcelTogglingKey === key
@@ -1762,6 +1871,11 @@ function AdminOrders() {
                     )
                   })}
                 </div>
+                  </>
+                )}
+                {childOrders.length > 0 && items.length === 0 && (
+                  <p className="order-details-partial-hint">Товары распределены по частям заказа выше.</p>
+                )}
               </div>
             </div>
           </div>

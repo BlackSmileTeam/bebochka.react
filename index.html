@@ -36,6 +36,20 @@
       content="Одежда европейских брендов по доступным ценам. Быстрая связь и удобная доставка."
     />
     <meta name="twitter:image" content="https://www.bebochka.online/logo.jpg" />
+    <script>
+      (function () {
+        var host = (location.hostname || '').toLowerCase()
+        var site = host.indexOf('bebochka.ru') >= 0 ? 'https://bebochka.ru' : 'https://www.bebochka.online'
+        var canonical = document.querySelector('link[rel="canonical"]')
+        if (canonical) canonical.href = site + '/'
+        var ogUrl = document.querySelector('meta[property="og:url"]')
+        if (ogUrl) ogUrl.setAttribute('content', site + '/')
+        var ogImage = document.querySelector('meta[property="og:image"]')
+        if (ogImage) ogImage.setAttribute('content', site + '/logo.jpg')
+        var twImage = document.querySelector('meta[name="twitter:image"]')
+        if (twImage) twImage.setAttribute('content', site + '/logo.jpg')
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
@@ -45,7 +59,7 @@
         <img src="https://mc.yandex.ru/watch/109494790" style="position:absolute; left:-9999px;" alt="" />
       </div>
     </noscript>
-    <script type="application/ld+json">
+    <script type="application/ld+json" id="ld-org">
       {
         "@context": "https://schema.org",
         "@type": "Organization",
@@ -59,7 +73,7 @@
         ]
       }
     </script>
-    <script type="application/ld+json">
+    <script type="application/ld+json" id="ld-site">
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
@@ -72,6 +86,25 @@
           "query-input": "required name=search_term_string"
         }
       }
+    </script>
+    <script>
+      (function () {
+        var host = (location.hostname || '').toLowerCase()
+        var site = host.indexOf('bebochka.ru') >= 0 ? 'https://bebochka.ru' : 'https://www.bebochka.online'
+        ;['ld-org', 'ld-site'].forEach(function (id) {
+          var el = document.getElementById(id)
+          if (!el) return
+          try {
+            var data = JSON.parse(el.textContent)
+            data.url = site + '/'
+            if (data.logo) data.logo = site + '/logo.jpg'
+            if (data.potentialAction && data.potentialAction.target) {
+              data.potentialAction.target = site + '/?q={search_term_string}'
+            }
+            el.textContent = JSON.stringify(data)
+          } catch (_) {}
+        })
+      })()
     </script>
   </body>
 </html>

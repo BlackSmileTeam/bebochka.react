@@ -4,6 +4,12 @@
     <loc>https://www.bebochka.online/sitemap-pages.xml</loc>
   </sitemap>
   <sitemap>
+    <loc>https://bebochka.ru/sitemap-pages-ru.xml</loc>
+  </sitemap>
+  <sitemap>
     <loc>https://www.bebochka.online/api/seo/sitemap-products.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://bebochka.ru/api/seo/sitemap-products.xml</loc>
   </sitemap>
 </sitemapindex>
