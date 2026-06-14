@@ -23,8 +23,24 @@ env:
   CONTAINER_PORT: '80'
 
 jobs:
+  detect-target:
+    runs-on: ubuntu-latest
+    outputs:
+      edge: ${{ steps.detect.outputs.edge }}
+    steps:
+      - id: detect
+        run: |
+          if [ -n "${{ secrets.EDGE_PROD_HOST }}" ] && [ -n "${{ secrets.EDGE_SSH_PRIVATE_KEY }}" ]; then
+            echo "edge=true" >> "$GITHUB_OUTPUT"
+            echo "Deploy target: Selectel edge"
+          else
+            echo "edge=false" >> "$GITHUB_OUTPUT"
+            echo "Deploy target: legacy FirstVDS"
+          fi
+
   preflight-prod:
-    if: ${{ secrets.EDGE_PROD_HOST == '' }}
+    needs: detect-target
+    if: needs.detect-target.outputs.edge != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Validate PROD secrets
@@ -53,22 +69,11 @@ jobs:
             echo "=== OK ==="
 
   preflight-edge:
+    needs: detect-target
+    if: needs.detect-target.outputs.edge == 'true'
     runs-on: ubuntu-latest
-    outputs:
-      configured: ${{ steps.edge.outputs.configured }}
     steps:
-      - id: edge
-        run: |
-          if [ -n "${{ secrets.EDGE_PROD_HOST }}" ] && [ -n "${{ secrets.EDGE_SSH_PRIVATE_KEY }}" ]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-            echo "Edge secrets found — will deploy to edge VPS"
-          else
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "Edge secrets missing — skip edge deploy"
-          fi
-
       - name: SSH preflight (edge VPS)
-        if: steps.edge.outputs.configured == 'true'
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.EDGE_PROD_HOST }}
@@ -83,8 +88,8 @@ jobs:
             echo "=== OK ==="
 
   build:
-    needs: [preflight-prod, preflight-edge]
-    if: always() && !cancelled() && (needs.preflight-prod.result == 'success' || needs.preflight-prod.result == 'skipped') && needs.preflight-edge.result == 'success'
+    needs: [detect-target, preflight-prod, preflight-edge]
+    if: always() && !cancelled() && needs.detect-target.result == 'success' && (needs.preflight-prod.result == 'success' || needs.preflight-prod.result == 'skipped') && (needs.preflight-edge.result == 'success' || needs.preflight-edge.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -136,8 +141,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy-prod:
-    needs: [build]
-    if: ${{ secrets.EDGE_PROD_HOST == '' }}
+    needs: [build, detect-target]
+    if: needs.detect-target.outputs.edge != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Download image
@@ -200,8 +205,8 @@ jobs:
           echo "- Port: **${{ env.HOST_PORT }}**" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-edge:
-    needs: [build, preflight-edge]
-    if: needs.preflight-edge.outputs.configured == 'true'
+    needs: [build, detect-target]
+    if: needs.detect-target.outputs.edge == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
