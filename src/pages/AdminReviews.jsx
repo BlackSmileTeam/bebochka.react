@@ -5,6 +5,8 @@ import Toast from '../components/Toast'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import ImageLightbox from '../components/ImageLightbox'
 import { getApiPublicOrigin } from '../utils/apiBase'
+import { usePageSeo } from '../utils/seo'
+import { getPublicSiteUrl } from '../constants/siteUrl'
 import './AdminReviews.css'
 
 function renderStars(rating) {
@@ -98,6 +100,13 @@ function AdminReviews() {
   const formRef = useRef(null)
   const [filePreviewUrls, setFilePreviewUrls] = useState([])
   const [lightboxSrc, setLightboxSrc] = useState(null)
+
+  usePageSeo({
+    title: 'Отзывы покупателей — bebochka',
+    description:
+      'Отзывы мам о покупках в bebochka: качество одежды, размеры, доставка и сервис.',
+    canonical: `${getPublicSiteUrl()}/reviews`,
+  })
 
   useEffect(() => {
     const urls = (form.files || []).map((file) => URL.createObjectURL(file))

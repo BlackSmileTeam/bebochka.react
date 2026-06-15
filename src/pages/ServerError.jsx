@@ -6,6 +6,7 @@ export default function ServerError({ onRetry }) {
   usePageSeo({
     title: 'Ошибка сервера — bebochka',
     description: 'На сервере произошла ошибка.',
+    robots: 'noindex, nofollow',
   })
 
   const handleRetry = () => {

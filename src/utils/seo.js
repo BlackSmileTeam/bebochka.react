@@ -1,6 +1,24 @@
 import { useEffect } from 'react'
 
 const SEO_TAG_ID = 'dynamic-seo-jsonld'
+const DEFAULT_ROBOTS = 'index, follow'
+
+/** Пути, которые не должны попадать в поиск. */
+export const NOINDEX_PATH_PREFIXES = [
+  '/admin',
+  '/cart',
+  '/checkout',
+  '/profile',
+  '/account',
+  '/login',
+]
+
+export function isNoindexPath(pathname) {
+  const path = String(pathname || '')
+  return NOINDEX_PATH_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+  )
+}
 
 function ensureMeta(name, content) {
   if (!content) return
@@ -24,14 +42,19 @@ function ensureCanonical(url) {
   el.setAttribute('href', url)
 }
 
-export function usePageSeo({ title, description, keywords, canonical, robots, jsonLd }) {
+export function usePageSeo({
+  title,
+  description,
+  keywords,
+  canonical,
+  robots = DEFAULT_ROBOTS,
+  jsonLd,
+}) {
   useEffect(() => {
     if (title) document.title = title
     ensureMeta('description', description)
     ensureMeta('keywords', keywords)
-    if (robots) {
-      ensureMeta('robots', robots)
-    }
+    ensureMeta('robots', robots)
     ensureCanonical(canonical)
 
     const old = document.getElementById(SEO_TAG_ID)
@@ -49,6 +72,14 @@ export function usePageSeo({ title, description, keywords, canonical, robots, js
       if (current) current.remove()
     }
   }, [title, description, keywords, canonical, robots, jsonLd])
+}
+
+/** noindex для служебных маршрутов (корзина, профиль, админка). */
+export function usePrivateRouteSeo(pathname) {
+  useEffect(() => {
+    if (!isNoindexPath(pathname)) return
+    ensureMeta('robots', 'noindex, nofollow')
+  }, [pathname])
 }
 
 export function getProductStockCount(product) {

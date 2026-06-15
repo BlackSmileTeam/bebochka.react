@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { CONTACT_TELEGRAM_URL, CONTACT_VK_PERSONAL_URL } from '../constants/contactLinks'
+import SeoRouteGuard from './SeoRouteGuard'
 import Toast from './Toast'
 import './Layout.css'
 
@@ -427,6 +428,7 @@ function Layout() {
         </div>
       </header>
       <main className={`main${isWelcomePage ? ' main--welcome' : ''}`}>
+        <SeoRouteGuard />
         <Outlet />
       </main>
       <Suspense fallback={null}>

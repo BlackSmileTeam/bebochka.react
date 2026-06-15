@@ -16,6 +16,7 @@ export default function NotFound() {
   usePageSeo({
     title: 'Страница не найдена — bebochka',
     description: 'Запрошенная страница не существует.',
+    robots: 'noindex, nofollow',
   })
 
   return (

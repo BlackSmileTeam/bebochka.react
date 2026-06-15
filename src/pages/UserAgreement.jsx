@@ -3,12 +3,20 @@ import PageShell from '../components/PageShell'
 import ContactChannelsLinks from '../components/ContactChannelsLinks'
 import { SITE_NAME, SITE_URL } from '../constants/site'
 import { CONTACT_TELEGRAM_URL, CONTACT_TELEGRAM_CHANNEL_URL, CONTACT_VK_GROUP_URL, CONTACT_VK_PERSONAL_URL, CONTACT_AVITO_URL } from '../constants/contactLinks'
+import { usePageSeo } from '../utils/seo'
+import { getPublicSiteUrl } from '../constants/siteUrl'
 import './InfoPages.css'
 import './UserAgreement.css'
 
 const AGREEMENT_VERSION = '29.05.2026'
 
 export default function UserAgreement() {
+  usePageSeo({
+    title: `Пользовательское соглашение — ${SITE_NAME}`,
+    description: `Условия использования интернет-магазина ${SITE_NAME}: заказы, доставка, cookie и персональные данные.`,
+    canonical: `${getPublicSiteUrl()}/terms`,
+  })
+
   return (
     <PageShell
       title="Пользовательское соглашение"

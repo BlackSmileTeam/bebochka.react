@@ -68,7 +68,7 @@ export default function ProductPage() {
   }, [productId])
 
   const inStock = product ? getProductStockCount(product) > 0 : false
-  const isIndexable = Boolean(product && inStock && !notFound)
+  const isIndexable = Boolean(!loading && product && inStock && !notFound)
 
   const canonical = useMemo(
     () => `${getPublicSiteUrl()}/product/${productIdSlug || ''}`,
@@ -88,7 +88,11 @@ export default function ProductPage() {
     title: seoTitle,
     description: seoDescription,
     canonical,
-    robots: isIndexable ? 'index, follow' : 'noindex, nofollow',
+    robots: loading
+      ? 'index, follow'
+      : isIndexable
+        ? 'index, follow'
+        : 'noindex, nofollow',
     keywords:
       'секонд хенд, сэконд, сток одежда, одежда для всей семьи, новая одежда, новая одежда для всей семьи, одежда для детей, для детей секонд, доставка одежды, покупка одежды',
     jsonLd: product && isIndexable

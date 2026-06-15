@@ -8,4 +8,3 @@ Disallow: /profile
 Disallow: /change-password
 
 Sitemap: https://www.bebochka.online/sitemap.xml
-Sitemap: https://bebochka.ru/sitemap.xml
