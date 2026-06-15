@@ -140,8 +140,6 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.75rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid #e2e8f0;
 }
 
 .admin-user-contact-link {
