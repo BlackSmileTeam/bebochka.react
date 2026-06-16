@@ -1,0 +1,31 @@
+.product-image-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.product-image-wrap > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.2s ease;
+}
+
+.product-image-placeholder-skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #edf2f7 0%, #f7fafc 50%, #edf2f7 100%);
+  background-size: 200% 100%;
+  animation: product-image-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes product-image-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}

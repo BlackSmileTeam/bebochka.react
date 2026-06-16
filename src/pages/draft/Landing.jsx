@@ -226,7 +226,10 @@ export default function Landing() {
                         width={320}
                         height={320}
                         sizes={LANDING_PRODUCT_IMAGE_SIZES}
-                        priority={index === 0}
+                        priority={index < 4}
+                        onError={(e) => {
+                          e.target.src = '/logo.jpg'
+                        }}
                       />
                     ) : (
                       <div className="landing-product-placeholder">Нет фото</div>
@@ -257,11 +260,20 @@ export default function Landing() {
             })}
           </div>
         )}
-        {isLoggedIn && (
+        {!loading && products.length > 0 && (
           <div className="landing-catalog-more">
-            <Link to="/" className="landing-text-link">
-              Весь каталог →
-            </Link>
+            {isLoggedIn ? (
+              <Link to="/" className="landing-btn landing-btn--primary landing-btn--lg">
+                Весь каталог →
+              </Link>
+            ) : (
+              <Link
+                to={`/account?returnUrl=${encodeURIComponent('/')}`}
+                className="landing-btn landing-btn--primary landing-btn--lg"
+              >
+                Весь каталог →
+              </Link>
+            )}
           </div>
         )}
       </section>

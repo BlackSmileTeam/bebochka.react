@@ -331,6 +331,11 @@
   flex-shrink: 0;
 }
 
+.product-image-container .product-image-wrap {
+  width: 100%;
+  height: 100%;
+}
+
 .product-images-badge {
   position: absolute;
   top: 0.75rem;

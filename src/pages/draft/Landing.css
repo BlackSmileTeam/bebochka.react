@@ -488,11 +488,15 @@
   justify-content: center;
 }
 
+.landing-product-image-wrap .product-image-wrap {
+  width: 100%;
+  height: 100%;
+}
+
 .landing-product-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  content-visibility: auto;
 }
 
 .landing-product-placeholder {
@@ -560,6 +564,11 @@
 .landing-catalog-more {
   text-align: center;
   margin-top: 1.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.landing-catalog-more .landing-btn {
+  min-width: min(100%, 280px);
 }
 
 .landing-how {
