@@ -40,6 +40,45 @@
   align-items: center;
   justify-content: center;
   cursor: default;
+  touch-action: pan-y pinch-zoom;
+}
+
+.review-image-lightbox__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #2d3748;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.review-image-lightbox__nav--prev {
+  left: 0.75rem;
+}
+
+.review-image-lightbox__nav--next {
+  right: 0.75rem;
+}
+
+.review-image-lightbox__counter {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.68);
+  color: #fff;
+  font-size: 0.9rem;
 }
 
 .review-image-lightbox__img {

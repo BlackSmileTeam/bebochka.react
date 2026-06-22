@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { toAbsoluteMediaUrl, toThumbnailMediaUrl } from '../utils/mediaUrl'
 import './ProductImage.css'
 
 const MAX_RETRIES = 2
@@ -12,6 +13,7 @@ export default function ProductImage({
   alt,
   className = '',
   priority = false,
+  thumbWidth,
   width,
   height,
   sizes,
@@ -28,13 +30,17 @@ export default function ProductImage({
     setAttempt(0)
     setLoaded(false)
     setFailed(false)
-  }, [src])
+  }, [src, thumbWidth])
+
+  const baseSrc = thumbWidth
+    ? (toThumbnailMediaUrl(src, thumbWidth) || toAbsoluteMediaUrl(src) || fallbackSrc)
+    : (toAbsoluteMediaUrl(src) || src || fallbackSrc)
 
   const resolvedSrc = (() => {
-    if (!src) return fallbackSrc
-    if (attempt === 0) return src
-    const sep = src.includes('?') ? '&' : '?'
-    return `${src}${sep}retry=${attempt}`
+    if (!baseSrc) return fallbackSrc
+    if (attempt === 0) return baseSrc
+    const sep = baseSrc.includes('?') ? '&' : '?'
+    return `${baseSrc}${sep}retry=${attempt}`
   })()
 
   const handleLoad = useCallback(() => {

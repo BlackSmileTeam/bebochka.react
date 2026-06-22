@@ -7,7 +7,6 @@ import Toast from '../components/Toast'
 import PageShell from '../components/PageShell'
 import FilterIcon from '../components/FilterIcon'
 import { formatCondition } from '../utils/formatCondition'
-import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import CatalogBuyButton from '../components/CatalogBuyButton'
 import ProductKitCartControl from '../components/ProductKitCartControl'
 import { isKitProduct } from '../utils/productKit'
@@ -546,7 +545,8 @@ function Home() {
                 {product.images && product.images.length > 0 ? (
                   <>
                     <ProductImage
-                      src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
+                      src={product.images[0]}
+                      thumbWidth={420}
                       alt={product.name}
                       className="product-image"
                       priority={index < 4}

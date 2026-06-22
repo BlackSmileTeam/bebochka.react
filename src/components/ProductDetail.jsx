@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useCart } from '../contexts/CartContext'
 import { api } from '../services/api'
 import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
@@ -25,7 +25,9 @@ function ProductDetail({
 }) {
   const isPageLayout = variant === 'page'
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [lightboxSrc, setLightboxSrc] = useState(null)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const galleryTrackRef = useRef(null)
+  const scrollRafRef = useRef(null)
   const [isAdding, setIsAdding] = useState(false)
   const [queueLoading, setQueueLoading] = useState(false)
   const [toast, setToast] = useState(null)
@@ -230,22 +232,51 @@ function ProductDetail({
     canAdd ||
     isAdding
 
-  const getImageUrl = (imagePath) => {
-    return toAbsoluteMediaUrl(imagePath) || '/logo.jpg'
+  const getFullImageUrl = (imagePath) => toAbsoluteMediaUrl(imagePath) || '/logo.jpg'
+
+  const scrollToSlide = (index, behavior = 'smooth') => {
+    const track = galleryTrackRef.current
+    if (!track || track.clientWidth === 0) return
+    const safeIndex = Math.min(Math.max(index, 0), Math.max(images.length - 1, 0))
+    track.scrollTo({ left: safeIndex * track.clientWidth, behavior })
+  }
+
+  const handleGalleryScroll = () => {
+    if (scrollRafRef.current) return
+    scrollRafRef.current = window.requestAnimationFrame(() => {
+      scrollRafRef.current = null
+      const track = galleryTrackRef.current
+      if (!track || track.clientWidth === 0 || images.length <= 1) return
+      const nextIndex = Math.round(track.scrollLeft / track.clientWidth)
+      if (nextIndex >= 0 && nextIndex < images.length) {
+        setCurrentImageIndex((prev) => (prev === nextIndex ? prev : nextIndex))
+      }
+    })
   }
 
   const openOriginalImage = () => {
     if (!images.length) return
-    setLightboxSrc(getImageUrl(images[currentImageIndex]))
+    setLightboxOpen(true)
   }
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length)
+    const next = (currentImageIndex + 1) % images.length
+    setCurrentImageIndex(next)
+    scrollToSlide(next)
   }
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
+    const next = (currentImageIndex - 1 + images.length) % images.length
+    setCurrentImageIndex(next)
+    scrollToSlide(next)
   }
+
+  const selectImage = (index) => {
+    setCurrentImageIndex(index)
+    scrollToSlide(index)
+  }
+
+  const fullImageUrls = images.map(getFullImageUrl)
 
   const panel = (
     <div
@@ -281,17 +312,29 @@ function ProductDetail({
                     ‹
                   </button>
                 )}
-                <ProductImage
-                  src={getImageUrl(images[currentImageIndex])}
-                  alt={`${product.name} — фото ${currentImageIndex + 1}`}
-                  className="product-detail-image"
-                  priority
-                  title="Открыть фото"
-                  onClick={openOriginalImage}
-                  onError={(e) => {
-                    e.target.src = '/logo.jpg'
-                  }}
-                />
+                <div
+                  ref={galleryTrackRef}
+                  className="product-gallery-track"
+                  onScroll={handleGalleryScroll}
+                >
+                  {images.map((image, index) => (
+                    <div key={`${image}-${index}`} className="product-gallery-slide">
+                      <ProductImage
+                        src={image}
+                        thumbWidth={900}
+                        alt={`${product.name} — фото ${index + 1}`}
+                        className="product-detail-image"
+                        priority={index === 0 || index === currentImageIndex}
+                        loading={index <= currentImageIndex + 1 ? 'eager' : 'lazy'}
+                        title="Открыть фото"
+                        onClick={openOriginalImage}
+                        onError={(e) => {
+                          e.target.src = '/logo.jpg'
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
                 {images.length > 1 && (
                   <button 
                     className="gallery-nav gallery-nav-next" 
@@ -314,10 +357,11 @@ function ProductDetail({
                   {images.map((image, index) => (
                     <ProductImage
                       key={index}
-                      src={getImageUrl(image)}
+                      src={image}
+                      thumbWidth={160}
                       alt={`${product.name} — миниатюра ${index + 1}`}
                       className={`thumbnail ${index === currentImageIndex ? 'active' : ''}`}
-                      onClick={() => setCurrentImageIndex(index)}
+                      onClick={() => selectImage(index)}
                       onError={(e) => {
                         e.target.src = '/logo.jpg'
                       }}
@@ -523,11 +567,14 @@ function ProductDetail({
           onClose={() => setToast(null)}
         />
       )}
-      <ImageLightbox
-        src={lightboxSrc}
-        alt={`${product.name} — фото ${currentImageIndex + 1}`}
-        onClose={() => setLightboxSrc(null)}
-      />
+      {lightboxOpen && (
+        <ImageLightbox
+          images={fullImageUrls}
+          initialIndex={currentImageIndex}
+          alt={`${product.name} — фото ${currentImageIndex + 1}`}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </div>
   )
 

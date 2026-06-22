@@ -2,7 +2,6 @@ import ProductImage from './ProductImage'
 import ProductPriceDisplay from './ProductPriceDisplay'
 import ProductMetaFilter from './ProductMetaFilter'
 import CatalogBuyButton from './CatalogBuyButton'
-import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
 import { isTestProduct } from '../utils/testProductVisibility'
 
 function getStockInfo(available, quantityInStock, inCart) {
@@ -61,7 +60,8 @@ export default function CatalogProductCard({
         {product.images && product.images.length > 0 ? (
           <>
             <ProductImage
-              src={toAbsoluteMediaUrl(product.images[0]) || '/logo.jpg'}
+              src={product.images[0]}
+              thumbWidth={420}
               alt={product.name}
               className="product-image"
               priority={imagePriority}
