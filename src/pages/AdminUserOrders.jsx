@@ -5,7 +5,7 @@ import PageShell from '../components/PageShell'
 import ProductDetail from '../components/ProductDetail'
 import { useCart } from '../contexts/CartContext'
 import { getOrderStatusColor } from '../constants/orderStatusColors'
-import { getApiPublicOrigin } from '../utils/apiBase'
+import ProductImage from '../components/ProductImage'
 import VkProfileLink from '../components/VkProfileLink'
 import AdminUserChildrenPanel from '../components/AdminUserChildrenPanel'
 import { AdminUserEmailLink, AdminUserPhoneLink } from '../utils/adminUserContact'
@@ -161,13 +161,6 @@ function AdminUserInfo({ user, userId, children, childrenLoading, childrenError 
   )
 }
 
-function toImgUrl(path) {
-  if (!path) return '/logo.jpg'
-  if (String(path).startsWith('http')) return path
-  const base = getApiPublicOrigin()
-  return base + (String(path).startsWith('/') ? String(path) : `/${String(path)}`)
-}
-
 function isItemAddedToParcel(item) {
   return !!(item.addedToParcel ?? item.AddedToParcel)
 }
@@ -212,7 +205,14 @@ function OrderItemsGrid({
               title="Открыть карточку товара"
             >
               <div className="admin-user-orders-item-thumb">
-                <img src={toImgUrl(img)} alt={name} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/logo.jpg' }} />
+                <ProductImage
+                  src={img}
+                  thumbWidth={104}
+                  alt={name}
+                  className="admin-user-orders-item-thumb-img"
+                  width={52}
+                  height={52}
+                />
               </div>
               <div className="admin-user-orders-item-body">
                 <div className="admin-user-orders-item-name">{loadingThis ? 'Загрузка…' : name}</div>

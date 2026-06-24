@@ -1,18 +1,35 @@
+import { getPublicSiteUrl } from '../constants/siteUrl'
+
+function isLocalhostUrl(url) {
+  if (!url || typeof url !== 'string') return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'localhost' || host === '127.0.0.1' || host === '[::1]'
+  } catch {
+    return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])([:/]|$)/i.test(url)
+  }
+}
+
 /**
  * Публичный origin бэкенда (без суффикса /api).
- * Production на bebochka.ru: VITE_API_URL=https://bebochka.ru (или тот же origin + nginx /api).
- * Локально: origin Vite (5173/4173) + proxy на bebochka.ru в vite.config.js.
- * Локальный API: задайте VITE_API_URL=http://localhost:5000 в .env.local
+ * Production: same origin (nginx /api) или VITE_API_URL=https://bebochka.ru.
+ * localhost в VITE_API_URL игнорируется — берётся адрес сайта.
  */
 export function getApiPublicOrigin() {
   const v = import.meta.env.VITE_API_URL
   if (v != null && String(v).trim() !== '') {
-    return String(v).trim().replace(/\/$/, '').replace(/\/api\/?$/i, '')
+    const trimmed = String(v).trim().replace(/\/$/, '').replace(/\/api\/?$/i, '')
+    if (!isLocalhostUrl(trimmed)) {
+      return trimmed
+    }
   }
   if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin
+    const origin = window.location.origin
+    if (!isLocalhostUrl(origin)) {
+      return origin
+    }
   }
-  return ''
+  return getPublicSiteUrl()
 }
 
 export function getApiBaseUrl() {

@@ -254,7 +254,9 @@ function ProductDetail({
     })
   }
 
-  const openOriginalImage = () => {
+  const openOriginalImage = (event) => {
+    event?.stopPropagation?.()
+    event?.preventDefault?.()
     if (!images.length) return
     setLightboxOpen(true)
   }
@@ -327,7 +329,7 @@ function ProductDetail({
                         priority={index === 0 || index === currentImageIndex}
                         loading={index <= currentImageIndex + 1 ? 'eager' : 'lazy'}
                         title="Открыть фото"
-                        onClick={openOriginalImage}
+                        onClick={(event) => openOriginalImage(event)}
                         onError={(e) => {
                           e.target.src = '/logo.jpg'
                         }}

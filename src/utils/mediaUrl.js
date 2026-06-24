@@ -8,7 +8,10 @@ function normalizeUploadPath(path) {
 
   const origin = getApiPublicOrigin()
   if (/^https?:\/\//i.test(uploadPath)) {
-    if (origin && uploadPath.startsWith(origin)) {
+    const uploadsMatch = uploadPath.match(/\/uploads\/[^?#]+/i)
+    if (uploadsMatch) {
+      uploadPath = uploadsMatch[0]
+    } else if (origin && uploadPath.startsWith(origin)) {
       uploadPath = uploadPath.slice(origin.length)
     } else {
       return null

@@ -18,6 +18,7 @@ import {
 } from '../constants/paymentContacts'
 import { readFavoriteProductIds, toggleFavoriteProductId } from '../utils/favoritesStorage'
 import { readProfileTab, saveProfileTab } from '../utils/profileTabStorage'
+import ProductImage from '../components/ProductImage'
 import './Profile.css'
 import './Home.css'
 
@@ -380,8 +381,6 @@ function Profile() {
   const [favoriteProducts, setFavoriteProducts] = useState([])
   const [favoritesLoading, setFavoritesLoading] = useState(false)
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-
   const syncProfileFormFromUser = (u) => {
     setProfileForm({
       fullName: String(u?.fullName ?? u?.FullName ?? '').trim(),
@@ -484,11 +483,7 @@ function Profile() {
     return () => { cancelled = true }
   }, [sessionId])
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '/logo.jpg'
-    if (imagePath.startsWith('http')) return imagePath
-    return `${apiUrl}${imagePath}`
-  }
+  const getOrderItemImagePath = (item) => item?.imageUrl ?? item?.ImageUrl ?? null
 
   const openProductDetail = async (productId) => {
     if (productId == null) return
@@ -1246,7 +1241,7 @@ function Profile() {
                         {orderItems.map((it) => {
                           const pid = it.productId ?? it.ProductId
                           const name = it.productName ?? it.ProductName ?? 'Товар'
-                          const imgRaw = it.imageUrl ?? it.ImageUrl
+                          const imgRaw = getOrderItemImagePath(it)
                           const quantity = Number(it.quantity ?? it.Quantity ?? 1) || 1
                           const unitPrice = Number(it.productPrice ?? it.ProductPrice ?? 0) || 0
                           const lineTotal = unitPrice * quantity
@@ -1259,7 +1254,14 @@ function Profile() {
                                 disabled={detailLoadingId === pid}
                                 title="Открыть карточку товара"
                               >
-                                <img src={getImageUrl(imgRaw)} alt={name} loading="lazy" decoding="async" onError={(e) => { e.target.src = '/logo.jpg' }} />
+                                <ProductImage
+                                  src={imgRaw}
+                                  thumbWidth={104}
+                                  alt={name}
+                                  className="profile-order-item-thumb-img"
+                                  width={52}
+                                  height={52}
+                                />
                               </button>
                               <div className="profile-order-item-text">
                                 <span className="profile-order-item-name">{name}</span>

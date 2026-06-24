@@ -6,7 +6,8 @@ import PageShell from '../components/PageShell'
 import FilterIcon from '../components/FilterIcon'
 import Toast from '../components/Toast'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import { getApiPublicOrigin } from '../utils/apiBase'
+import { toAbsoluteMediaUrl } from '../utils/mediaUrl'
+import ProductImage from '../components/ProductImage'
 import './AdminOrders.css'
 
 function OrderDiscountSingleModal({ orderId, order, getOrderNumber, getCustomerName, getTotalAmount, getFinalAmount, formatPrice, hasDiscount, onClose, onApply, onRemove }) {
@@ -678,18 +679,12 @@ function AdminOrders() {
   const getOrderItems = (order) => order.orderItems || order.OrderItems || []
   const getItemImageUrl = (item) => {
     const path = item.imageUrl || item.ImageUrl
-    if (!path) return null
-    if (path.startsWith('http')) return path
-    const base = getApiPublicOrigin()
-    return base + (path.startsWith('/') ? path : '/' + path)
+    return toAbsoluteMediaUrl(path)
   }
 
   const getCartImageUrl = (cartItem) => {
     const first = cartItem.productImages?.[0] ?? cartItem.ProductImages?.[0]
-    if (!first) return null
-    if (first.startsWith('http')) return first
-    const base = getApiPublicOrigin()
-    return base + (first.startsWith('/') ? first : '/' + first)
+    return toAbsoluteMediaUrl(first)
   }
 
   const handleRemoveAdminCartItem = async (cartItemId) => {
@@ -721,8 +716,7 @@ function AdminOrders() {
     try {
       const product = await api.getProduct(productId)
       const images = product?.images || product?.Images || []
-      const base = getApiPublicOrigin()
-      const fullUrls = images.map(p => (p && (p.startsWith('http') ? p : base + (p.startsWith('/') ? p : '/' + p))))
+      const fullUrls = images.map((p) => toAbsoluteMediaUrl(p)).filter(Boolean)
       if (fullUrls.length > 0) {
         const idx = fullUrls.findIndex(u => u === initialUrl)
         setImageCarousel({ urls: fullUrls, currentIndex: idx >= 0 ? idx : 0 })
@@ -1060,12 +1054,8 @@ function AdminOrders() {
                     return (
                       <div key={id} className="admin-cart-item-card">
                         {imageUrl ? (
-                          <img
+                          <div
                             className="admin-cart-item-image"
-                            src={imageUrl}
-                            alt={productName}
-                            loading="lazy"
-                            decoding="async"
                             role="button"
                             tabIndex={0}
                             title="Открыть фото"
@@ -1076,7 +1066,14 @@ function AdminOrders() {
                                 openPhotoCarousel(productId, imageUrl)
                               }
                             }}
-                          />
+                          >
+                            <ProductImage
+                              src={item.productImages?.[0] ?? item.ProductImages?.[0]}
+                              thumbWidth={120}
+                              alt={productName}
+                              className="admin-cart-item-image-img"
+                            />
+                          </div>
                         ) : (
                           <div className="admin-cart-item-image admin-cart-item-image--empty">фото</div>
                         )}
@@ -1427,7 +1424,12 @@ function AdminOrders() {
                                                         onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)}
                                                         title="Открыть фото"
                                                       >
-                                                        <img src={imgUrl} alt={name} loading="lazy" decoding="async" />
+                                                        <ProductImage
+                                                          src={item.imageUrl ?? item.ImageUrl}
+                                                          thumbWidth={120}
+                                                          alt={name}
+                                                          className="order-item-photo-img"
+                                                        />
                                                       </div>
                                                     ) : (
                                                       <div className="order-item-photo order-item-photo-placeholder">фото</div>
@@ -1479,7 +1481,12 @@ function AdminOrders() {
                                               onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)}
                                               title="Открыть фото (карусель)"
                                             >
-                                              <img src={imgUrl} alt={name} loading="lazy" decoding="async" />
+                                              <ProductImage
+                                                src={item.imageUrl ?? item.ImageUrl}
+                                                thumbWidth={120}
+                                                alt={name}
+                                                className="order-item-photo-img"
+                                              />
                                             </div>
                                           ) : (
                                             <div className="order-item-photo order-item-photo-placeholder">фото</div>
@@ -1823,7 +1830,12 @@ function AdminOrders() {
                                     <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}${childHighlightMissing && !addedToParcel ? ' order-item-card--missing-parcel' : ''}`}>
                                       {imgUrl ? (
                                         <div className="order-item-photo" onClick={() => openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} title="Открыть фото">
-                                          <img src={imgUrl} alt={name} loading="lazy" decoding="async" />
+                                          <ProductImage
+                                            src={item.imageUrl ?? item.ImageUrl}
+                                            thumbWidth={120}
+                                            alt={name}
+                                            className="order-item-photo-img"
+                                          />
                                         </div>
                                       ) : (
                                         <div className="order-item-photo order-item-photo-placeholder">фото</div>
@@ -1876,7 +1888,12 @@ function AdminOrders() {
                       <div key={itemId} className={`order-item-card${addedToParcel ? ' order-item-card--in-parcel' : ''}${highlightMissingParcel && !addedToParcel ? ' order-item-card--missing-parcel' : ''}`}>
                         {imgUrl ? (
                           <div className="order-item-photo" onClick={() => openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && openPhotoCarousel(item.productId ?? item.ProductId, imgUrl)} title="Открыть фото">
-                            <img src={imgUrl} alt={name} loading="lazy" decoding="async" />
+                            <ProductImage
+                              src={item.imageUrl ?? item.ImageUrl}
+                              thumbWidth={120}
+                              alt={name}
+                              className="order-item-photo-img"
+                            />
                           </div>
                         ) : (
                           <div className="order-item-photo order-item-photo-placeholder">фото</div>

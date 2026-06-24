@@ -1219,6 +1219,13 @@ main.main > .profile-page .profile-actions {
   background: #fff;
 }
 
+.profile-order-item-thumb .product-image-wrap,
+.profile-order-item-thumb-img-wrap {
+  width: 100%;
+  height: 100%;
+}
+
+.profile-order-item-thumb-img,
 .profile-order-item-thumb img {
   width: 100%;
   height: 100%;

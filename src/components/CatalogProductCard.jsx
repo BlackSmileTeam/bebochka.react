@@ -61,7 +61,7 @@ export default function CatalogProductCard({
           <>
             <ProductImage
               src={product.images[0]}
-              thumbWidth={420}
+              thumbWidth={240}
               alt={product.name}
               className="product-image"
               priority={imagePriority}

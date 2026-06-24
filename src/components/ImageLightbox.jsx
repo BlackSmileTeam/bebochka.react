@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useSwipeGallery } from '../hooks/useSwipeGallery'
 import './ImageLightbox.css'
 
@@ -22,6 +23,15 @@ export default function ImageLightbox({
     if (!gallery.length) return
     setIndex(Math.min(Math.max(initialIndex, 0), gallery.length - 1))
   }, [gallery, initialIndex, src])
+
+  useEffect(() => {
+    if (!gallery.length) return undefined
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [gallery.length])
 
   const goPrev = useCallback(() => {
     if (gallery.length <= 1) return
@@ -54,7 +64,7 @@ export default function ImageLightbox({
 
   const currentSrc = gallery[index]
 
-  return (
+  const content = (
     <div
       className="review-image-lightbox"
       role="dialog"
@@ -108,4 +118,6 @@ export default function ImageLightbox({
       </div>
     </div>
   )
+
+  return createPortal(content, document.body)
 }

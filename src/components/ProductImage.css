@@ -21,6 +21,27 @@
   animation: product-image-shimmer 1.2s ease-in-out infinite;
 }
 
+.product-image-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border: 3px solid rgba(102, 126, 234, 0.2);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: product-image-spin 0.75s linear infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes product-image-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes product-image-shimmer {
   0% {
     background-position: 100% 0;
